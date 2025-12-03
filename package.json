@@ -24,14 +24,19 @@
     "url": "https://github.com/unlibra/next-i18n-tiny/issues"
   },
   "homepage": "https://github.com/unlibra/next-i18n-tiny#readme",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.react-client.cjs",
+  "module": "./dist/index.react-client.js",
+  "types": "./dist/index.react-client.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "react-server": {
+        "types": "./dist/index.react-server.d.ts",
+        "import": "./dist/index.react-server.js",
+        "require": "./dist/index.react-server.cjs"
+      },
+      "types": "./dist/index.react-client.d.ts",
+      "import": "./dist/index.react-client.js",
+      "require": "./dist/index.react-client.cjs"
     },
     "./types": {
       "types": "./dist/types.d.ts",

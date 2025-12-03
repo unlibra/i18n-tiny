@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { define } from '../index'
+import { define } from '../index.react-client'
 
 const enMessages = {
   common: {

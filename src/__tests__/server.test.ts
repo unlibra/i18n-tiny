@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { define } from '../index.react-client'
+import { define } from '../index.react-server'
 
 const enMessages = {
   common: {
@@ -25,7 +25,7 @@ const jaMessages = {
   }
 }
 
-describe('define()', () => {
+describe('Server version - define()', () => {
   it('should create i18n instance with correct configuration', () => {
     const i18n = define({
       locales: ['en', 'ja'] as const,
@@ -88,31 +88,37 @@ describe('define()', () => {
       const t = await i18n.server.getTranslations('en')
       expect(t('nested.deep.value')).toBe('Deep Value')
     })
+  })
 
-    it('should return key when translation is missing', async () => {
+  describe('client APIs should throw errors', () => {
+    it('useMessages should throw', () => {
       const i18n = define({
         locales: ['en', 'ja'] as const,
         defaultLocale: 'en',
         messages: { en: enMessages, ja: jaMessages }
       })
 
-      const t = await i18n.server.getTranslations('en')
-      // @ts-expect-error Testing non-existent key
-      expect(t('nonexistent.key')).toBe('nonexistent.key')
+      expect(() => i18n.client.useMessages()).toThrow('useMessages is not available in Server Components')
     })
 
-    it('should support namespace', async () => {
+    it('useTranslations should throw', () => {
       const i18n = define({
         locales: ['en', 'ja'] as const,
         defaultLocale: 'en',
         messages: { en: enMessages, ja: jaMessages }
       })
 
-      const t = await i18n.server.getTranslations('en', 'common')
-      // @ts-expect-error Testing namespace with partial key
-      expect(t('hello')).toBe('Hello')
-      // @ts-expect-error Testing namespace with partial key
-      expect(t('world')).toBe('World')
+      expect(() => i18n.client.useTranslations()).toThrow('useTranslations is not available in Server Components')
+    })
+
+    it('useLocale should throw', () => {
+      const i18n = define({
+        locales: ['en', 'ja'] as const,
+        defaultLocale: 'en',
+        messages: { en: enMessages, ja: jaMessages }
+      })
+
+      expect(() => i18n.client.useLocale()).toThrow('useLocale is not available in Server Components')
     })
   })
 })
