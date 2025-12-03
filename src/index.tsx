@@ -8,6 +8,7 @@ import {
   useTranslations as baseUseTranslations
 } from './components'
 import type { NestedKeys } from './types'
+import { resolveMessage } from './utils'
 
 export interface I18nConfig<
   L extends readonly string[],
@@ -79,26 +80,7 @@ export function define<
       const msgs = JSON.parse(JSON.stringify(moduleObj))
 
       return (key: MessageKeys): string => {
-        const fullKey = namespace ? `${String(namespace)}.${key}` : key
-        const keys = fullKey.split('.')
-        let obj: unknown = msgs
-
-        for (const k of keys) {
-          if (obj && typeof obj === 'object' && k in obj) {
-            obj = (obj as Record<string, unknown>)[k]
-          } else {
-            obj = undefined
-          }
-
-          if (obj === undefined) {
-            if (process.env.NODE_ENV === 'development') {
-              console.warn(`[i18n] Missing key: "${fullKey}" in locale "${locale}"`)
-            }
-            return fullKey
-          }
-        }
-
-        return String(obj)
+        return resolveMessage(msgs, key, namespace, locale)
       }
     }
   }

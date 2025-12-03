@@ -31,6 +31,22 @@ yarn add next-i18n-tiny
 
 ## Usage
 
+### Project Structure
+
+```
+your-app/
+├── app/
+│   └── [locale]/
+│       ├── layout.tsx
+│       └── page.tsx
+├── messages/
+│   ├── en.ts
+│   └── ja.ts
+├── src/
+│   └── i18n.ts
+└── proxy.ts
+```
+
 ### Minimal Setup
 
 **1. Create message files**
@@ -38,9 +54,13 @@ yarn add next-i18n-tiny
 ```typescript
 // messages/en.ts
 export default {
-  site: {
-    name: "My Site",
+  common: {
+    title: "My Site",
     description: "Welcome to my site"
+  },
+  nav: {
+    home: "Home",
+    about: "About"
   }
 }
 ```
@@ -48,9 +68,13 @@ export default {
 ```typescript
 // messages/ja.ts
 export default {
-  site: {
-    name: "マイサイト",
+  common: {
+    title: "マイサイト",
     description: "サイトへようこそ"
+  },
+  nav: {
+    home: "ホーム",
+    about: "概要"
   }
 }
 ```
@@ -80,7 +104,66 @@ export const { useMessages, useTranslations, useLocale } = client
 export const { getMessages, getTranslations } = server
 ```
 
-**3. Use in Layout**
+**3. Setup Proxy** (Next.js 16+)
+
+```typescript
+// proxy.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+const locales = ['ja', 'en']
+const defaultLocale = 'ja'
+
+export default function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Check if pathname already has a locale
+  const hasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  )
+
+  if (hasLocale) return
+
+  // Redirect to default locale
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`
+  return NextResponse.redirect(request.nextUrl)
+}
+
+export const config = {
+  matcher: ['/((?!api|_next|.*\\..*).*)']
+}
+```
+
+<details>
+<summary>For Next.js 15 or earlier (middleware.ts)</summary>
+
+```typescript
+// middleware.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+const locales = ['ja', 'en']
+const defaultLocale = 'ja'
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  const hasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  )
+
+  if (hasLocale) return
+
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`
+  return NextResponse.redirect(request.nextUrl)
+}
+
+export const config = {
+  matcher: ['/((?!api|_next|.*\\..*).*)']
+}
+```
+
+</details>
+
+**4. Use in Layout**
 
 ```typescript
 // app/[locale]/layout.tsx
@@ -98,7 +181,7 @@ export default async function Layout({ children, params }) {
 }
 ```
 
-**4. Use in Components**
+**5. Use in Components**
 
 ```typescript
 // Server Component
@@ -112,10 +195,10 @@ export async function ServerComponent({ locale }: { locale: Locale }) {
 
   return (
     <div>
-      <h1>{messages.site.name}</h1>
-      {/*           ^^^^ Auto-complete */}
-      <p>{t('site.description')}</p>
-      {/*    ^^^^^^^^^^^^^^^^ Auto-complete */}
+      <h1>{messages.common.title}</h1>
+      {/*           ^^^^^ Auto-complete */}
+      <p>{t('common.description')}</p>
+      {/*    ^^^^^^^^^^^^^^^^^^ Auto-complete */}
     </div>
   )
 }
@@ -147,8 +230,8 @@ That's it! **Types are automatically inferred** - no manual type annotations nee
 
 **Two ways to access translations:**
 
-- `messages.site.name` - Direct object access (simple and clear)
-- `t('site.name')` - Function call (useful for dynamic keys)
+- `messages.common.title` - Direct object access (simple and clear)
+- `t('common.title')` - Function call (useful for dynamic keys)
 
 Both are fully typed with autocomplete. Use whichever you prefer!
 

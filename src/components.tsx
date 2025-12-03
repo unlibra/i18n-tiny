@@ -3,6 +3,7 @@
 import NextLink from 'next/link'
 import type { ComponentProps, ReactNode } from 'react'
 import { createContext, useCallback, useContext, useMemo } from 'react'
+import { resolveMessage } from './utils'
 
 interface I18nContextValue {
   locale: string
@@ -62,26 +63,7 @@ export function useTranslations<K extends string = string> (namespace?: string):
 
   return useCallback(
     (key: K): string => {
-      const fullKey = namespace ? `${String(namespace)}.${key}` : key
-      const keys = fullKey.split('.')
-      let obj: unknown = messages
-
-      for (const k of keys) {
-        if (obj && typeof obj === 'object' && k in obj) {
-          obj = (obj as Record<string, unknown>)[k]
-        } else {
-          obj = undefined
-        }
-
-        if (obj === undefined) {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`[i18n] Missing key: "${fullKey}" in locale "${locale}"`)
-          }
-          return fullKey
-        }
-      }
-
-      return String(obj)
+      return resolveMessage(messages, key, namespace, locale)
     },
     [namespace, messages, locale]
   )
@@ -98,7 +80,19 @@ export function useLocalizedPath () {
       if (locale === defaultLocale) {
         return path
       }
-      return `/${locale}${path}`
+
+      const cleanPath = path.startsWith('/') ? path : `/${path}`
+
+      // Avoid double prefixing
+      if (cleanPath.startsWith(`/${locale}/`) || cleanPath === `/${locale}`) {
+        return cleanPath
+      }
+
+      if (cleanPath === '/') {
+        return `/${locale}`
+      }
+
+      return `/${locale}${cleanPath}`
     },
     [locale, defaultLocale]
   )
