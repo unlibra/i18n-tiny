@@ -15,7 +15,7 @@
     "rsc"
   ],
   "author": "unlibra",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/unlibra/next-i18n-tiny.git"

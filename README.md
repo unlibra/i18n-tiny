@@ -263,4 +263,4 @@ Both will have the locale prefix automatically added based on the current locale
 
 ## License
 
-AGPL-3.0
+MIT
