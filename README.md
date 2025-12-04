@@ -10,11 +10,19 @@ Type-safe, zero-dependency i18n library for Next.js App Router with React Server
 
 Inspired by next-intl, designed for simplicity and type safety.
 
+## Live Demo
+
+This library is used in production at **[8px.app](https://8px.app)**.
+You can try the language switcher in the header to see it in action.
+
+Source code: [https://github.com/unlibra/8px.app](https://github.com/unlibra/8px.app)
+
 ## Features
 
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for `messages.site.name`, `t('common.title')`, and all nested keys
 - **Zero dependencies**: No external i18n libraries needed
 - **Server Components**: Native RSC support
+- **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages. No per-page configuration needed.
 - **Simple API**: Single configuration, minimal boilerplate
 - **Small**: Minimal bundle size
 - **No global state**: Pure function factory pattern
@@ -107,24 +115,25 @@ export const { getMessages, getTranslations } = server
 
 ```typescript
 // proxy.ts
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-const locales = ['ja', 'en']
-const defaultLocale = 'ja'
+import { defaultLocale, locales } from '@/i18n'
 
-export default function proxy(request: NextRequest) {
+export function proxy (request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check if pathname already has a locale
+  // Check if the pathname already has a locale
   const hasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   )
 
-  if (hasLocale) return
+  // If locale is present, continue
+  if (hasLocale) return NextResponse.next()
 
-  // Redirect to default locale
+  // Redirect to default locale (rewrite strategy)
   request.nextUrl.pathname = `/${defaultLocale}${pathname}`
-  return NextResponse.redirect(request.nextUrl)
+  return NextResponse.rewrite(request.nextUrl)
 }
 
 export const config = {
@@ -137,24 +146,25 @@ export const config = {
 
 ```typescript
 // middleware.ts
-import { NextRequest, NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-const locales = ['ja', 'en']
-const defaultLocale = 'ja'
+import { defaultLocale, locales } from '@/i18n'
 
-export function middleware(request: NextRequest) {
+export function middleware (request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check if pathname already has a locale
+  // Check if the pathname already has a locale
   const hasLocale = locales.some(
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   )
 
+  // If locale is present, continue
   if (hasLocale) return NextResponse.next()
 
-  // Redirect to default locale
+  // Redirect to default locale (rewrite strategy)
   request.nextUrl.pathname = `/${defaultLocale}${pathname}`
-  return NextResponse.redirect(request.nextUrl)
+  return NextResponse.rewrite(request.nextUrl)
 }
 
 export const config = {
@@ -263,6 +273,83 @@ Defines an i18n instance with automatic type inference.
     useTranslations, // Get translation function (hook)
     useLocale      // Get current locale (hook)
   }
+}
+```
+
+## Advanced Usage
+
+### Static Site Generation (SSG)
+
+To generate static pages for all locales at build time, simply add `generateStaticParams` to your **root layout** (`app/[locale]/layout.tsx`).
+
+Unlike some other libraries, **you do not need to add this to every page**. Defining it once in the layout automatically enables static generation for all child routes.
+
+```typescript
+// app/[locale]/layout.tsx
+import { locales } from '@/i18n'
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }))
+}
+
+export default function Layout({ children, params }) {
+  // ...
+}
+```
+
+### Language Switcher
+
+Create a component to switch between languages while preserving the current path.
+
+```typescript
+// components/LanguageSwitcher.tsx
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+
+// Import i18n settings and hooks
+import { defaultLocale, locales, useLocale } from '@/i18n'
+
+// Define display names for locales
+const localeNames: Record<string, string> = {
+  ja: '日本語',
+  en: 'English'
+}
+
+export function LanguageSwitcher () {
+  const locale = useLocale() // Get the current active locale
+  const pathname = usePathname() // Get the current path without locale prefix (e.g., /about)
+
+  // Helper function to get the base path, removing the current locale prefix
+  const getBasePath = () => {
+    const localePrefix = new RegExp(`^/${locale}(/|$)`)
+    const basePath = pathname.replace(localePrefix, '/')
+    return basePath === '' ? '/' : basePath
+  }
+
+  // Generate the path for a new locale
+  const getLocalizedPath = (newLocale: string) => {
+    const basePath = getBasePath()
+
+    // If the new locale is the default, remove the locale prefix from the path
+    if (newLocale === defaultLocale) {
+      return basePath
+    }
+    // Otherwise, prepend the new locale to the base path
+    return `/${newLocale}${basePath}`
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: '10px' }}>
+      {locales.map((locale) => (
+        // Create a link for each locale
+        <Link key={locale} href={getLocalizedPath(locale)}>
+          {localeNames[locale]} {/* Display locale name */}
+        </Link>
+      ))}
+    </div>
+  )
 }
 ```
 
