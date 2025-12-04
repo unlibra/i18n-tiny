@@ -105,8 +105,6 @@ export const { getMessages, getTranslations } = server
 
 **3. Setup Proxy** (Next.js 16+)
 
-> For Next.js 15 or earlier, use `middleware.ts` instead. See [official migration guide](https://nextjs.org/docs/messages/middleware-to-proxy).
-
 ```typescript
 // proxy.ts
 import { NextRequest, NextResponse } from 'next/server'
@@ -133,6 +131,38 @@ export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
 }
 ```
+
+<details>
+<summary>Next.js 15 or earlier (middleware.ts)</summary>
+
+```typescript
+// middleware.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+const locales = ['ja', 'en']
+const defaultLocale = 'ja'
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Check if pathname already has a locale
+  const hasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  )
+
+  if (hasLocale) return NextResponse.next()
+
+  // Redirect to default locale
+  request.nextUrl.pathname = `/${defaultLocale}${pathname}`
+  return NextResponse.redirect(request.nextUrl)
+}
+
+export const config = {
+  matcher: ['/((?!api|_next|.*\\..*).*)']
+}
+```
+
+</details>
 
 **4. Use in Layout**
 
