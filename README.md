@@ -12,7 +12,7 @@ Inspired by next-intl, designed for simplicity and type safety.
 
 ## Live Demo
 
-This library is used in production at **[8px.app](https://8px.app)**.
+This library is used at **[8px.app](https://8px.app)**.
 You can try the language switcher in the header to see it in action.
 
 Source code: [https://github.com/unlibra/8px.app](https://github.com/unlibra/8px.app)
