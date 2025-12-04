@@ -3,7 +3,6 @@
  * This version throws errors for client-only APIs
  */
 
-import type { ReactNode } from 'react'
 import { I18nLink, I18nProvider } from './components'
 import type { NestedKeys } from './types'
 import { resolveMessage } from './utils'
