@@ -1,6 +1,6 @@
 {
   "name": "next-i18n-tiny",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "Tiny, type-safe i18n library for Next.js with automatic type inference and zero dependencies",
   "keywords": [

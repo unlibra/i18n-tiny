@@ -3,8 +3,7 @@
  * This version throws errors for client-only APIs
  */
 
-import type { ReactNode } from 'react'
-import { I18nLink } from './components'
+import { I18nLink, I18nProvider } from './components'
 import type { NestedKeys } from './types'
 import { resolveMessage } from './utils'
 
@@ -59,16 +58,6 @@ export function define<
     }
   }
 
-  // Provider - throws error on server
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function Provider (_props: {
-    locale: string
-    messages: MessageType
-    children: ReactNode
-  }): ReactNode {
-    clientOnlyError('Provider')
-  }
-
   // Client API - all throw errors on server
   const client = {
     useMessages: (): MessageType => clientOnlyError('useMessages'),
@@ -78,7 +67,7 @@ export function define<
   }
 
   return {
-    Provider,
+    Provider: I18nProvider,
     Link: I18nLink,
     server,
     client
