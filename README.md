@@ -1,5 +1,31 @@
 # next-i18n-tiny
 
+> **⚠️ DEPRECATED**
+>
+> This package has been moved to **[@i18n-tiny/next](https://www.npmjs.com/package/@i18n-tiny/next)**.
+>
+> Please migrate to the new package for continued support and updates.
+>
+> ## Migration Guide
+>
+> The API is 100% compatible. Simply update your import:
+>
+> ```diff
+> - import { define } from 'next-i18n-tiny'
+> + import { define } from '@i18n-tiny/next'
+> ```
+>
+> Then install the new package:
+>
+> ```bash
+> npm uninstall next-i18n-tiny
+> npm install @i18n-tiny/next
+> ```
+>
+> For more information, see the [new package documentation](https://github.com/unlibra/i18n-tiny/tree/main/packages/next).
+
+---
+
 [![npm version](https://img.shields.io/npm/v/next-i18n-tiny.svg)](https://www.npmjs.com/package/next-i18n-tiny)
 <!-- [![npm downloads](https://img.shields.io/npm/dm/next-i18n-tiny.svg)](https://www.npmjs.com/package/next-i18n-tiny) -->
 [![CI](https://github.com/unlibra/next-i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/next-i18n-tiny/actions)
