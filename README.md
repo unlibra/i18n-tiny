@@ -1,13 +1,19 @@
 # i18n-tiny
 
+[![CI](https://github.com/unlibra/i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/i18n-tiny/actions)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-Type-safe, zero-dependency i18n libraries for modern frameworks.
+The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup.
+
+Currently supports: **Next.js** (with more frameworks coming)
 
 ## Quick Start
 
 ### Next.js
+
+[![npm version](https://img.shields.io/npm/v/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
+[![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
 
 ```typescript
 import { define } from '@i18n-tiny/next'

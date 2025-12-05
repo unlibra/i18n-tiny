@@ -1,7 +1,9 @@
 # @i18n-tiny/next
 
 [![npm version](https://img.shields.io/npm/v/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
-[![License](https://img.shields.io/npm/l/@i18n-tiny/next.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
+[![CI](https://github.com/unlibra/i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/i18n-tiny/actions)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 Type-safe, zero-dependency i18n library for Next.js App Router with React Server Components support.
@@ -274,6 +276,35 @@ Defines an i18n instance with automatic type inference.
 }
 ```
 
+### `detectLocale(acceptLanguage, supportedLocales)` (from `@i18n-tiny/core`)
+
+Detects the best matching locale from the Accept-Language header.
+
+**Parameters:**
+
+- `acceptLanguage` - The Accept-Language header value from the request (e.g., `"ja,en-US;q=0.9,en;q=0.8"`)
+- `supportedLocales` - Array of locale codes supported by your application
+
+**Returns:**
+
+- The best matching locale string, or `null` if no match is found
+
+**Example:**
+
+```typescript
+import { detectLocale } from '@i18n-tiny/core'
+
+const acceptLanguage = request.headers.get('accept-language')
+const locale = detectLocale(acceptLanguage, ['ja', 'en']) // Returns: 'ja' or 'en' or null
+```
+
+**How it works:**
+
+- Parses the Accept-Language header and sorts languages by quality value
+- Returns the highest priority locale that matches your supported locales
+- Normalizes language codes (e.g., `en-US` → `en`, `ja-JP` → `ja`)
+- Returns `null` if no supported locale matches
+
 ## Advanced Usage
 
 ### Static Site Generation (SSG)
@@ -330,6 +361,7 @@ export const config = {
 ```
 
 **How it works:**
+
 - Parses `Accept-Language` header (e.g., `"ja,en-US;q=0.9,en;q=0.8"`)
 - Returns the highest priority locale that matches your supported locales
 - Falls back to your specified default if no match is found
