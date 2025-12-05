@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 
-import { I18nLink } from './components'
+import { I18nLink, useLocalizedPath } from './components'
 import {
   I18nProvider as BaseProvider,
   useMessages as baseUseMessages,
@@ -142,7 +142,8 @@ export function define<
   const client = {
     useMessages,
     useTranslations,
-    useLocale
+    useLocale,
+    useLocalizedPath
   }
 
   return {
