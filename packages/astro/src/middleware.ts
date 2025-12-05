@@ -7,6 +7,9 @@
 import { detectLocale } from '@i18n-tiny/core'
 import type { MiddlewareHandler } from 'astro'
 
+// Common static file extensions to skip in middleware
+const STATIC_FILE_EXTENSIONS = /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|mjs|woff|woff2|ttf|eot|otf|mp3|mp4|webm|ogg|wav|pdf|zip|json|xml|txt|map)$/i
+
 export interface MiddlewareConfig {
   /** Array of supported locales (e.g., ['en', 'ja']) */
   locales: readonly string[]
@@ -76,8 +79,8 @@ export function middleware(
       }
     }
 
-    // Skip static files
-    if (pathname.includes('.')) {
+    // Skip static files (check for common extensions)
+    if (STATIC_FILE_EXTENSIONS.test(pathname)) {
       return next()
     }
 

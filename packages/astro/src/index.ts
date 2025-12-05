@@ -67,17 +67,18 @@ export function define<
   /**
    * Get translation function for a given locale
    * Keys are automatically inferred and provide autocomplete
+   * Supports variable interpolation with {key} syntax
    */
   function getTranslations(
     locale: string | undefined,
     namespace?: string
-  ): (key: MessageKeys) => string {
+  ): (key: MessageKeys, vars?: Record<string, string | number>) => string {
     const resolvedLocale = locale ?? resolvedDefaultLocale
     const moduleObj = messages[resolvedLocale as L[number]]
     const msgs = JSON.parse(JSON.stringify(moduleObj))
 
-    return (key: MessageKeys): string => {
-      return resolveMessage(msgs, key, namespace, resolvedLocale)
+    return (key: MessageKeys, vars?: Record<string, string | number>): string => {
+      return resolveMessage(msgs, key, namespace, resolvedLocale, vars)
     }
   }
 

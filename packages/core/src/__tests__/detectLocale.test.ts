@@ -14,9 +14,21 @@ describe('detectLocale()', () => {
     expect(result).toBe('fr')
   })
 
-  it('should normalize locale codes (en-US → en)', () => {
+  it('should fall back to language code when exact match not found (en-US → en)', () => {
     const result = detectLocale('en-US,ja;q=0.8', supportedLocales)
     expect(result).toBe('en')
+  })
+
+  it('should prefer exact match over language code fallback', () => {
+    const localesWithRegion = ['en-US', 'en-GB', 'ja'] as const
+    const result = detectLocale('en-GB,en-US;q=0.8', localesWithRegion)
+    expect(result).toBe('en-GB')
+  })
+
+  it('should return exact match when available', () => {
+    const localesWithRegion = ['en-US', 'en-GB', 'en'] as const
+    const result = detectLocale('en-US', localesWithRegion)
+    expect(result).toBe('en-US')
   })
 
   it('should skip unsupported locales and return next match', () => {

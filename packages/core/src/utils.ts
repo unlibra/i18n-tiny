@@ -1,11 +1,32 @@
 /**
+ * Interpolates variables into a string.
+ * Replaces {key} placeholders with values from the vars object.
+ *
+ * @param str - The string containing {key} placeholders
+ * @param vars - Object with key-value pairs to interpolate
+ * @returns The interpolated string
+ *
+ * @example
+ * interpolate("Hello, {name}!", { name: "John" }) // "Hello, John!"
+ * interpolate("Missing {key}", {}) // "Missing {key}"
+ */
+function interpolate (str: string, vars: Record<string, string | number>): string {
+  return str.replace(/\{(\w+)\}/g, (match, key) => {
+    const value = vars[key]
+    return value !== undefined ? String(value) : match
+  })
+}
+
+/**
  * Resolves a nested key in a messages object.
  * Handles missing keys and object values gracefully.
+ * Supports variable interpolation with {key} syntax.
  *
  * @param messages - The messages object to search
  * @param key - Dot-separated key path (e.g., "common.title")
  * @param namespace - Optional namespace prefix to prepend to the key
  * @param locale - Locale identifier for debug messages (used in development mode)
+ * @param vars - Optional variables for interpolation
  * @returns The resolved message string, or the key itself if not found or if it points to an object
  *
  * @example
@@ -13,12 +34,14 @@
  * resolveMessage(messages, "title", "common") // "Hello"
  * resolveMessage(messages, "missing", "common") // "common.missing"
  * resolveMessage(messages, "common") // "common" (warns in dev mode)
+ * resolveMessage(messages, "greeting", "common", "en", { name: "John" }) // "Hello, John!"
  */
 export function resolveMessage (
   messages: unknown,
   key: string,
   namespace?: string,
-  locale?: string
+  locale?: string,
+  vars?: Record<string, string | number>
 ): string {
   let obj: unknown = messages
 
@@ -65,5 +88,6 @@ export function resolveMessage (
     return fullKey
   }
 
-  return String(obj)
+  const result = String(obj)
+  return vars ? interpolate(result, vars) : result
 }

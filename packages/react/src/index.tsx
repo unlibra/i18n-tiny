@@ -94,7 +94,7 @@ export function define<
     return baseUseMessages<MessageType>()
   }
 
-  function useTranslations (namespace?: string): (key: MessageKeys) => string {
+  function useTranslations (namespace?: string): (key: MessageKeys, vars?: Record<string, string | number>) => string {
     return baseUseTranslations<MessageKeys>(namespace)
   }
 

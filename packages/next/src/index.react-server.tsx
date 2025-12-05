@@ -52,12 +52,12 @@ export function define<
     getTranslations: async (
       locale: string,
       namespace?: string
-    ): Promise<(key: MessageKeys) => string> => {
+    ): Promise<(key: MessageKeys, vars?: Record<string, string | number>) => string> => {
       const moduleObj = messages[locale as L[number]]
       const msgs = JSON.parse(JSON.stringify(moduleObj))
 
-      return (key: MessageKeys): string => {
-        return resolveMessage(msgs, key, namespace, locale)
+      return (key: MessageKeys, vars?: Record<string, string | number>): string => {
+        return resolveMessage(msgs, key, namespace, locale, vars)
       }
     },
 
@@ -83,7 +83,7 @@ export function define<
   const client = {
     useMessages: (): MessageType => clientOnlyError('useMessages'),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    useTranslations: (_namespace?: string): ((key: MessageKeys) => string) => clientOnlyError('useTranslations'),
+    useTranslations: (_namespace?: string): ((key: MessageKeys, vars?: Record<string, string | number>) => string) => clientOnlyError('useTranslations'),
     useLocale: (): string => clientOnlyError('useLocale')
   }
 

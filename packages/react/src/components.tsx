@@ -62,12 +62,12 @@ export function useMessages<T = Record<string, unknown>> (): T {
   return useI18n().messages as T
 }
 
-export function useTranslations<K extends string = string> (namespace?: string): (key: K) => string {
+export function useTranslations<K extends string = string> (namespace?: string): (key: K, vars?: Record<string, string | number>) => string {
   const { locale, messages } = useI18n()
 
   return useCallback(
-    (key: K): string => {
-      return resolveMessage(messages, key, namespace, locale)
+    (key: K, vars?: Record<string, string | number>): string => {
+      return resolveMessage(messages, key, namespace, locale, vars)
     },
     [namespace, messages, locale]
   )

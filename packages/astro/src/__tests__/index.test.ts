@@ -45,17 +45,18 @@ describe('define', () => {
     })
 
     it('should work with getMessages', () => {
-      const messages = i18nMinimal.getMessages('ja')
+      const messages = i18nMinimal.getMessages('ja') as typeof enMessages
       expect(messages.common.title).toBe('こんにちは')
     })
 
     it('should work with getTranslations', () => {
       const t = i18nMinimal.getTranslations('ja')
-      expect(t('common.title')).toBe('こんにちは')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((t as any)('common.title')).toBe('こんにちは')
     })
 
     it('should use first locale when locale is undefined', () => {
-      const messages = i18nMinimal.getMessages(undefined)
+      const messages = i18nMinimal.getMessages(undefined) as typeof enMessages
       expect(messages.common.title).toBe('Hello')
     })
   })
@@ -95,6 +96,7 @@ describe('define', () => {
 
     it('should support namespace', () => {
       const t = i18n.getTranslations('en', 'common')
+      // @ts-expect-error Testing namespace with partial key
       expect(t('title')).toBe('Hello')
     })
 
