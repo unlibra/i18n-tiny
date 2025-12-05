@@ -43,10 +43,6 @@ jobs:
 
       - name: Publish @i18n-tiny/core
         run: cd packages/core && pnpm publish --provenance --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @i18n-tiny/next
         run: cd packages/next && pnpm publish --provenance --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
