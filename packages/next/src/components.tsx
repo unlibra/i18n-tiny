@@ -3,7 +3,7 @@
 import NextLink from 'next/link'
 import type { ComponentProps, ReactNode } from 'react'
 import { createContext, useCallback, useContext, useMemo } from 'react'
-import { resolveMessage } from './utils'
+import { resolveMessage } from '@i18n-tiny/core'
 
 interface I18nContextValue {
   locale: string

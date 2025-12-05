@@ -4,8 +4,8 @@
  */
 
 import { I18nLink, I18nProvider } from './components'
-import type { NestedKeys } from './types'
-import { resolveMessage } from './utils'
+import type { NestedKeys } from '@i18n-tiny/core'
+import { resolveMessage } from '@i18n-tiny/core'
 
 export interface I18nConfig<
   L extends readonly string[],

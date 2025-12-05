@@ -9,8 +9,8 @@ import {
   useMessages as baseUseMessages,
   useTranslations as baseUseTranslations
 } from './components'
-import type { NestedKeys } from './types'
-import { resolveMessage } from './utils'
+import type { NestedKeys } from '@i18n-tiny/core'
+import { resolveMessage } from '@i18n-tiny/core'
 
 export interface I18nConfig<
   L extends readonly string[],
@@ -27,7 +27,7 @@ export interface I18nConfig<
  * This is a pure function that creates a self-contained i18n runtime
  *
  * @example
- * import { define } from 'next-i18n-tiny'
+ * import { define } from '@i18n-tiny/next'
  * import jaMessages from './messages/ja'
  * import enMessages from './messages/en'
  *

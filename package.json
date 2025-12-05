@@ -1,88 +1,31 @@
 {
-  "name": "next-i18n-tiny",
-  "version": "0.1.5",
+  "name": "i18n-tiny",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
-  "description": "Tiny, type-safe i18n library for Next.js with automatic type inference and zero dependencies",
-  "keywords": [
-    "nextjs",
-    "next",
-    "i18n",
-    "internationalization",
-    "react",
-    "typescript",
-    "app-router",
-    "server-components",
-    "rsc"
-  ],
+  "description": "Tiny, type-safe i18n libraries for modern frameworks",
   "author": "unlibra",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/unlibra/next-i18n-tiny.git"
+    "url": "https://github.com/unlibra/i18n-tiny.git"
   },
-  "bugs": {
-    "url": "https://github.com/unlibra/next-i18n-tiny/issues"
-  },
-  "homepage": "https://github.com/unlibra/next-i18n-tiny#readme",
-  "main": "./dist/index.react-client.cjs",
-  "module": "./dist/index.react-client.js",
-  "types": "./dist/index.react-client.d.ts",
-  "exports": {
-    ".": {
-      "react-server": {
-        "types": "./dist/index.react-server.d.ts",
-        "import": "./dist/index.react-server.js",
-        "require": "./dist/index.react-server.cjs"
-      },
-      "types": "./dist/index.react-client.d.ts",
-      "import": "./dist/index.react-client.js",
-      "require": "./dist/index.react-client.cjs"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "require": "./dist/types.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
-    "build": "tsup",
-    "type-check": "tsc --noEmit",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build"
-  },
-  "peerDependencies": {
-    "next": "^15.0.0 || ^16.0.0",
-    "react": "^18.0.0 || ^19.0.0"
+    "build": "pnpm -r build",
+    "type-check": "pnpm -r type-check",
+    "lint": "eslint packages/*/src",
+    "lint:fix": "eslint packages/*/src --fix",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm --filter @i18n-tiny/next test:watch"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.4",
-    "@vitejs/plugin-react": "^5.1.1",
-    "@vitest/ui": "^4.0.15",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "happy-dom": "^20.0.11",
-    "jsdom": "^27.2.0",
-    "next": "^16.0.0",
-    "react": "^19.0.0",
-    "tsup": "^8.3.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1",
-    "vitest": "^4.0.15"
-  }
+    "typescript-eslint": "^8.48.1"
+  },
+  "packageManager": "pnpm@9.15.0"
 }

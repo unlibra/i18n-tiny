@@ -5,7 +5,7 @@ const sharedConfig = {
   format: ['cjs', 'esm'] as const,
   dts: true,
   sourcemap: true,
-  external: ['react', 'next'],
+  external: ['react', 'next', '@i18n-tiny/core'],
   splitting: false,
   treeshake: true,
   outExtension ({ format }: { format: 'cjs' | 'esm' }) {
