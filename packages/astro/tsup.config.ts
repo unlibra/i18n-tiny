@@ -23,14 +23,6 @@ export default defineConfig([
     },
     clean: true
   },
-  // Router entry
-  {
-    ...sharedConfig,
-    entry: {
-      router: 'src/router/index.ts'
-    },
-    clean: false
-  },
   // Middleware entry
   {
     ...sharedConfig,
@@ -38,5 +30,14 @@ export default defineConfig([
       middleware: 'src/middleware.ts'
     },
     clean: false
+  },
+  // Router utilities (re-exports from core)
+  {
+    ...sharedConfig,
+    entry: {
+      router: 'src/router.ts'
+    },
+    clean: false
   }
+  // Note: Link.astro is distributed as source at src/router/Link.astro
 ])

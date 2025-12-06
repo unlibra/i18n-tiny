@@ -94,3 +94,58 @@ export function removeLocalePrefix(
 export function hasLocalePrefix(pathname: string, locale: string): boolean {
   return pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
 }
+
+/**
+ * Generate a link href based on current URL pattern
+ *
+ * Used by Link components to auto-detect whether to add locale prefix.
+ * If current URL has locale prefix → add prefix to link
+ * If current URL has no prefix → no prefix on link
+ *
+ * @param href - The target path (e.g., '/about')
+ * @param currentPathname - The current URL pathname
+ * @param currentLocale - The current locale (from params or context)
+ * @param overrideLocale - Optional locale override (undefined = auto, '' = raw, 'ja' = explicit)
+ * @returns The resolved href
+ *
+ * @example
+ * ```typescript
+ * import { getLinkHref } from '@i18n-tiny/core/router'
+ *
+ * // Auto-detect from current URL
+ * getLinkHref('/about', '/ja/page', 'ja')           // '/ja/about' (URL has prefix)
+ * getLinkHref('/about', '/page', 'ja')              // '/about' (URL has no prefix)
+ *
+ * // Explicit locale override
+ * getLinkHref('/about', '/page', 'en', 'ja')        // '/ja/about'
+ *
+ * // Raw path (no localization)
+ * getLinkHref('/about', '/ja/page', 'ja', '')       // '/about'
+ * ```
+ */
+export function getLinkHref(
+  href: string,
+  currentPathname: string,
+  currentLocale: string | undefined,
+  overrideLocale?: string
+): string {
+  const cleanPath = href.startsWith('/') ? href : `/${href}`
+
+  // overrideLocale="" → raw path (no localization)
+  if (overrideLocale === '') {
+    return cleanPath
+  }
+
+  // overrideLocale="ja" → explicit locale prefix
+  if (overrideLocale !== undefined) {
+    return cleanPath === '/' ? `/${overrideLocale}` : `/${overrideLocale}${cleanPath}`
+  }
+
+  // Auto-detect: check if current URL has locale prefix
+  if (currentLocale && hasLocalePrefix(currentPathname, currentLocale)) {
+    return cleanPath === '/' ? `/${currentLocale}` : `/${currentLocale}${cleanPath}`
+  }
+
+  // No prefix in current URL → no prefix
+  return cleanPath
+}

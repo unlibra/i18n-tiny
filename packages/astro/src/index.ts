@@ -59,7 +59,7 @@ export function define<
    */
   function getMessages(locale: string | undefined): MessageType {
     const resolvedLocale = locale ?? resolvedDefaultLocale
-    const moduleObj = messages[resolvedLocale as L[number]]
+    const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
     // Convert ES module namespace to plain object
     return JSON.parse(JSON.stringify(moduleObj)) as MessageType
   }
@@ -74,7 +74,7 @@ export function define<
     namespace?: string
   ): (key: MessageKeys, vars?: Record<string, string | number>) => string {
     const resolvedLocale = locale ?? resolvedDefaultLocale
-    const moduleObj = messages[resolvedLocale as L[number]]
+    const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
     const msgs = JSON.parse(JSON.stringify(moduleObj))
 
     return (key: MessageKeys, vars?: Record<string, string | number>): string => {

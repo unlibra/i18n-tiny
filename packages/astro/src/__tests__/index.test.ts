@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { define } from '../index'
-import { getLocalizedPath, removeLocalePrefix } from '../router/index'
+import { getLocalizedPath, removeLocalePrefix } from '../router'
 
 // Test messages
 const enMessages = {

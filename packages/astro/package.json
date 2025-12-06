@@ -27,21 +27,21 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./middleware": {
+      "types": "./dist/middleware.d.ts",
+      "import": "./dist/middleware.js",
+      "require": "./dist/middleware.cjs"
+    },
     "./router": {
       "types": "./dist/router.d.ts",
       "import": "./dist/router.js",
       "require": "./dist/router.cjs"
     },
-    "./router/Link.astro": "./src/router/Link.astro",
-    "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.js",
-      "require": "./dist/middleware.cjs"
-    }
+    "./router/*": "./src/router/*"
   },
   "files": [
     "dist",
-    "src/router/Link.astro"
+    "src/router"
   ],
   "scripts": {
     "build": "tsup",

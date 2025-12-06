@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getLocalizedPath, removeLocalePrefix, hasLocalePrefix } from '../router'
+import { getLocalizedPath, removeLocalePrefix, hasLocalePrefix, getLinkHref } from '../router'
 import { detectLocale } from '../detectLocale'
 
 /**
@@ -456,6 +456,95 @@ describe('Router Matrix Tests', () => {
     it('should remove prefixes correctly regardless of array order', () => {
       expect(removeLocalePrefix('/ja/about', REVERSED_LOCALES)).toBe('/about')
       expect(removeLocalePrefix('/en/about', REVERSED_LOCALES)).toBe('/about')
+    })
+  })
+
+  describe('getLinkHref', () => {
+    /**
+     * Link href generation for Link components
+     * Auto-detects whether to add locale prefix based on current URL pattern
+     */
+
+    describe('auto-detect mode (overrideLocale = undefined)', () => {
+      it.each([
+        // [href, currentPathname, currentLocale, expected, description]
+        // Current URL has locale prefix → add prefix to link
+        ['/about', '/ja/page', 'ja', '/ja/about', 'URL has /ja prefix'],
+        ['/about', '/ja', 'ja', '/ja/about', 'URL is /ja root'],
+        ['/contact', '/ja/page', 'ja', '/ja/contact', 'different path with /ja prefix'],
+        ['/', '/ja/page', 'ja', '/ja', 'root link when on /ja prefix'],
+        // Current URL has no prefix → no prefix on link
+        ['/about', '/page', 'en', '/about', 'URL has no prefix'],
+        ['/about', '/', 'en', '/about', 'URL is root'],
+        ['/contact', '/page', 'en', '/contact', 'different path with no prefix'],
+        ['/', '/page', 'en', '/', 'root link when no prefix'],
+        // No currentLocale → no prefix
+        ['/about', '/page', undefined, '/about', 'no current locale'],
+        ['/about', '/', undefined, '/about', 'no locale at root'],
+      ] as const)(
+        'getLinkHref("%s", "%s", %s) → "%s" (%s)',
+        (href, currentPathname, currentLocale, expected, _description) => {
+          expect(getLinkHref(href, currentPathname, currentLocale)).toBe(expected)
+        }
+      )
+    })
+
+    describe('explicit locale override (overrideLocale = "locale")', () => {
+      it.each([
+        // [href, currentPathname, currentLocale, overrideLocale, expected]
+        // Always add explicit locale prefix regardless of current URL pattern
+        ['/about', '/page', 'en', 'ja', '/ja/about'],
+        ['/about', '/ja/page', 'ja', 'en', '/en/about'],
+        ['/', '/page', 'en', 'ja', '/ja'],
+        ['/', '/ja/page', 'ja', 'en', '/en'],
+        ['/contact', '/', undefined, 'fr', '/fr/contact'],
+      ] as const)(
+        'getLinkHref("%s", "%s", %s, "%s") → "%s"',
+        (href, currentPathname, currentLocale, overrideLocale, expected) => {
+          expect(getLinkHref(href, currentPathname, currentLocale, overrideLocale)).toBe(expected)
+        }
+      )
+    })
+
+    describe('raw path mode (overrideLocale = "")', () => {
+      it.each([
+        // [href, currentPathname, currentLocale, expected]
+        // Empty string override means no localization at all
+        ['/about', '/ja/page', 'ja', '/about'],
+        ['/about', '/page', 'en', '/about'],
+        ['/', '/ja/page', 'ja', '/'],
+        ['/', '/page', 'en', '/'],
+        ['/contact', '/ja/about', 'ja', '/contact'],
+      ] as const)(
+        'getLinkHref("%s", "%s", %s, "") → "%s"',
+        (href, currentPathname, currentLocale, expected) => {
+          expect(getLinkHref(href, currentPathname, currentLocale, '')).toBe(expected)
+        }
+      )
+    })
+
+    describe('path normalization', () => {
+      it('should add leading slash to relative paths', () => {
+        expect(getLinkHref('about', '/ja/page', 'ja')).toBe('/ja/about')
+        expect(getLinkHref('about', '/page', 'en')).toBe('/about')
+      })
+    })
+
+    describe('language switching use case', () => {
+      /**
+       * Common use case: language switcher links
+       */
+
+      it('should generate correct language switch links', () => {
+        // On English page (no prefix), switch to Japanese
+        expect(getLinkHref('/', '/about', 'en', 'ja')).toBe('/ja')
+
+        // On Japanese page (with prefix), switch to English
+        expect(getLinkHref('/', '/ja/about', 'ja', 'en')).toBe('/en')
+
+        // On Japanese page, link to raw English root (no prefix)
+        expect(getLinkHref('/', '/ja/about', 'ja', '')).toBe('/')
+      })
     })
   })
 })

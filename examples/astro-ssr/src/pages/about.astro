@@ -1,0 +1,29 @@
+---
+import Link from '@i18n-tiny/astro/router/Link.astro'
+import { getMessages } from '../i18n'
+
+// SSR: Get locale from middleware (detected from Accept-Language)
+const locale = Astro.locals.locale
+const messages = getMessages(locale)
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{messages.about.title} | {messages.common.title} - SSR</title>
+  </head>
+  <body style="padding: 2rem; font-family: system-ui;">
+    <div style="background: #e7f3ff; padding: 0.5rem 1rem; border-radius: 4px; margin-bottom: 1rem;">
+      <strong>SSR Mode</strong> - Locale: <code>{locale}</code>
+    </div>
+
+    <h1>{messages.about.title}</h1>
+    <p>{messages.about.description}</p>
+
+    <div style="margin-top: 2rem;">
+      <Link href="/" style="color: #007bff;">
+        {messages.nav.home}
+      </Link>
+    </div>
+  </body>
+</html>

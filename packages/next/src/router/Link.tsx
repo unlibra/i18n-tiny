@@ -5,10 +5,7 @@ import { usePathname } from 'next/navigation'
 import type { ComponentProps } from 'react'
 
 import { useLocale } from '@i18n-tiny/react/internal'
-import {
-  getLocalizedPath as coreGetLocalizedPath,
-  hasLocalePrefix
-} from '@i18n-tiny/core/router'
+import { getLinkHref } from '@i18n-tiny/core/router'
 
 export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale'> {
   /**
@@ -45,34 +42,10 @@ export function Link({ href, locale, ...props }: LinkProps) {
   const currentLocale = useLocale()
   const pathname = usePathname()
 
-  // Check if current URL has locale prefix
-  const urlHasPrefix = pathname ? hasLocalePrefix(pathname, currentLocale) : false
-
-  const getLocalizedHref = (path: string): string => {
-    const cleanPath = path.startsWith('/') ? path : `/${path}`
-
-    // locale="": use path as-is (no localization)
-    if (locale === '') {
-      return cleanPath
-    }
-
-    // locale="ja": explicit locale prefix
-    if (locale !== undefined) {
-      return cleanPath === '/' ? `/${locale}` : `/${locale}${cleanPath}`
-    }
-
-    // locale={undefined}: auto-detect from current URL
-    if (urlHasPrefix) {
-      return cleanPath === '/' ? `/${currentLocale}` : `/${currentLocale}${cleanPath}`
-    }
-
-    return cleanPath
-  }
-
   // Handle both string and UrlObject
   const localizedHref = typeof href === 'string'
-    ? getLocalizedHref(href)
-    : { ...href, pathname: getLocalizedHref(href.pathname ?? '') }
+    ? getLinkHref(href, pathname ?? '', currentLocale, locale)
+    : { ...href, pathname: getLinkHref(href.pathname ?? '', pathname ?? '', currentLocale, locale) }
 
   return <NextLink href={localizedHref} {...props} />
 }

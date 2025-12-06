@@ -19,7 +19,7 @@
  * ```
  */
 import type { HTMLAttributes } from 'astro/types'
-import { hasLocalePrefix } from '@i18n-tiny/core/router'
+import { getLinkHref } from '@i18n-tiny/core/router'
 
 interface Props extends HTMLAttributes<'a'> {
   /** The path to navigate to */
@@ -35,30 +35,16 @@ interface Props extends HTMLAttributes<'a'> {
 
 const { href, locale, ...attrs } = Astro.props
 
-// Get current locale from route params
-const currentLocale = Astro.params.locale as string | undefined
-const pathname = Astro.url.pathname
+const locals = Astro.locals as Record<string, unknown>
 
-// Check if current URL has locale prefix
-const urlHasPrefix = currentLocale ? hasLocalePrefix(pathname, currentLocale) : false
+// Get current locale from route params or locals (for SSR rewrite mode)
+const currentLocale = (Astro.params.locale as string | undefined)
+  || locals.locale as string | undefined
 
-// Generate localized href
-const cleanPath = href.startsWith('/') ? href : `/${href}`
-let localizedHref: string
+// Use original pathname if available (for SSR rewrite mode where URL is rewritten)
+const currentPathname = (locals.originalPathname as string | undefined) ?? Astro.url.pathname
 
-if (locale === '') {
-  // locale="" → raw path (no localization)
-  localizedHref = cleanPath
-} else if (locale !== undefined) {
-  // locale="ja" → explicit locale prefix
-  localizedHref = cleanPath === '/' ? `/${locale}` : `/${locale}${cleanPath}`
-} else if (urlHasPrefix && currentLocale) {
-  // Auto-localize: current URL has prefix → add prefix
-  localizedHref = cleanPath === '/' ? `/${currentLocale}` : `/${currentLocale}${cleanPath}`
-} else {
-  // Auto-localize: current URL has no prefix → no prefix
-  localizedHref = cleanPath
-}
+const localizedHref = getLinkHref(href, currentPathname, currentLocale, locale)
 ---
 
 <a href={localizedHref} {...attrs}>
