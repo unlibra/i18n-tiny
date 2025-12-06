@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations, Link, useLocale, useMessages, locales, defaultLocale } from '@/i18n'
 
 export default function ClientComponent() {
@@ -10,10 +10,12 @@ export default function ClientComponent() {
   const [count, setCount] = useState(0)
 
   // Check if browser language is in supported locales (excluding default)
-  const browserLangInLocales = useMemo(() => {
-    if (typeof navigator === 'undefined') return false
+  // Uses useEffect to avoid hydration mismatch (navigator is undefined on server)
+  const [browserLangInLocales, setBrowserLangInLocales] = useState(false)
+  useEffect(() => {
     const browserLang = navigator.language.split('-')[0]
-    return (locales as readonly string[]).includes(browserLang) && browserLang !== defaultLocale
+    const inLocales = (locales as readonly string[]).includes(browserLang) && browserLang !== defaultLocale
+    setBrowserLangInLocales(inLocales)
   }, [])
 
   const buttonStyle = (isActive: boolean) => ({

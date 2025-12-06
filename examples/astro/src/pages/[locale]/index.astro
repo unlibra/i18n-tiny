@@ -47,12 +47,12 @@ const buttonStyle = (isActive: boolean) => `
     <hr style="margin: 2rem 0;" />
 
     <div>
-      <a href="/en" style={buttonStyle(locale === 'en')}>
+      <Link href="/" locale="en" style={buttonStyle(locale === 'en')}>
         English
-      </a>
-      <a href="/ja" style={buttonStyle(locale === 'ja')}>
+      </Link>
+      <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
         日本語
-      </a>
+      </Link>
     </div>
   </body>
 </html>
