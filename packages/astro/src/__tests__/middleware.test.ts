@@ -32,10 +32,7 @@ const createMockContext = (
 }
 
 const createMockNext = () => {
-  return vi.fn(() => {
-    nextCalls++
-    return Promise.resolve({ type: 'next' })
-  })
+  return vi.fn(() => Promise.resolve({ type: 'next' }))
 }
 
 describe('create (middleware)', () => {

@@ -10,6 +10,9 @@ import type { MiddlewareHandler } from 'astro'
 // Common static file extensions to skip in middleware
 const STATIC_FILE_EXTENSIONS = /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|mjs|woff|woff2|ttf|eot|otf|mp3|mp4|webm|ogg|wav|pdf|zip|json|xml|txt|map)$/i
 
+// Astro internal paths to always exclude
+const DEFAULT_EXCLUDE_PATHS = ['/_astro', '/_image']
+
 /**
  * Base configuration for middleware
  */
@@ -24,7 +27,9 @@ interface BaseConfig {
    */
   fallbackLocale?: string
   /**
-   * Paths to exclude from i18n handling (e.g., ['/api', '/_image'])
+   * Additional paths to exclude from i18n handling (e.g., ['/api'])
+   *
+   * Note: '/_astro' and '/_image' are always excluded by default
    * @default []
    */
   excludePaths?: string[]
@@ -129,8 +134,11 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
     locales,
     defaultLocale,
     fallbackLocale = defaultLocale,
-    excludePaths = []
+    excludePaths: userExcludePaths = []
   } = config
+
+  // Merge default exclude paths with user-provided paths
+  const excludePaths = [...DEFAULT_EXCLUDE_PATHS, ...userExcludePaths]
 
   // Determine routing mode
   const isRewriteMode = 'routing' in config && config.routing === 'rewrite'
