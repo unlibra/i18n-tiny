@@ -506,7 +506,7 @@ describe('Router Matrix Tests', () => {
       )
     })
 
-    describe('raw path mode (overrideLocale = "")', () => {
+    describe('raw path mode (overrideLocale = "" or false)', () => {
       it.each([
         // [href, currentPathname, currentLocale, expected]
         // Empty string override means no localization at all
@@ -519,6 +519,21 @@ describe('Router Matrix Tests', () => {
         'getLinkHref("%s", "%s", %s, "") → "%s"',
         (href, currentPathname, currentLocale, expected) => {
           expect(getLinkHref(href, currentPathname, currentLocale, '')).toBe(expected)
+        }
+      )
+
+      it.each([
+        // [href, currentPathname, currentLocale, expected]
+        // false override also means no localization (for conditional rendering)
+        ['/about', '/ja/page', 'ja', '/about'],
+        ['/about', '/page', 'en', '/about'],
+        ['/', '/ja/page', 'ja', '/'],
+        ['/', '/page', 'en', '/'],
+        ['/contact', '/ja/about', 'ja', '/contact'],
+      ] as const)(
+        'getLinkHref("%s", "%s", %s, false) → "%s"',
+        (href, currentPathname, currentLocale, expected) => {
+          expect(getLinkHref(href, currentPathname, currentLocale, false)).toBe(expected)
         }
       )
     })

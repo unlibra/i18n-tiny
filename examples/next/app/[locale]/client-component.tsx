@@ -1,22 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useTranslations, Link, useLocale, useMessages, locales, defaultLocale } from '@/i18n'
+import { useState } from 'react'
+import { useTranslations, Link, useLocale, useMessages } from '@/i18n'
 
 export default function ClientComponent() {
   const t = useTranslations()
   const locale = useLocale()
   const messages = useMessages()
   const [count, setCount] = useState(0)
-
-  // Check if browser language is in supported locales (excluding default)
-  // Uses useEffect to avoid hydration mismatch (navigator is undefined on server)
-  const [browserLangInLocales, setBrowserLangInLocales] = useState(false)
-  useEffect(() => {
-    const browserLang = navigator.language.split('-')[0]
-    const inLocales = (locales as readonly string[]).includes(browserLang) && browserLang !== defaultLocale
-    setBrowserLangInLocales(inLocales)
-  }, [])
 
   const buttonStyle = (isActive: boolean) => ({
     height: '2rem',
@@ -57,18 +48,14 @@ export default function ClientComponent() {
 
       {/* Language Buttons */}
       <div style={{ marginTop: '2rem' }}>
-        <Link
-          href="/"
-          locale={browserLangInLocales ? 'en' : ''}
-          style={buttonStyle(locale === 'en')}
-        >
+        {/* Auto-detect: goes to / which redirects based on browser language */}
+        <Link href="/" locale='' style={buttonStyle(false)}>
+          Auto
+        </Link>
+        <Link href="/" locale="en" style={buttonStyle(locale === 'en')}>
           English
         </Link>
-        <Link
-          href="/"
-          locale="ja"
-          style={buttonStyle(locale === 'ja')}
-        >
+        <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
           日本語
         </Link>
       </div>

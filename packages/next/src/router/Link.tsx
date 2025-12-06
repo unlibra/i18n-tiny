@@ -12,9 +12,9 @@ export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale
    * Override the locale for this link
    * - undefined: auto-localize based on current locale (default)
    * - string (e.g., 'en', 'ja'): generate path for specified locale with prefix
-   * - '' (empty string): use href as-is without any localization (raw path)
+   * - '' (empty string) or false: use href as-is without any localization (raw path)
    */
-  locale?: string
+  locale?: string | false
 }
 
 /**
@@ -36,6 +36,8 @@ export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale
  *
  * // Raw path (no localization)
  * <Link href="/" locale="">English</Link>
+ * <Link href="/" locale={false}>English</Link>
+ * <Link href="/" locale={condition && 'ja'}>Conditional</Link>
  * ```
  */
 export function Link({ href, locale, ...props }: LinkProps) {

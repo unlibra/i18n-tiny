@@ -16,6 +16,7 @@
  *
  * // Raw path (no localization)
  * <Link href="/" locale="">English</Link>
+ * <Link href="/" locale={false}>English</Link>
  * ```
  */
 import type { HTMLAttributes } from 'astro/types'
@@ -28,9 +29,9 @@ interface Props extends HTMLAttributes<'a'> {
    * Override the locale for this link
    * - undefined: auto-localize based on current URL (default)
    * - string (e.g., 'ja'): generate path with specified locale prefix
-   * - '' (empty string): use href as-is without any localization
+   * - '' (empty string) or false: use href as-is without any localization
    */
-  locale?: string
+  locale?: string | false
 }
 
 const { href, locale, ...attrs } = Astro.props

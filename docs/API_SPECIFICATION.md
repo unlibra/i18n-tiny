@@ -254,7 +254,7 @@ type ProxyConfig = StandardRoutingConfig | RewriteRoutingConfig
 
 ```typescript
 interface LinkProps extends NextLinkProps {
-  locale?: string  // Explicit locale, '' for raw path
+  locale?: string | false  // Explicit locale, '' or false for raw path
   // ... NextLinkProps
 }
 ```
@@ -348,7 +348,7 @@ type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
 ---
 interface Props {
   href: string
-  locale?: string  // Explicit locale, '' for raw path
+  locale?: string | false  // Explicit locale, '' or false for raw path
   [key: string]: any  // Other HTML attributes
 }
 ---

@@ -313,6 +313,10 @@ import { Link } from '@i18n-tiny/next/router'
 
 // Raw path (no localization)
 <Link href="/" locale="">English</Link>
+<Link href="/" locale={false}>English</Link>
+
+// Conditional locale (false = raw path)
+<Link href="/" locale={condition && 'ja'}>Conditional</Link>
 ```
 
 ### `@i18n-tiny/core`

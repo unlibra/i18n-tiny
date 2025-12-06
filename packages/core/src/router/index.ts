@@ -105,7 +105,7 @@ export function hasLocalePrefix(pathname: string, locale: string): boolean {
  * @param href - The target path (e.g., '/about')
  * @param currentPathname - The current URL pathname
  * @param currentLocale - The current locale (from params or context)
- * @param overrideLocale - Optional locale override (undefined = auto, '' = raw, 'ja' = explicit)
+ * @param overrideLocale - Optional locale override (undefined = auto, '' | false = raw, 'ja' = explicit)
  * @returns The resolved href
  *
  * @example
@@ -121,18 +121,19 @@ export function hasLocalePrefix(pathname: string, locale: string): boolean {
  *
  * // Raw path (no localization)
  * getLinkHref('/about', '/ja/page', 'ja', '')       // '/about'
+ * getLinkHref('/about', '/ja/page', 'ja', false)    // '/about'
  * ```
  */
 export function getLinkHref(
   href: string,
   currentPathname: string,
   currentLocale: string | undefined,
-  overrideLocale?: string
+  overrideLocale?: string | false
 ): string {
   const cleanPath = href.startsWith('/') ? href : `/${href}`
 
-  // overrideLocale="" → raw path (no localization)
-  if (overrideLocale === '') {
+  // overrideLocale="" or false → raw path (no localization)
+  if (overrideLocale === '' || overrideLocale === false) {
     return cleanPath
   }
 
