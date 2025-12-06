@@ -92,6 +92,7 @@ import { Link } from '@i18n-tiny/next/router'
 import enMessages from '@/messages/en'
 import jaMessages from '@/messages/ja'
 
+// IMPORTANT: `as const` is required for type inference
 export const locales = ['en', 'ja'] as const
 export type Locale = (typeof locales)[number]
 export const defaultLocale: Locale = 'en'
