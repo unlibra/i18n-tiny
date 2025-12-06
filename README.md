@@ -85,6 +85,25 @@ const messages = getMessages(locale)
 - **Framework support**: Next.js, Astro
 - **Minimal bundle**: No bloat, just what you need
 
+## Security
+
+Variable interpolation (`{name}`) inserts values as-is without HTML escaping.
+
+**Safe usage (React/Astro auto-escape):**
+```tsx
+// ✅ Safe - framework escapes output
+<p>{t('greeting', { name: userInput })}</p>
+```
+
+**Unsafe usage:**
+```tsx
+// ❌ Unsafe - bypasses escaping
+<p dangerouslySetInnerHTML={{ __html: t('greeting', { name: userInput }) }} />
+// Astro: <p set:html={t('greeting', { name: userInput })} />
+```
+
+When using `dangerouslySetInnerHTML` or `set:html`, sanitize user input first.
+
 ## Examples
 
 See the [examples](./examples) directory for complete working examples.

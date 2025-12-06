@@ -6,7 +6,9 @@ import {
   I18nProvider as BaseProvider,
   useMessages as baseUseMessages,
   useTranslations as baseUseTranslations,
-  useLocale as baseUseLocale
+  useLocale as baseUseLocale,
+  useLocales as baseUseLocales,
+  useDefaultLocale as baseUseDefaultLocale
 } from '@i18n-tiny/react/internal'
 import type { NestedKeys } from '@i18n-tiny/core/internal'
 import { resolveMessage } from '@i18n-tiny/core/internal'
@@ -59,7 +61,7 @@ export function define<
     getMessages: async (locale: string): Promise<MessageType> => {
       const moduleObj = messages[locale as L[number]]
       // Convert ES module namespace to plain object (required for Client Components)
-      return JSON.parse(JSON.stringify(moduleObj)) as MessageType
+      return structuredClone(moduleObj) as MessageType
     },
 
     /**
@@ -71,7 +73,7 @@ export function define<
       namespace?: string
     ): Promise<(key: MessageKeys, vars?: Record<string, string | number>) => string> => {
       const moduleObj = messages[locale as L[number]]
-      const msgs = JSON.parse(JSON.stringify(moduleObj))
+      const msgs = structuredClone(moduleObj)
 
       return (key: MessageKeys, vars?: Record<string, string | number>): string => {
         return resolveMessage(msgs, key, namespace, locale, vars)
@@ -110,11 +112,21 @@ export function define<
     return baseUseLocale()
   }
 
+  function useLocales (): L {
+    return baseUseLocales() as L
+  }
+
+  function useDefaultLocale (): L[number] {
+    return baseUseDefaultLocale() as L[number]
+  }
+
   // Client API (hooks only)
   const client = {
     useMessages,
     useTranslations,
-    useLocale
+    useLocale,
+    useLocales,
+    useDefaultLocale
   }
 
   return {

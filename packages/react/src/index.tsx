@@ -5,7 +5,9 @@ import {
   I18nProvider as BaseProvider,
   useMessages as baseUseMessages,
   useTranslations as baseUseTranslations,
-  useLocale as baseUseLocale
+  useLocale as baseUseLocale,
+  useLocales as baseUseLocales,
+  useDefaultLocale as baseUseDefaultLocale
 } from './components'
 import type { NestedKeys } from '@i18n-tiny/core/internal'
 
@@ -93,11 +95,21 @@ export function define<
     return baseUseLocale()
   }
 
+  function useLocales (): L {
+    return baseUseLocales() as L
+  }
+
+  function useDefaultLocale (): L[number] {
+    return baseUseDefaultLocale() as L[number]
+  }
+
   return {
     Provider,
     useMessages,
     useTranslations,
     useLocale,
+    useLocales,
+    useDefaultLocale,
     locales,
     defaultLocale
   }

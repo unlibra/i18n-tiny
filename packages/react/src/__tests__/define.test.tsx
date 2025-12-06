@@ -141,4 +141,46 @@ describe('define', () => {
 
     expect(screen.getByText('Deep Value')).toBeInTheDocument()
   })
+
+  it('should return supported locales via useLocales', () => {
+    const i18n = define({
+      locales,
+      defaultLocale: 'en',
+      messages
+    })
+
+    function TestComponent () {
+      const supportedLocales = i18n.useLocales()
+      return <div data-testid="locales">{JSON.stringify(supportedLocales)}</div>
+    }
+
+    render(
+      <i18n.Provider locale="en" messages={messages.en}>
+        <TestComponent />
+      </i18n.Provider>
+    )
+
+    expect(screen.getByTestId('locales')).toHaveTextContent('["en","ja"]')
+  })
+
+  it('should return default locale via useDefaultLocale', () => {
+    const i18n = define({
+      locales,
+      defaultLocale: 'en',
+      messages
+    })
+
+    function TestComponent () {
+      const defaultLoc = i18n.useDefaultLocale()
+      return <div>Default: {defaultLoc}</div>
+    }
+
+    render(
+      <i18n.Provider locale="ja" messages={messages.ja}>
+        <TestComponent />
+      </i18n.Provider>
+    )
+
+    expect(screen.getByText('Default: en')).toBeInTheDocument()
+  })
 })

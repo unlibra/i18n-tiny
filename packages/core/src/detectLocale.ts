@@ -44,24 +44,27 @@ export function detectLocale(
     })
     .sort((a, b) => b.quality - a.quality) // Higher quality first
 
-  // Normalize supported locales for case-insensitive comparison
-  const normalizedSupported = supportedLocales.map(l => l.toLowerCase())
+  // Build lookup map for O(1) search (case-insensitive)
+  const localeMap = new Map<string, string>()
+  for (const locale of supportedLocales) {
+    localeMap.set(locale.toLowerCase(), locale)
+  }
 
   // Find first matching locale
   for (const { locale } of languages) {
     const lowerLocale = locale.toLowerCase()
 
     // 1. Try exact match first (e.g., en-US matches en-US)
-    const exactIndex = normalizedSupported.indexOf(lowerLocale)
-    if (exactIndex !== -1) {
-      return supportedLocales[exactIndex]
+    const exactMatch = localeMap.get(lowerLocale)
+    if (exactMatch) {
+      return exactMatch
     }
 
     // 2. Fall back to language code (e.g., en-US falls back to en)
     const langCode = lowerLocale.split('-')[0]
-    const langIndex = normalizedSupported.indexOf(langCode)
-    if (langIndex !== -1) {
-      return supportedLocales[langIndex]
+    const langMatch = localeMap.get(langCode)
+    if (langMatch) {
+      return langMatch
     }
   }
 

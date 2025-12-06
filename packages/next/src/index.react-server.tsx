@@ -54,7 +54,7 @@ export function define<
   const server = {
     getMessages: async (locale: string): Promise<MessageType> => {
       const moduleObj = messages[locale as L[number]]
-      return JSON.parse(JSON.stringify(moduleObj)) as MessageType
+      return structuredClone(moduleObj) as MessageType
     },
 
     getTranslations: async (
@@ -62,7 +62,7 @@ export function define<
       namespace?: string
     ): Promise<(key: MessageKeys, vars?: Record<string, string | number>) => string> => {
       const moduleObj = messages[locale as L[number]]
-      const msgs = JSON.parse(JSON.stringify(moduleObj))
+      const msgs = structuredClone(moduleObj)
 
       return (key: MessageKeys, vars?: Record<string, string | number>): string => {
         return resolveMessage(msgs, key, namespace, locale, vars)
@@ -75,7 +75,9 @@ export function define<
     useMessages: (): MessageType => clientOnlyError('useMessages'),
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     useTranslations: (_namespace?: string): ((key: MessageKeys, vars?: Record<string, string | number>) => string) => clientOnlyError('useTranslations'),
-    useLocale: (): string => clientOnlyError('useLocale')
+    useLocale: (): string => clientOnlyError('useLocale'),
+    useLocales: (): L => clientOnlyError('useLocales'),
+    useDefaultLocale: (): L[number] => clientOnlyError('useDefaultLocale')
   }
 
   return {

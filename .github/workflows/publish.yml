@@ -44,5 +44,11 @@ jobs:
       - name: Publish @i18n-tiny/core
         run: cd packages/core && pnpm publish --provenance --access public --no-git-checks
 
+      - name: Publish @i18n-tiny/react
+        run: cd packages/react && pnpm publish --provenance --access public --no-git-checks
+
       - name: Publish @i18n-tiny/next
         run: cd packages/next && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish @i18n-tiny/astro
+        run: cd packages/astro && pnpm publish --provenance --access public --no-git-checks

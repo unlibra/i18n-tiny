@@ -37,11 +37,15 @@
       "import": "./dist/router.js",
       "require": "./dist/router.cjs"
     },
-    "./router/*": "./src/router/*"
+    "./router/*": "./src/router/*",
+    "./locals": {
+      "types": "./src/locals.d.ts"
+    }
   },
   "files": [
     "dist",
-    "src/router"
+    "src/router",
+    "src/locals.d.ts"
   ],
   "scripts": {
     "build": "tsup",

@@ -49,7 +49,7 @@ export function resolveMessage (
   const traverse = (path: string) => {
     const keys = path.split('.')
     for (const k of keys) {
-      if (obj && typeof obj === 'object' && k in obj) {
+      if (obj && typeof obj === 'object' && Object.hasOwn(obj, k)) {
         obj = (obj as Record<string, unknown>)[k]
       } else {
         obj = undefined

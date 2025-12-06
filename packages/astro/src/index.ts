@@ -61,7 +61,7 @@ export function define<
     const resolvedLocale = locale ?? resolvedDefaultLocale
     const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
     // Convert ES module namespace to plain object
-    return JSON.parse(JSON.stringify(moduleObj)) as MessageType
+    return structuredClone(moduleObj) as MessageType
   }
 
   /**
@@ -75,7 +75,7 @@ export function define<
   ): (key: MessageKeys, vars?: Record<string, string | number>) => string {
     const resolvedLocale = locale ?? resolvedDefaultLocale
     const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
-    const msgs = JSON.parse(JSON.stringify(moduleObj))
+    const msgs = structuredClone(moduleObj)
 
     return (key: MessageKeys, vars?: Record<string, string | number>): string => {
       return resolveMessage(msgs, key, namespace, resolvedLocale, vars)

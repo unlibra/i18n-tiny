@@ -421,6 +421,23 @@ const messages = getMessages(locale)
 </html>
 ```
 
+## TypeScript
+
+### Astro.locals Type Safety
+
+For type-safe access to `Astro.locals.locale`, add the type reference to your project:
+
+```typescript
+// src/env.d.ts
+/// <reference types="astro/client" />
+/// <reference types="@i18n-tiny/astro/locals" />
+```
+
+This provides types for:
+- `Astro.locals.locale` - Current locale
+- `Astro.locals.locales` - Supported locales array
+- `Astro.locals.originalPathname` - Original path (rewrite mode)
+
 ## License
 
 MIT
