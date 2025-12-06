@@ -4,7 +4,6 @@ import { create } from '../middleware'
 // Track method calls
 let redirectCalls: Array<{ pathname: string; status: number }> = []
 let rewriteCalls: Array<string> = []
-let nextCalls = 0
 
 const createMockContext = (
   pathname: string,
@@ -48,7 +47,6 @@ describe('create (middleware)', () => {
   beforeEach(() => {
     redirectCalls = []
     rewriteCalls = []
-    nextCalls = 0
   })
 
   describe('default behavior (prefixDefault: false, detectLanguage: true)', () => {

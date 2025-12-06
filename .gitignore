@@ -6,6 +6,7 @@ dist/
 *.tsbuildinfo
 .next
 .astro
+next-env.d.ts
 
 # Environment files
 .env
