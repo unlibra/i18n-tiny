@@ -1,6 +1,6 @@
 {
   "name": "astro-i18n-tiny",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Alias package for @i18n-tiny/astro - Tiny, type-safe i18n library for Astro",
   "keywords": [
@@ -45,7 +45,7 @@
     "./router/Link.astro": "@i18n-tiny/astro/src/router/Link.astro"
   },
   "dependencies": {
-    "@i18n-tiny/astro": "1.1.0"
+    "@i18n-tiny/astro": "1.1.1"
   },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0"
