@@ -1,5 +1,8 @@
 # react-i18n-tiny
 
+[![npm version](https://img.shields.io/npm/v/react-i18n-tiny.svg)](https://www.npmjs.com/package/react-i18n-tiny)
+[![npm downloads](https://img.shields.io/npm/dm/react-i18n-tiny.svg)](https://www.npmjs.com/package/react-i18n-tiny)
+
 Alternative package name for [`@i18n-tiny/react`](https://www.npmjs.com/package/@i18n-tiny/react).
 
 > **Note**: This is an alias package. Both `react-i18n-tiny` and `@i18n-tiny/react` provide the exact same functionality.
