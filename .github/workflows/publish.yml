@@ -40,22 +40,22 @@ jobs:
         run: pnpm test
 
       - name: Publish @i18n-tiny/core
-        run: cd packages/core && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/core && npm publish --provenance --access public --no-git-checks
 
       - name: Publish @i18n-tiny/react
-        run: cd packages/react && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/react && npm publish --provenance --access public --no-git-checks
 
       - name: Publish @i18n-tiny/next
-        run: cd packages/next && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/next && npm publish --provenance --access public --no-git-checks
 
       - name: Publish @i18n-tiny/astro
-        run: cd packages/astro && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/astro && npm publish --provenance --access public --no-git-checks
 
       - name: Publish next-i18n-tiny
-        run: cd packages/aliases/next-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/aliases/next-i18n-tiny && npm publish --provenance --access public --no-git-checks
 
       - name: Publish react-i18n-tiny
-        run: cd packages/aliases/react-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/aliases/react-i18n-tiny && npm publish --provenance --access public --no-git-checks
 
       - name: Publish astro-i18n-tiny
-        run: cd packages/aliases/astro-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+        run: cd packages/aliases/astro-i18n-tiny && npm publish --provenance --access public --no-git-checks
