@@ -6,9 +6,11 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-Type-safe, zero-dependency i18n library for Next.js App Router with React Server Components support.
-
-Inspired by next-intl, designed for simplicity and type safety.
+A dependency-free, type-safe, minimal i18n library for Next.js.
+Simply prepare translation files and call the define function—usable in both Server and Client Components immediately.
+All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
+Static generation features like `generateStaticParams` can be written cleanly without per-page duplication.
+Routing, prefixes, and automatic language detection are all handled via a single middleware `create()` API.
 
 ## Features
 
