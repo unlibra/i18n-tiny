@@ -1,6 +1,6 @@
 {
   "name": "@i18n-tiny/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Framework-agnostic core utilities for i18n-tiny",
   "keywords": [
