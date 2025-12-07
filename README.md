@@ -8,11 +8,14 @@
 
 The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup.
 
+One function for fully-typed translations.
+`define()` gives you complete autocomplete for every translation key.
+
+*Optional routing support with `create()` for Next.js and Astro.*
+
 Currently supports: **Next.js** | **Astro**
 
 ## Quick Start
-
-Just `define()` your i18n config - that's all you need.
 
 ### Next.js
 

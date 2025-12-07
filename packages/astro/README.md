@@ -6,9 +6,10 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-Type-safe, zero-dependency i18n library for Astro. Works with Astro 3.0+ and 4.0+.
-
-Inspired by next-intl, designed for simplicity and type safety.
+A zero-dependency, type-safe, minimal internationalization library for Astro.
+Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
+Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
+Routing configuration is handled with `middleware.create()`, supporting prefix/no-prefix modes and automatic language detection.
 
 ## Features
 
