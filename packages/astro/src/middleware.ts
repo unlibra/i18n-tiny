@@ -7,6 +7,9 @@
 import { detectLocale } from '@i18n-tiny/core/middleware'
 import type { MiddlewareHandler } from 'astro'
 
+// Re-export middleware utilities from @i18n-tiny/core/middleware
+export { detectLocale } from '@i18n-tiny/core/middleware'
+
 // Common static file extensions to skip in middleware
 const STATIC_FILE_EXTENSIONS = /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|mjs|woff|woff2|ttf|eot|otf|mp3|mp4|webm|ogg|wav|pdf|zip|json|xml|txt|map)$/i
 

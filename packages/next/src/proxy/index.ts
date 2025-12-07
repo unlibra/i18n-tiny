@@ -16,6 +16,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { detectLocale } from '@i18n-tiny/core/middleware'
 
+// Re-export middleware utilities from @i18n-tiny/core/middleware
+export { detectLocale } from '@i18n-tiny/core/middleware'
+
 /**
  * Base configuration for proxy
  */

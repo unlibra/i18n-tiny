@@ -213,10 +213,11 @@ getLinkHref('/ja/about', '/en/page', 'en', { locale: 'en', locales: ['en', 'ja']
 
 ### Exports
 
-| Export        | Kind     | Description                       |
-| ------------- | -------- | --------------------------------- |
-| `create`      | function | Create proxy/middleware           |
-| `ProxyConfig` | type     | Configuration type for `create()` |
+| Export         | Kind     | Description                                    |
+| -------------- | -------- | ---------------------------------------------- |
+| `create`       | function | Create proxy/middleware                        |
+| `ProxyConfig`  | type     | Configuration type for `create()`              |
+| `detectLocale` | function | Re-export from `@i18n-tiny/core/middleware`    |
 
 ### `create(config)`
 
@@ -265,9 +266,12 @@ type ProxyConfig = StandardRoutingConfig | RewriteRoutingConfig
 
 ### Exports
 
-| Export | Kind      | Description              |
-| ------ | --------- | ------------------------ |
-| `Link` | component | Localized Link component |
+| Export               | Kind      | Description                                 |
+| -------------------- | --------- | ------------------------------------------- |
+| `Link`               | component | Localized Link component                    |
+| `getLocalizedPath`   | function  | Re-export from `@i18n-tiny/core/router`     |
+| `removeLocalePrefix` | function  | Re-export from `@i18n-tiny/core/router`     |
+| `hasLocalePrefix`    | function  | Re-export from `@i18n-tiny/core/router`     |
 
 ### `Link` Props
 
@@ -295,8 +299,6 @@ interface LinkProps extends NextLinkProps {
 const pathname = usePathname() // '/ja/about'
 <Link href={pathname} locale="en" normalize>English</Link>  // → /en/about
 ```
-
-**Note**: `getLocalizedPath`, `removeLocalePrefix` are not re-exported. Import directly from `@i18n-tiny/core/router` if needed.
 
 ---
 
@@ -328,10 +330,11 @@ const pathname = usePathname() // '/ja/about'
 
 ### Exports
 
-| Export             | Kind     | Description                       |
-| ------------------ | -------- | --------------------------------- |
-| `create`           | function | Create middleware                 |
-| `MiddlewareConfig` | type     | Configuration type for `create()` |
+| Export             | Kind     | Description                                    |
+| ------------------ | -------- | ---------------------------------------------- |
+| `create`           | function | Create middleware                              |
+| `MiddlewareConfig` | type     | Configuration type for `create()`              |
+| `detectLocale`     | function | Re-export from `@i18n-tiny/core/middleware`    |
 
 ### `create(config)`
 
@@ -375,9 +378,12 @@ type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
 
 ### Exports
 
-| Export       | Kind      | Description              |
-| ------------ | --------- | ------------------------ |
-| `Link.astro` | component | Localized Link component |
+| Export               | Kind      | Description                                 |
+| -------------------- | --------- | ------------------------------------------- |
+| `Link.astro`         | component | Localized Link component                    |
+| `getLocalizedPath`   | function  | Re-export from `@i18n-tiny/core/router`     |
+| `removeLocalePrefix` | function  | Re-export from `@i18n-tiny/core/router`     |
+| `hasLocalePrefix`    | function  | Re-export from `@i18n-tiny/core/router`     |
 
 ### `Link.astro` Props
 
@@ -420,11 +426,12 @@ interface Props {
 - Auto-detects locale from URL
 - `define()` settings (locales, defaultLocale) can be inferred from URL patterns
 
-### 2. Router utilities are imported directly from core/router
+### 2. Core utilities are re-exported from framework packages
 
-- `getLocalizedPath`, `removeLocalePrefix` are for power users
-- Not re-exported across packages; use directly from `@i18n-tiny/core/router`
-- Keeps API surface minimal
+- Router utilities (`getLocalizedPath`, `removeLocalePrefix`, `hasLocalePrefix`) are re-exported from `/router` subpath
+- Middleware utilities (`detectLocale`) are re-exported from `/proxy` (Next.js) or `/middleware` (Astro) subpath
+- Users can import from their framework package without depending on `@i18n-tiny/core` directly
+- Direct import from `@i18n-tiny/core/*` is also supported
 
 ### 3. Astro does not return `Provider`
 

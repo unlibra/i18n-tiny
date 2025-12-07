@@ -6,3 +6,6 @@
 
 // Components
 export { Link } from './Link'
+
+// Router utilities (re-exported from @i18n-tiny/core/router)
+export { getLocalizedPath, removeLocalePrefix, hasLocalePrefix } from '@i18n-tiny/core/router'
