@@ -66,8 +66,8 @@ export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
       'Wrap your component tree with the <Provider> returned from define().'
     )
     // Remove Link function from stack trace to show user's code
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(error, Link)
+    if ('captureStackTrace' in Error) {
+      ;(Error as { captureStackTrace: (e: object, fn?: unknown) => void }).captureStackTrace(error, Link)
     }
     throw error
   }

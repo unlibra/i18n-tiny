@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build
+        run: pnpm build
+
       - name: Type check
         run: pnpm type-check
 
@@ -37,9 +40,6 @@ jobs:
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build
 
   # Job to verify that all tests passed
   # Use this job name in Branch Protection Rules

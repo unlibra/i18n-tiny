@@ -21,8 +21,8 @@ function useI18n (hookName: string = 'useI18n') {
       `Wrap your component tree with the <Provider> returned from define().`
     )
     // Remove useI18n function from stack trace to show user's code
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(error, useI18n)
+    if ('captureStackTrace' in Error) {
+      ;(Error as { captureStackTrace: (e: object, fn?: unknown) => void }).captureStackTrace(error, useI18n)
     }
     throw error
   }
