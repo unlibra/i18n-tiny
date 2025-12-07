@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Provider, getMessages, locales } from '@/i18n'
+import { Link, Provider, getMessages, locales } from '@/i18n'
 import { ReactNode } from 'react'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -33,7 +33,13 @@ export default async function Layout({
     <html lang={locale}>
       <body>
         <Provider locale={locale} messages={messages}>
-          {children}
+          <div style={{ padding: '2rem' }}>
+            <nav style={{ marginBottom: "2rem" }}>
+              <Link href="/" style={{ marginRight: "1rem" }}>{messages.nav.home}</Link>
+              <Link href="/about">{messages.nav.about}</Link>
+            </nav>
+            {children}
+          </div>
         </Provider>
       </body>
     </html>

@@ -7,7 +7,7 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const messages = await getMessages(locale)
 
   return (
-    <main style={{ padding: '2rem' }}>
+    <main>
       <div>
         <h2>{messages.home.serverComponent}</h2>
         <h1>{messages.home.welcome}</h1>

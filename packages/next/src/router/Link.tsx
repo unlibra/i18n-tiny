@@ -52,9 +52,25 @@ export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale
  * ```
  */
 export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
-  const currentLocale = useLocale()
-  const locales = useLocales()
-  const pathname = usePathname()
+  let currentLocale: string
+  let locales: readonly string[]
+  let pathname: string | null
+
+  try {
+    currentLocale = useLocale()
+    locales = useLocales()
+    pathname = usePathname()
+  } catch {
+    const error = new Error(
+      'Link component must be used within i18n Provider. ' +
+      'Wrap your component tree with the <Provider> returned from define().'
+    )
+    // Remove Link function from stack trace to show user's code
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(error, Link)
+    }
+    throw error
+  }
 
   // Get locales for normalization if enabled
   const normalizeLocales = normalize ? locales : undefined
