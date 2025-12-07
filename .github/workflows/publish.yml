@@ -17,8 +17,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
@@ -52,3 +50,12 @@ jobs:
 
       - name: Publish @i18n-tiny/astro
         run: cd packages/astro && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish next-i18n-tiny
+        run: cd packages/aliases/next-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish react-i18n-tiny
+        run: cd packages/aliases/react-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish astro-i18n-tiny
+        run: cd packages/aliases/astro-i18n-tiny && pnpm publish --provenance --access public --no-git-checks

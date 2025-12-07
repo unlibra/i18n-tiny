@@ -1,0 +1,61 @@
+{
+  "name": "next-i18n-tiny",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Alias package for @i18n-tiny/next - Tiny, type-safe i18n library for Next.js",
+  "keywords": [
+    "nextjs",
+    "next",
+    "i18n",
+    "internationalization",
+    "react",
+    "typescript",
+    "app-router",
+    "server-components",
+    "rsc"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/aliases/next-i18n-tiny"
+  },
+  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/next",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "react-server": {
+        "types": "@i18n-tiny/next/dist/index.react-server.d.ts",
+        "import": "@i18n-tiny/next/dist/index.react-server.js",
+        "require": "@i18n-tiny/next/dist/index.react-server.cjs"
+      },
+      "types": "@i18n-tiny/next/dist/index.react-client.d.ts",
+      "import": "@i18n-tiny/next/dist/index.react-client.js",
+      "require": "@i18n-tiny/next/dist/index.react-client.cjs"
+    },
+    "./types": {
+      "types": "@i18n-tiny/next/dist/types.d.ts",
+      "import": "@i18n-tiny/next/dist/types.js",
+      "require": "@i18n-tiny/next/dist/types.cjs"
+    },
+    "./proxy": {
+      "types": "@i18n-tiny/next/dist/proxy/index.d.ts",
+      "import": "@i18n-tiny/next/dist/proxy/index.js",
+      "require": "@i18n-tiny/next/dist/proxy/index.cjs"
+    },
+    "./router": {
+      "types": "@i18n-tiny/next/dist/router/index.d.ts",
+      "import": "@i18n-tiny/next/dist/router/index.js",
+      "require": "@i18n-tiny/next/dist/router/index.cjs"
+    }
+  },
+  "dependencies": {
+    "@i18n-tiny/next": "1.0.0"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0 || ^16.0.0",
+    "react": "^18.0.0 || ^19.0.0"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "astro-i18n-tiny",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Alias package for @i18n-tiny/astro - Tiny, type-safe i18n library for Astro",
+  "keywords": [
+    "astro",
+    "i18n",
+    "internationalization",
+    "typescript",
+    "ssg",
+    "ssr"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/aliases/astro-i18n-tiny"
+  },
+  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/astro",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "@i18n-tiny/astro/dist/index.d.ts",
+      "import": "@i18n-tiny/astro/dist/index.js",
+      "require": "@i18n-tiny/astro/dist/index.cjs"
+    },
+    "./middleware": {
+      "types": "@i18n-tiny/astro/dist/middleware.d.ts",
+      "import": "@i18n-tiny/astro/dist/middleware.js",
+      "require": "@i18n-tiny/astro/dist/middleware.cjs"
+    },
+    "./router": {
+      "types": "@i18n-tiny/astro/dist/router.d.ts",
+      "import": "@i18n-tiny/astro/dist/router.js",
+      "require": "@i18n-tiny/astro/dist/router.cjs"
+    },
+    "./router/Link.astro": "@i18n-tiny/astro/src/router/Link.astro"
+  },
+  "dependencies": {
+    "@i18n-tiny/astro": "1.0.0"
+  },
+  "peerDependencies": {
+    "astro": "^4.0.0 || ^5.0.0"
+  }
+}
