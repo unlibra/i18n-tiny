@@ -1,0 +1,62 @@
+{
+  "name": "@i18n-tiny/react",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tiny, type-safe i18n library for React with automatic type inference and zero dependencies",
+  "keywords": [
+    "react",
+    "i18n",
+    "internationalization",
+    "typescript",
+    "hooks",
+    "context"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/react"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./internal": {
+      "types": "./dist/components.d.ts",
+      "import": "./dist/components.js",
+      "require": "./dist/components.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@i18n-tiny/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.2.4",
+    "@vitejs/plugin-react": "^5.1.1",
+    "happy-dom": "^20.0.11",
+    "react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "react-i18n-tiny",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Alias package for @i18n-tiny/react - Tiny, type-safe i18n library for React",
+  "keywords": [
+    "react",
+    "i18n",
+    "internationalization",
+    "typescript",
+    "hooks",
+    "context"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/aliases/react-i18n-tiny"
+  },
+  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/react",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "@i18n-tiny/react/dist/index.d.ts",
+      "import": "@i18n-tiny/react/dist/index.js",
+      "require": "@i18n-tiny/react/dist/index.cjs"
+    },
+    "./internal": {
+      "types": "@i18n-tiny/react/dist/components.d.ts",
+      "import": "@i18n-tiny/react/dist/components.js",
+      "require": "@i18n-tiny/react/dist/components.cjs"
+    }
+  },
+  "dependencies": {
+    "@i18n-tiny/react": "1.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  }
+}

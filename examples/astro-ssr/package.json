@@ -1,0 +1,22 @@
+{
+  "name": "example-astro-ssr",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@i18n-tiny/astro": "workspace:*",
+    "@i18n-tiny/core": "workspace:*",
+    "@astrojs/node": "^9.0.0",
+    "astro": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

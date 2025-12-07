@@ -1,0 +1,84 @@
+{
+  "name": "@i18n-tiny/next",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Tiny, type-safe i18n library for Next.js with automatic type inference and zero dependencies",
+  "keywords": [
+    "nextjs",
+    "next",
+    "i18n",
+    "internationalization",
+    "react",
+    "typescript",
+    "app-router",
+    "server-components",
+    "rsc"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/next"
+  },
+  "main": "./dist/index.react-client.cjs",
+  "module": "./dist/index.react-client.js",
+  "types": "./dist/index.react-client.d.ts",
+  "exports": {
+    ".": {
+      "react-server": {
+        "types": "./dist/index.react-server.d.ts",
+        "import": "./dist/index.react-server.js",
+        "require": "./dist/index.react-server.cjs"
+      },
+      "types": "./dist/index.react-client.d.ts",
+      "import": "./dist/index.react-client.js",
+      "require": "./dist/index.react-client.cjs"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "require": "./dist/types.cjs"
+    },
+    "./proxy": {
+      "types": "./dist/proxy/index.d.ts",
+      "import": "./dist/proxy/index.js",
+      "require": "./dist/proxy/index.cjs"
+    },
+    "./router": {
+      "types": "./dist/router/index.d.ts",
+      "import": "./dist/router/index.js",
+      "require": "./dist/router/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@i18n-tiny/core": "workspace:*",
+    "@i18n-tiny/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": "^15.0.0 || ^16.0.0",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.4",
+    "@vitejs/plugin-react": "^5.1.1",
+    "happy-dom": "^20.0.11",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}

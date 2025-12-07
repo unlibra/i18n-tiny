@@ -16,28 +16,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Update npm
-        run: npm install -g npm@latest
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Type check
-        run: npm run type-check
+        run: pnpm type-check
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Test
-        run: npm run test
+        run: pnpm test
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
+      - name: Publish @i18n-tiny/core
+        run: cd packages/core && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish @i18n-tiny/react
+        run: cd packages/react && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish @i18n-tiny/next
+        run: cd packages/next && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish @i18n-tiny/astro
+        run: cd packages/astro && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish next-i18n-tiny
+        run: cd packages/aliases/next-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish react-i18n-tiny
+        run: cd packages/aliases/react-i18n-tiny && pnpm publish --provenance --access public --no-git-checks
+
+      - name: Publish astro-i18n-tiny
+        run: cd packages/aliases/astro-i18n-tiny && pnpm publish --provenance --access public --no-git-checks

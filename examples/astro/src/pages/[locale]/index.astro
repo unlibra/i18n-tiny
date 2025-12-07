@@ -1,0 +1,58 @@
+---
+import { locales, getTranslations } from '../../i18n'
+import Link from '@i18n-tiny/astro/router/Link.astro'
+
+export function getStaticPaths() {
+  return locales.map(locale => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
+const t = getTranslations(locale!)
+
+const buttonStyle = (isActive: boolean) => `
+  height: 2rem;
+  padding: 0 1rem;
+  font-size: 1rem;
+  line-height: 2rem;
+  background-color: ${isActive ? '#007bff' : '#6c757d'};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0.5rem;
+  text-decoration: none;
+  display: inline-block;
+`
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{t('common.title')}</title>
+  </head>
+  <body style="padding: 2rem; font-family: system-ui;">
+    <nav style="margin-bottom: 2rem;">
+      <Link href="/" style="margin-right: 1rem;">{t('nav.home')}</Link>
+      <Link href="/about">{t('nav.about')}</Link>
+    </nav>
+
+    <h1>{t('home.welcome')}</h1>
+    <p>{t('common.description')}</p>
+    <p>{t('common.currentLocale', { locale })}</p>
+
+    <div style="margin-top: 1rem;">
+      <h3>{t('home.greeting', { name: 'User' })}</h3>
+    </div>
+
+    <hr style="margin: 2rem 0;" />
+
+    <div>
+      <Link href="/" locale="en" style={buttonStyle(locale === 'en')}>
+        English
+      </Link>
+      <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
+        日本語
+      </Link>
+    </div>
+  </body>
+</html>

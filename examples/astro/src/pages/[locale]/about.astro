@@ -1,0 +1,28 @@
+---
+import { locales, getMessages } from '../../i18n'
+import Link from '@i18n-tiny/astro/router/Link.astro'
+
+export function getStaticPaths() {
+  return locales.map(locale => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
+const messages = getMessages(locale!)
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{messages.about.title} | {messages.common.title}</title>
+  </head>
+  <body style="padding: 2rem; font-family: system-ui;">
+    <h1>{messages.about.title}</h1>
+    <p>{messages.about.description}</p>
+
+    <div style="margin-top: 2rem;">
+      <Link href="/" style="color: #007bff;">
+        {messages.nav.home}
+      </Link>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+export { detectLocale } from '../detectLocale'

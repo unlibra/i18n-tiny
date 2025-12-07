@@ -1,0 +1,58 @@
+{
+  "name": "@i18n-tiny/core",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Framework-agnostic core utilities for i18n-tiny",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "typescript"
+  ],
+  "author": "unlibra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlibra/i18n-tiny.git",
+    "directory": "packages/core"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./router": {
+      "types": "./dist/router/index.d.ts",
+      "import": "./dist/router/index.js",
+      "require": "./dist/router/index.cjs"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.js",
+      "require": "./dist/middleware/index.cjs"
+    },
+    "./internal": {
+      "types": "./dist/internal/index.d.ts",
+      "import": "./dist/internal/index.js",
+      "require": "./dist/internal/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
+  }
+}

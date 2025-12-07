@@ -1,0 +1,13 @@
+# Exclude configuration files from GitHub language statistics
+**/*.config.js linguist-vendored
+**/*.config.ts linguist-vendored
+**/*.config.mjs linguist-vendored
+**/*.config.cjs linguist-vendored
+**/eslint*.js linguist-vendored
+**/tsup.config.* linguist-vendored
+**/vitest.config.* linguist-vendored
+
+# Exclude test files from language statistics
+**/__tests__/** linguist-vendored
+**/*.test.ts linguist-vendored
+**/*.test.tsx linguist-vendored

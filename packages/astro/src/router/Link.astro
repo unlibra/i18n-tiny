@@ -1,0 +1,66 @@
+---
+/**
+ * Localized Link component for Astro
+ *
+ * Automatically detects whether locale prefix is needed based on current URL.
+ *
+ * @example
+ * ```astro
+ * import Link from '@i18n-tiny/astro/router/Link.astro'
+ *
+ * // Auto-localized (maintains current URL pattern)
+ * <Link href="/about">About</Link>
+ *
+ * // Language switch with explicit locale
+ * <Link href="/" locale="ja">日本語</Link>
+ *
+ * // Raw path (no localization)
+ * <Link href="/" locale="">English</Link>
+ * <Link href="/" locale={false}>English</Link>
+ *
+ * // With href normalization (removes existing locale prefix before processing)
+ * // Useful when href comes from usePathname() or similar
+ * <Link href="/ja/about" locale="en" normalize>English</Link>  // → /en/about
+ * ```
+ */
+import type { HTMLAttributes } from 'astro/types'
+import { getLinkHref } from '@i18n-tiny/core/router'
+
+interface Props extends HTMLAttributes<'a'> {
+  /** The path to navigate to */
+  href: string
+  /**
+   * Override the locale for this link
+   * - undefined: auto-localize based on current URL (default)
+   * - string (e.g., 'ja'): generate path with specified locale prefix
+   * - '' (empty string) or false: use href as-is without any localization
+   */
+  locale?: string | false
+  /**
+   * Normalize href by removing any existing locale prefix before processing.
+   * When true, locales are read from Astro.locals (set by middleware).
+   * @default false
+   */
+  normalize?: boolean
+}
+
+const { href, locale, normalize = false, ...attrs } = Astro.props
+
+const locals = Astro.locals as Record<string, unknown>
+
+// Get current locale from route params or locals (for SSR rewrite mode)
+const currentLocale = (Astro.params.locale as string | undefined)
+  || locals.locale as string | undefined
+
+// Use original pathname if available (for SSR rewrite mode where URL is rewritten)
+const currentPathname = (locals.originalPathname as string | undefined) ?? Astro.url.pathname
+
+// Get locales from middleware for normalization
+const locales = normalize ? (locals.locales as readonly string[] | undefined) : undefined
+
+const localizedHref = getLinkHref(href, currentPathname, currentLocale, { locale, locales })
+---
+
+<a href={localizedHref} {...attrs}>
+  <slot />
+</a>
