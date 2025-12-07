@@ -9,7 +9,9 @@
 A zero-dependency, type-safe, minimal internationalization library for Astro.
 Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
 Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
-Routing configuration is handled with `middleware.create()`, supporting prefix/no-prefix modes and automatic language detection.
+
+**SSR**: Use `middleware.create()` for routing with automatic language detection.
+**SSG**: Use `integration.create()` to copy default locale content to root at build time.
 
 ## Features
 
@@ -178,11 +180,13 @@ Defines an i18n instance with automatic type inference.
 
 Type for the configuration object passed to `define()`.
 
-### `@i18n-tiny/astro/middleware`
+### `@i18n-tiny/astro/middleware` (SSR only)
 
 #### `create(config)`
 
 Creates an Astro middleware handler for i18n routing.
+
+> **Note**: Middleware only works in SSR mode. For SSG, use the integration instead.
 
 **Parameters:**
 
@@ -268,6 +272,57 @@ const messages = getMessages(locale)
 
 Type for the configuration object passed to `create()`.
 
+### `@i18n-tiny/astro/integration` (SSG only)
+
+#### `create(config)`
+
+Creates an Astro integration for i18n static file generation.
+
+> **Note**: This integration is for SSG mode only. It copies the default locale's content to the root directory after build, enabling `/` to serve the default locale without a prefix.
+
+**Parameters:**
+
+| Parameter       | Type      | Default | Description                                              |
+| --------------- | --------- | ------- | -------------------------------------------------------- |
+| `defaultLocale` | `string`  | -       | Default locale - content from this locale is copied to root |
+| `prefixDefault` | `boolean` | `false` | If true, skips copying (all locales remain prefixed)    |
+
+**Example:**
+
+```typescript
+// astro.config.mjs
+import { defineConfig } from 'astro/config'
+import { create } from '@i18n-tiny/astro/integration'
+
+export default defineConfig({
+  integrations: [
+    create({
+      defaultLocale: 'en'
+    })
+  ]
+})
+```
+
+**Build Output:**
+
+```
+dist/
+├── index.html        ← copied from /en/index.html
+├── about/index.html  ← copied from /en/about/index.html
+├── en/
+│   ├── index.html
+│   └── about/index.html
+└── ja/
+    ├── index.html
+    └── about/index.html
+```
+
+> **Important**: In SSG mode, automatic language detection (`detectLanguage`) does not work because there is no server to read the `Accept-Language` header. Users will always see the default locale first when visiting `/`.
+
+#### `IntegrationConfig` (type)
+
+Type for the configuration object passed to `create()`.
+
 ### `@i18n-tiny/astro/router`
 
 #### `Link` Component
@@ -333,7 +388,22 @@ removeLocalePrefix('/about', ['en', 'ja'])     // '/about'
 
 ### Static Site Generation (SSG)
 
-For static sites, use `getStaticPaths`:
+For static sites, use `getStaticPaths` and the integration:
+
+**1. Add the integration to `astro.config.mjs`:**
+
+```typescript
+import { defineConfig } from 'astro/config'
+import { create } from '@i18n-tiny/astro/integration'
+
+export default defineConfig({
+  integrations: [
+    create({ defaultLocale: 'en' })
+  ]
+})
+```
+
+**2. Use `getStaticPaths` in your pages:**
 
 ```astro
 ---
@@ -356,6 +426,8 @@ const messages = getMessages(locale)
   </body>
 </html>
 ```
+
+> **Note**: The integration copies `/en/*` to `/*` after build, so users can access the site at `/` without a locale prefix. Middleware is not needed for SSG.
 
 ### Language Switcher
 

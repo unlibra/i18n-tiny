@@ -1,6 +1,6 @@
 {
   "name": "@i18n-tiny/astro",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Tiny, type-safe i18n library for Astro with automatic type inference and zero dependencies",
   "keywords": [
@@ -36,6 +36,11 @@
       "types": "./dist/router.d.ts",
       "import": "./dist/router.js",
       "require": "./dist/router.cjs"
+    },
+    "./integration": {
+      "types": "./dist/integration.d.ts",
+      "import": "./dist/integration.js",
+      "require": "./dist/integration.cjs"
     },
     "./router/*": "./src/router/*",
     "./locals": {

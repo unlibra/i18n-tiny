@@ -1,13 +1,13 @@
-import { defineConfig } from 'tsup'
+import { defineConfig, type Options } from 'tsup'
 
-const sharedConfig = {
-  format: ['cjs', 'esm'] as const,
+const sharedConfig: Options = {
+  format: ['cjs', 'esm'],
   dts: true,
   sourcemap: true,
   external: ['astro', '@i18n-tiny/core'],
   splitting: false,
   treeshake: true,
-  outExtension ({ format }: { format: 'cjs' | 'esm' }) {
+  outExtension ({ format }) {
     return {
       js: format === 'esm' ? '.js' : '.cjs'
     }
@@ -36,6 +36,14 @@ export default defineConfig([
     ...sharedConfig,
     entry: {
       router: 'src/router.ts'
+    },
+    clean: false
+  },
+  // Integration for static file generation
+  {
+    ...sharedConfig,
+    entry: {
+      integration: 'src/integration.ts'
     },
     clean: false
   }
