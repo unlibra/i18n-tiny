@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build
+        run: pnpm build
+
       - name: Type check
         run: pnpm type-check
 
@@ -35,9 +38,6 @@ jobs:
 
       - name: Test
         run: pnpm test
-
-      - name: Build
-        run: pnpm build
 
       - name: Publish @i18n-tiny/core
         run: cd packages/core && pnpm publish --provenance --access public --no-git-checks
