@@ -1,6 +1,6 @@
 {
   "name": "next-i18n-tiny",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Alias package for @i18n-tiny/next - Tiny, type-safe i18n library for Next.js",
   "keywords": [
@@ -52,7 +52,7 @@
     }
   },
   "dependencies": {
-    "@i18n-tiny/next": "1.0.0"
+    "@i18n-tiny/next": "1.1.0"
   },
   "peerDependencies": {
     "next": "^15.0.0 || ^16.0.0",
