@@ -1,14 +1,14 @@
-import { defineConfig } from 'tsup'
+import { defineConfig, type Options } from 'tsup'
 import { readFileSync, writeFileSync } from 'fs'
 
-const sharedConfig = {
-  format: ['cjs', 'esm'] as const,
+const sharedConfig: Options = {
+  format: ['cjs', 'esm'],
   dts: true,
   sourcemap: true,
   external: ['react', 'next', '@i18n-tiny/core'],
   splitting: false,
   treeshake: true,
-  outExtension ({ format }: { format: 'cjs' | 'esm' }) {
+  outExtension ({ format }) {
     return {
       js: format === 'esm' ? '.js' : '.cjs'
     }

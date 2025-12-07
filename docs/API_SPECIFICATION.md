@@ -11,7 +11,9 @@ API specification for developers. Complete export list and detailed specificatio
 @i18n-tiny/core/internal - Internal use only (resolveMessage, NestedKeys) *not public*
 @i18n-tiny/react         - React (Provider, hooks)
 @i18n-tiny/next          - Next.js (RSC support, proxy)
-@i18n-tiny/astro         - Astro (middleware)
+@i18n-tiny/astro         - Astro (define, translations)
+@i18n-tiny/astro/middleware - Astro middleware (SSR only)
+@i18n-tiny/astro/integration - Astro integration (SSG only)
 ```
 
 ---
@@ -326,7 +328,9 @@ const pathname = usePathname() // '/ja/about'
 
 ---
 
-## @i18n-tiny/astro/middleware
+## @i18n-tiny/astro/middleware (SSR only)
+
+> **Note**: Middleware only works in SSR mode. For SSG, use the integration instead.
 
 ### Exports
 
@@ -371,6 +375,64 @@ type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
 ```
 
 **Astro-specific option**: `excludePaths` - Paths to skip processing (e.g., `['/api', '/_image']`)
+
+---
+
+## @i18n-tiny/astro/integration (SSG only)
+
+> **Note**: This integration is for SSG mode only. It copies the default locale's content to the root directory after build.
+
+### Exports
+
+| Export              | Kind     | Description                                 |
+| ------------------- | -------- | ------------------------------------------- |
+| `create`            | function | Create integration                          |
+| `IntegrationConfig` | type     | Configuration type for `create()`           |
+
+### `create(config)`
+
+```typescript
+function create(config: IntegrationConfig): AstroIntegration
+```
+
+### `IntegrationConfig`
+
+```typescript
+interface IntegrationConfig {
+  defaultLocale: string       // Content from this locale is copied to root
+  prefixDefault?: boolean     // default: false - if true, skips copying
+}
+```
+
+### Usage
+
+```typescript
+// astro.config.mjs
+import { defineConfig } from 'astro/config'
+import { create } from '@i18n-tiny/astro/integration'
+
+export default defineConfig({
+  integrations: [
+    create({ defaultLocale: 'en' })
+  ]
+})
+```
+
+### Build Output
+
+```
+dist/
+├── index.html        ← copied from /en/index.html
+├── about/index.html  ← copied from /en/about/index.html
+├── en/
+│   ├── index.html
+│   └── about/index.html
+└── ja/
+    ├── index.html
+    └── about/index.html
+```
+
+> **Important**: In SSG mode, automatic language detection (`detectLanguage`) does not work because there is no server to read the `Accept-Language` header. Users will always see the default locale first when visiting `/`.
 
 ---
 
@@ -449,9 +511,17 @@ interface Props {
 
 - `DefineConfig` - For `define()` function
 - `ProxyConfig` - For Next.js `create()`
-- `MiddlewareConfig` - For Astro `create()`
+- `MiddlewareConfig` - For Astro middleware `create()`
+- `IntegrationConfig` - For Astro integration `create()`
 
-### 6. core subpath structure
+### 6. Astro SSR vs SSG
+
+- **SSR**: Use `@i18n-tiny/astro/middleware` - middleware runs on every request, supports language detection and rewriting
+- **SSG**: Use `@i18n-tiny/astro/integration` - copies default locale content to root at build time
+- In SSG mode, middleware does not run (no server at runtime)
+- Language detection (`detectLanguage`) only works in SSR mode
+
+### 7. core subpath structure
 
 - `/` - `DefineConfig` only (type for define)
 - `/middleware` - `detectLocale` (middleware layer logic)
