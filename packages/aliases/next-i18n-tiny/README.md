@@ -1,5 +1,8 @@
 # next-i18n-tiny
 
+[![npm version](https://img.shields.io/npm/v/next-i18n-tiny.svg)](https://www.npmjs.com/package/next-i18n-tiny)
+[![npm downloads](https://img.shields.io/npm/dm/next-i18n-tiny.svg)](https://www.npmjs.com/package/next-i18n-tiny)
+
 Alternative package name for [`@i18n-tiny/next`](https://www.npmjs.com/package/@i18n-tiny/next).
 
 > **Note**: This is an alias package. Both `next-i18n-tiny` and `@i18n-tiny/next` provide the exact same functionality.
