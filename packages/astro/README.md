@@ -282,10 +282,10 @@ Creates an Astro integration for i18n static file generation.
 
 **Parameters:**
 
-| Parameter       | Type      | Default | Description                                              |
-| --------------- | --------- | ------- | -------------------------------------------------------- |
+| Parameter       | Type      | Default | Description                                                 |
+| --------------- | --------- | ------- | ----------------------------------------------------------- |
 | `defaultLocale` | `string`  | -       | Default locale - content from this locale is copied to root |
-| `prefixDefault` | `boolean` | `false` | If true, skips copying (all locales remain prefixed)    |
+| `prefixDefault` | `boolean` | `false` | If true, skips copying (all locales remain prefixed)        |
 
 **Example:**
 
@@ -450,7 +450,6 @@ const localeNames: Record<string, string> = {
     <Link
       href="/"
       locale={loc}
-      style={loc === locale ? 'font-weight: bold;' : ''}
     >
       {localeNames[loc]}
     </Link>
@@ -507,6 +506,7 @@ For type-safe access to `Astro.locals.locale`, add the type reference to your pr
 ```
 
 This provides types for:
+
 - `Astro.locals.locale` - Current locale
 - `Astro.locals.locales` - Supported locales array
 - `Astro.locals.originalPathname` - Original path (rewrite mode)
