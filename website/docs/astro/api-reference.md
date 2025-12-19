@@ -32,6 +32,16 @@ sidebar_position: 4
 | --- | --- | :---: | --- |
 | `locale` | `string` \| `undefined` | Required | 取得するメッセージのロケール |
 
+**戻り値:**
+- `Messages`: 該当するロケールのメッセージオブジェクト。
+
+**例:**
+
+```typescript
+const messages = getMessages('ja')
+console.log(messages.common.title)
+```
+
 ##### `i18n.getTranslations(locale, namespace?)`
 
 指定されたロケールの翻訳関数 `t` を返します。
@@ -43,6 +53,19 @@ sidebar_position: 4
 | `locale` | `string` \| `undefined` | Required | 翻訳に使用するロケール |
 | `namespace` | `string` | | キーを絞り込むための名前空間（オプション） |
 
+**戻り値:**
+- `t(key, vars?)`: 翻訳関数。
+    - `key`: メッセージキー。
+    - `vars`: 補間用変数（オプション）。
+    - 戻り値: `string`（翻訳された文字列）。
+
+**例:**
+
+```typescript
+const t = getTranslations('ja', 'common')
+const title = t('title')
+```
+
 ##### `i18n.locales`
 
 設定された（または推論された） `locales` 配列。
@@ -53,7 +76,9 @@ sidebar_position: 4
 
 ### `DefineConfig` (type)
 
-`define()` に渡される設定オブジェクトの型。
+`define()` に渡される設定オブジェクトの型。 `@i18n-tiny/astro` から直接インポートできます。
+
+---
 
 ## @i18n-tiny/astro/middleware (SSRのみ)
 
@@ -73,6 +98,9 @@ i18nルーティング用のAstroミドルウェアハンドラを作成しま�
 | `detectLanguage` | `boolean` | | `true` | Accept-Languageから検出するかどうか |
 | `routing` | `'rewrite'` | | - | SSRリライトモード（prefixDefault/detectLanguageとは排他） |
 
+**戻り値:**
+- `MiddlewareHandler`: Astroのミドルウェアハンドラ。
+
 **ルーティング動作マトリックス:**
 
 | prefixDefault | detectLanguage | `/` の動作 |
@@ -81,6 +109,27 @@ i18nルーティング用のAstroミドルウェアハンドラを作成しま�
 | `false` | `true` | 検出、非デフォルトをリダイレクト、デフォルトをリライト |
 | `true` | `false` | `/[defaultLocale]` にリダイレクト |
 | `true` | `true` | 検出して、検出されたロケールにリダイレクト |
+
+**例:**
+
+```typescript
+// デフォルト: 言語検出、非デフォルトをリダイレクト、デフォルトをリライト
+export const onRequest = defineMiddleware(
+  create({
+    locales: ['en', 'ja'],
+    defaultLocale: 'en'
+  })
+)
+
+// SSRリライトモード（Astro.locals内のロケール）
+export const onRequest = defineMiddleware(
+  create({
+    locales: ['en', 'ja'],
+    defaultLocale: 'en',
+    routing: 'rewrite'
+  })
+)
+```
 
 **SSRリライトモード:**
 
@@ -105,6 +154,7 @@ const messages = getMessages(locale)
 ### `detectLocale(acceptLanguage, supportedLocales)`
 
 Accept-Languageヘッダーから最も一致するロケールを検出します。
+`@i18n-tiny/astro/middleware` から直接インポートできます。
 
 **パラメータ:**
 
@@ -112,6 +162,11 @@ Accept-Languageヘッダーから最も一致するロケールを検出しま�
 | --- | --- | :---: | --- |
 | `acceptLanguage` | `string` \| `null` | Required | Accept-Languageヘッダーの値 |
 | `supportedLocales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+
+**戻り値:**
+- `string | null`: 一致したロケール、または一致しない場合は `null`。
+
+---
 
 ## @i18n-tiny/astro/integration (SSGのみ)
 
@@ -125,7 +180,10 @@ i18n静的ファイル生成用のAstroインテグレーションを作成し�
 | --- | --- | :---: | --- | --- |
 | `defaultLocale` | `string` | Required | - | デフォルトロケール - このロケールのコンテンツがルートにコピーされます |
 
-**ビルド出力:**
+**戻り値:**
+- `AstroIntegration`: Astroのインテグレーションオブジェクト。
+
+**ビルド出力の例:**
 
 ```
 dist/
@@ -140,6 +198,8 @@ dist/
 ```
 
 > **重要**: SSGモードではサーバーが存在しないため、ブラウザの言語設定に基づいた自動言語検出（リダイレクト等）は標準では機能しません。インテグレーションを使用してデフォルトロケールをルートにコピーした場合、`/` にアクセスすると常にそのデフォルトロケールが表示されます。
+
+---
 
 ## @i18n-tiny/astro/router
 
@@ -156,9 +216,31 @@ dist/
 | `normalize` | `boolean` | | `false` | `href` に既存のロケールプレフィックスが含まれている場合、それを削除してから処理します。 |
 | その他 | `HTMLAttributes<'a'>` | | - | 標準のHTMLアンカータグの属性 |
 
+**例:**
+
+```astro
+---
+import Link from '@i18n-tiny/astro/router/Link.astro'
+---
+
+<!-- 自動ローカライズ（現在のURLパターンを維持） -->
+<Link href="/about">About</Link>
+
+<!-- ロケールの明示的な指定 -->
+<Link href="/" locale="ja">日本語</Link>
+
+<!-- 生のパス（ローカライズなし） -->
+<Link href="/" locale="">English</Link>
+<Link href="/" locale={false}>English</Link>
+
+<!-- パスの正規化 -->
+<Link href="/ja/about" locale="en" normalize>English</Link>
+```
+
 ### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
 
 ロケールプレフィックス付きのローカライズされたパスを生成します。
+`@i18n-tiny/astro/router` からインポートできます。
 
 **パラメータ:**
 
@@ -169,9 +251,21 @@ dist/
 | `defaultLocale` | `string` | Required | - | デフォルトロケール |
 | `prefixDefault` | `boolean` | | `false` | デフォルトロケールにプレフィックスを付けるかどうか |
 
+**戻り値:**
+- `string`: ローカライズされたパス。
+
+**例:**
+
+```typescript
+import { getLocalizedPath } from '@i18n-tiny/astro/router'
+
+getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
+```
+
 ### `removeLocalePrefix(pathname, locales)`
 
 パス名からロケールプレフィックスを削除します。
+`@i18n-tiny/astro/router` からインポートできます。
 
 **パラメータ:**
 
@@ -180,9 +274,13 @@ dist/
 | `pathname` | `string` | Required | 処理するパス名 |
 | `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
 
+**戻り値:**
+- `string`: プレフィックスが削除されたパス名。
+
 ### `hasLocalePrefix(pathname, locales)`
 
 パス名にロケールプレフィックスが含まれているかチェックします。
+`@i18n-tiny/astro/router` からインポートできます。
 
 **パラメータ:**
 
@@ -191,9 +289,13 @@ dist/
 | `pathname` | `string` | Required | チェックするパス名 |
 | `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
 
+**戻り値:**
+- `boolean`: プレフィックスが含まれていれば `true`。
+
 ### `getLinkHref(href, currentPathname, currentLocale, options?)`
 
 リンク用のURLを生成するユーティリティ。
+`@i18n-tiny/astro/router` からインポートできます。
 
 **パラメータ:**
 
@@ -203,3 +305,14 @@ dist/
 | `currentPathname` | `string` | Required | 現在のパス名 |
 | `currentLocale` | `string` \| `undefined` | Required | 現在のロケール |
 | `options` | `GetLinkHrefOptions` | | ロケール指定や正規化用のオプション |
+
+**戻り値:**
+- `string`: 生成された最終的なURL。
+
+**例:**
+
+```typescript
+import { getLinkHref } from '@i18n-tiny/astro/router'
+
+const href = getLinkHref('/about', '/ja', 'ja', { locale: 'en' }) // '/en/about'
+```
