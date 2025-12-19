@@ -1,0 +1,9 @@
+{
+  "label": "TIPS",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "slug": "/astro/tips"
+  },
+  "collapsed": false
+}
