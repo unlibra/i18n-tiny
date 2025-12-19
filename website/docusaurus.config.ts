@@ -51,8 +51,8 @@ const config: Config = {
         blog: false,
         sitemap: {
           lastmod: null,
-          changefreq: 'weekly',
-          priority: 0.5,
+          changefreq: null,
+          priority: null,
           ignorePatterns: ['/tags/**'],
           filename: 'sitemap.xml',
         },
