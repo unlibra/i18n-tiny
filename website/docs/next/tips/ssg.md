@@ -2,24 +2,24 @@
 sidebar_position: 1
 ---
 
-# 静的サイト生成 (SSG)
+# Static Site Generation (SSG)
 
-Next.js (App Router) で静的サイト生成を行う場合、通常は各ページ (`page.tsx`) ごとに `generateStaticParams` を定義する必要があります。
+When using Static Site Generation in Next.js (App Router), you typically need to define `generateStaticParams` in every page (`page.tsx`).
 
-しかし、**i18n-tiny では、ルートレイアウト (`layout.tsx`) に一度定義するだけで、配下のすべてのページを静的に生成することが可能です。**
+However, **with i18n-tiny, you only need to define it once in the root layout (`layout.tsx`).**
 
-これにより、新しいページを追加するたびに `generateStaticParams` を書く手間が省け、コードの重複を劇的に減らすことができます。
+This prevents you from having to write repetitive `generateStaticParams` for every new page, keeping your codebase extremely clean.
 
-## 実装例
+## Implementation
 
-`app/[locale]/layout.tsx` に以下のコードを追加するだけです：
+Simply add the following code to your `app/[locale]/layout.tsx`:
 
 ```typescript
 // app/[locale]/layout.tsx
 import { locales } from '@/i18n'
 
-// これをルートレイアウトに一度書くだけで、
-// 配下のすべてのページ（ページごとの追加設定なし）がビルド時に静的に生成されます。
+// By adding this to the root layout once,
+// all child pages will be statically generated at build time.
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }

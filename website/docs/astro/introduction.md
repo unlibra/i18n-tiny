@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# はじめに
+# Introduction
 
 [![npm version](https://img.shields.io/npm/v/@i18n-tiny/astro.svg)](https://www.npmjs.com/package/@i18n-tiny/astro)
 [![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/astro.svg)](https://www.npmjs.com/package/@i18n-tiny/astro)
@@ -10,30 +10,31 @@ sidebar_position: 1
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-**Astro**のための、依存関係なし、型安全、最小限の国際化ライブラリです。
+A zero-dependency, type-safe, minimal internationalization library for **Astro**.
 
-SSGとSSRの両方で動作します。設定は単一の `define` 関数で完了し、`messages.common.title` のようなキーパスの完全な自動補完が可能です。
+Works with both SSG and SSR. Configuration is handled by a single `define` function, providing full auto-completion for key paths like `messages.common.title`.
+Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
 
-## 特徴
+## Features
 
-- **型安全**: 完全なTypeScriptサポートと**自動型推論** - `messages.site.name`、`t('common.title')`、およびすべてのネストされたキーの自動補完
-- **依存関係ゼロ**: 外部i18nライブラリは不要
-- **サーバーファースト**: ネイティブAstroサーバーサイドレンダリングサポート
-- **最小限のSSG**: Astroの静的サイト生成とシームレスに連携
-- **シンプルなAPI**: 単一の設定、最小限のボイラープレート
-- **軽量**: 最小限のバンドルサイズ
-- **柔軟性**: Astro組み込みのi18nまたはスタンドアロンミドルウェアと一緒に使用可能
+- **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for `messages.site.name`, `t('common.title')`, and all nested keys.
+- **Zero dependencies**: No external i18n libraries needed.
+- **Server-first**: Native Astro server-side rendering support.
+- **Minimal SSG**: Works seamlessly with Astro's static site generation.
+- **Simple API**: Single configuration, minimal boilerplate.
+- **Lightweight**: Minimal bundle size.
+- **Flexible**: Works with Astro's built-in i18n or as a standalone solution.
 
-## インストール
+## Installation
 
 ```bash
 npm install @i18n-tiny/astro
 ```
 
-## 使い方
+## Usage
 
 ```typescript
-// i18n.ts - define() ですべてを生成
+// src/i18n.ts
 import { define } from '@i18n-tiny/astro'
 
 export const { getMessages, getTranslations } = define({
@@ -45,16 +46,28 @@ export const { getMessages, getTranslations } = define({
 
 ```astro
 ---
+// src/pages/[locale]/index.astro
+import { getMessages, getTranslations } from '../../i18n'
+const { locale } = Astro.params
+
 const messages = getMessages(locale)
 const t = getTranslations(locale)
 ---
-<h1>{messages.common.title}</h1>  <!-- ← 型安全！自動補完 -->
-<p>{t('greeting', { name })}</p>  <!-- ← 補間もサポート -->
+
+<html lang={locale}>
+  <head>
+    <title>{messages.common.title}</title> {/* ← Type-safe! Autocomplete */}
+  </head>
+  <body>
+    <h1>{messages.common.title}</h1>
+    <p>{t('common.description')}</p> {/* ← Interpolation supported */}
+  </body>
+</html>
 ```
 
-## 次のステップ
+## Next Steps
 
-- [インストール](./installation)
-- [使い方](./usage)
-- [APIリファレンス](./api-reference)
-- [TIPS](./tips/ssg)
+- [Installation](./installation)
+- [Usage](./usage)
+- [API Reference](./api-reference)
+- [TIPS](./tips/typescript)

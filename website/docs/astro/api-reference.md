@@ -2,118 +2,118 @@
 sidebar_position: 4
 ---
 
-# APIリファレンス
+# API Reference
 
 ## @i18n-tiny/astro
 
 ### `define(config)`
 
-自動型推論を備えたi18nインスタンスを定義します。
+Defines an i18n instance with automatic type inference.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locales` | `readonly string[]` | | サポートするロケールの配列（オプション、メッセージから推論されます） |
-| `defaultLocale` | `string` | | デフォルトロケール（オプション、最初のロケールを使用） |
-| `messages` | `Record<Locale, Messages>` | Required | ロケールをキーとしたメッセージオブジェクト |
+| `locales` | `readonly string[]` | | Array of supported locales (optional, inferred from messages) |
+| `defaultLocale` | `string` | | Default locale (optional, defaults to the first locale) |
+| `messages` | `Record<Locale, Messages>` | Required | Message objects keyed by locale |
 
-#### 戻り値 (Properties of `i18n`)
+#### Return Value (Properties of `i18n`)
 
-`define` は、以下のプロパティを含むオブジェクト（例: `i18n`）を返します。
+`define` returns an object (e.g., `i18n`) containing the following properties:
 
 ##### `i18n.getMessages(locale)`
 
-指定されたロケールのメッセージオブジェクトを返します。
+Returns the message object for the specified locale.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` \| `undefined` | Required | 取得するメッセージのロケール |
+| `locale` | `string` \| `undefined` | Required | The locale to retrieve messages for |
 
-**戻り値:**
-- `Messages`: 該当するロケールのメッセージオブジェクト。
+**Returns:**
+- `Messages`: The message object for the given locale.
 
-**例:**
+**Example:**
 
 ```typescript
-const messages = getMessages('ja')
+const messages = getMessages('en')
 console.log(messages.common.title)
 ```
 
 ##### `i18n.getTranslations(locale, namespace?)`
 
-指定されたロケールの翻訳関数 `t` を返します。
+Returns a translation function `t` for the specified locale.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` \| `undefined` | Required | 翻訳に使用するロケール |
-| `namespace` | `string` | | キーを絞り込むための名前空間（オプション） |
+| `locale` | `string` \| `undefined` | Required | The locale to use for translations |
+| `namespace` | `string` | | Optional namespace to scope the keys |
 
-**戻り値:**
-- `t(key, vars?)`: 翻訳関数。
-    - `key`: メッセージキー。
-    - `vars`: 補間用変数（オプション）。
-    - 戻り値: `string`（翻訳された文字列）。
+**Returns:**
+- `t(key, vars?)`: The translation function.
+    - `key`: The message key.
+    - `vars`: Interpolation variables (optional).
+    - Returns: `string` (The translated string).
 
-**例:**
+**Example:**
 
 ```typescript
-const t = getTranslations('ja', 'common')
+const t = getTranslations('en', 'common')
 const title = t('title')
 ```
 
 ##### `i18n.locales`
 
-設定された（または推論された） `locales` 配列。
+The configured (or inferred) `locales` array.
 
 ##### `i18n.defaultLocale`
 
-設定された（または推論された） `defaultLocale` 文字列。
+The configured (or inferred) `defaultLocale` string.
 
 ### `DefineConfig` (type)
 
-`define()` に渡される設定オブジェクトの型。 `@i18n-tiny/astro` から直接インポートできます。
+The type of the configuration object passed to `define()`. Can be imported directly from `@i18n-tiny/astro`.
 
 ---
 
-## @i18n-tiny/astro/middleware (SSRのみ)
+## @i18n-tiny/astro/middleware (SSR Only)
 
 ### `create(config)`
 
-i18nルーティング用のAstroミドルウェアハンドラを作成します。
+Creates an Astro Middleware handler for i18n routing.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | デフォルト値 | 説明 |
+| Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `locales` | `readonly string[]` | Required | - | サポートするロケールの配列 |
-| `defaultLocale` | `string` | Required | - | リダイレクト用のデフォルトロケール |
-| `fallbackLocale` | `string` | | `defaultLocale` | 検出に失敗した場合のフォールバック |
-| `excludePaths` | `string[]` | | `[]` | i18n処理から除外するパス |
-| `prefixDefault` | `boolean` | | `false` | デフォルトロケールのURLにプレフィックスを付けるかどうか |
-| `detectLanguage` | `boolean` | | `true` | Accept-Languageから検出するかどうか |
-| `routing` | `'rewrite'` | | - | SSRリライトモード（prefixDefault/detectLanguageとは排他） |
+| `locales` | `readonly string[]` | Required | - | Array of supported locales |
+| `defaultLocale` | `string` | Required | - | Default locale for redirects |
+| `fallbackLocale` | `string` | | `defaultLocale` | Fallback if detection fails |
+| `excludePaths` | `string[]` | | `[]` | Paths to exclude from i18n processing |
+| `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale in URLs |
+| `detectLanguage` | `boolean` | | `true` | Whether to detect language from Accept-Language header |
+| `routing` | `'rewrite'` | | - | SSR rewrite mode (mutually exclusive with prefixDefault/detectLanguage) |
 
-**戻り値:**
-- `MiddlewareHandler`: Astroのミドルウェアハンドラ。
+**Returns:**
+- `MiddlewareHandler`: Astro middleware handler.
 
-**ルーティング動作マトリックス:**
+**Routing Behavior Matrix:**
 
-| prefixDefault | detectLanguage | `/` の動作 |
+| prefixDefault | detectLanguage | Behavior at `/` |
 | --- | --- | --- |
-| `false` | `false` | fallbackLocaleを提供、検出なし |
-| `false` | `true` | 検出、非デフォルトをリダイレクト、デフォルトをリライト |
-| `true` | `false` | `/[defaultLocale]` にリダイレクト |
-| `true` | `true` | 検出して、検出されたロケールにリダイレクト |
+| `false` | `false` | Serves fallbackLocale, no detection |
+| `false` | `true` | Detects, redirects non-default, rewrites default |
+| `true` | `false` | Redirects to `/[defaultLocale]` |
+| `true` | `true` | Detects and redirects to detected locale |
 
-**例:**
+**Example:**
 
 ```typescript
-// デフォルト: 言語検出、非デフォルトをリダイレクト、デフォルトをリライト
+// Default: Language detection, non-default redirects, default rewrites
 export const onRequest = defineMiddleware(
   create({
     locales: ['en', 'ja'],
@@ -121,7 +121,7 @@ export const onRequest = defineMiddleware(
   })
 )
 
-// SSRリライトモード（Astro.locals内のロケール）
+// SSR rewrite mode (locale in Astro.locals)
 export const onRequest = defineMiddleware(
   create({
     locales: ['en', 'ja'],
@@ -131,13 +131,13 @@ export const onRequest = defineMiddleware(
 )
 ```
 
-**SSRリライトモード:**
+**SSR Rewrite Mode:**
 
-`routing: 'rewrite'` を使用する場合、ロケールは `Astro.locals.locale` に格納されます。
+When using `routing: 'rewrite'`, the locale is stored in `Astro.locals.locale`.
 
 ```astro
 ---
-// src/pages/index.astro ([locale] フォルダは不要)
+// src/pages/index.astro (No [locale] folder needed)
 import { getMessages } from '../i18n'
 
 const locale = Astro.locals.locale  // 'en' or 'ja'
@@ -153,42 +153,42 @@ const messages = getMessages(locale)
 
 ### `detectLocale(acceptLanguage, supportedLocales)`
 
-Accept-Languageヘッダーから最も一致するロケールを検出します。
-`@i18n-tiny/astro/middleware` から直接インポートできます。
+Detects the best matching locale from the Accept-Language header.
+Can be imported directly from `@i18n-tiny/astro/middleware`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `acceptLanguage` | `string` \| `null` | Required | Accept-Languageヘッダーの値 |
-| `supportedLocales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `acceptLanguage` | `string` \| `null` | Required | Value of Accept-Language header |
+| `supportedLocales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `string | null`: 一致したロケール、または一致しない場合は `null`。
+**Returns:**
+- `string | null`: The matched locale, or `null` if no match is found.
 
 ---
 
-## @i18n-tiny/astro/integration (SSGのみ)
+## @i18n-tiny/astro/integration (SSG Only)
 
 ### `create(config)`
 
-i18n静的ファイル生成用のAstroインテグレーションを作成します。
+Creates an Astro Integration for i18n static file generation.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | デフォルト値 | 説明 |
+| Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `defaultLocale` | `string` | Required | - | デフォルトロケール - このロケールのコンテンツがルートにコピーされます |
+| `defaultLocale` | `string` | Required | - | Default locale - content from this locale is copied to root |
 
-**戻り値:**
-- `AstroIntegration`: Astroのインテグレーションオブジェクト。
+**Returns:**
+- `AstroIntegration`: Astro integration object.
 
-**ビルド出力の例:**
+**Build Output Example:**
 
 ```
 dist/
-├── index.html        ← /en/index.html からコピー
-├── about/index.html  ← /en/about/index.html からコピー
+├── index.html        ← Copied from /en/index.html
+├── about/index.html  ← Copied from /en/about/index.html
 ├── en/
 │   ├── index.html
 │   └── about/index.html
@@ -197,7 +197,7 @@ dist/
     └── about/index.html
 ```
 
-> **重要**: SSGモードではサーバーが存在しないため、ブラウザの言語設定に基づいた自動言語検出（リダイレクト等）は標準では機能しません。インテグレーションを使用してデフォルトロケールをルートにコピーした場合、`/` にアクセスすると常にそのデフォルトロケールが表示されます。
+> **Important**: In SSG mode, since there is no server, automatic language detection (redirects based on browser settings) does not work by default. If you use the Integration to copy the default locale to the root, accessing `/` will always display that default locale.
 
 ---
 
@@ -205,56 +205,56 @@ dist/
 
 ### `Link`
 
-現在のURLからロケールを自動検出するローカライズされたLinkコンポーネント。
+A localized Link component that automatically detects the locale from the current URL.
 
 **Props:**
 
-| プロパティ | 型 | 必須 | デフォルト値 | 説明 |
+| Prop | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `href` | `string` | Required | - | リンク先のパス |
-| `locale` | `string` \| `false` | | - | ロケールを明示的に指定する場合に使用。`false` または `''` でローカライズを無効化（生のパス）。 |
-| `normalize` | `boolean` | | `false` | `href` に既存のロケールプレフィックスが含まれている場合、それを削除してから処理します。 |
-| その他 | `HTMLAttributes<'a'>` | | - | 標準のHTMLアンカータグの属性 |
+| `href` | `string` | Required | - | Destination path |
+| `locale` | `string` \| `false` | | - | Explicitly set locale. `false` or `''` disables localization (raw path). |
+| `normalize` | `boolean` | | `false` | If true, removes existing locale prefix from `href` before processing. |
+| Others | `HTMLAttributes<'a'>` | | - | Attributes for standard HTML anchor tag |
 
-**例:**
+**Example:**
 
 ```astro
 ---
 import Link from '@i18n-tiny/astro/router/Link.astro'
 ---
 
-<!-- 自動ローカライズ（現在のURLパターンを維持） -->
+<!-- Auto-localized (maintains current URL pattern) -->
 <Link href="/about">About</Link>
 
-<!-- ロケールの明示的な指定 -->
+<!-- Explicit locale override -->
 <Link href="/" locale="ja">日本語</Link>
 
-<!-- 生のパス（ローカライズなし） -->
+<!-- Raw path (no localization) -->
 <Link href="/" locale="">English</Link>
 <Link href="/" locale={false}>English</Link>
 
-<!-- パスの正規化 -->
+<!-- Path normalization -->
 <Link href="/ja/about" locale="en" normalize>English</Link>
 ```
 
 ### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
 
-ロケールプレフィックス付きのローカライズされたパスを生成します。
-`@i18n-tiny/astro/router` からインポートできます。
+Generates a localized path with a locale prefix.
+Can be imported from `@i18n-tiny/astro/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | デフォルト値 | 説明 |
+| Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `path` | `string` | Required | - | ローカライズするパス |
-| `locale` | `string` | Required | - | ターゲットロケール |
-| `defaultLocale` | `string` | Required | - | デフォルトロケール |
-| `prefixDefault` | `boolean` | | `false` | デフォルトロケールにプレフィックスを付けるかどうか |
+| `path` | `string` | Required | - | The path to localize |
+| `locale` | `string` | Required | - | Target locale |
+| `defaultLocale` | `string` | Required | - | Default locale |
+| `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale |
 
-**戻り値:**
-- `string`: ローカライズされたパス。
+**Returns:**
+- `string`: The localized path.
 
-**例:**
+**Example:**
 
 ```typescript
 import { getLocalizedPath } from '@i18n-tiny/astro/router'
@@ -264,52 +264,68 @@ getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
 
 ### `removeLocalePrefix(pathname, locales)`
 
-パス名からロケールプレフィックスを削除します。
-`@i18n-tiny/astro/router` からインポートできます。
+Removes the locale prefix from a pathname.
+Can be imported from `@i18n-tiny/astro/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `pathname` | `string` | Required | 処理するパス名 |
-| `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `pathname` | `string` | Required | The pathname to process |
+| `locales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `string`: プレフィックスが削除されたパス名。
+**Returns:**
+- `string`: Pathname without prefix.
+
+**Example:**
+
+```typescript
+import { removeLocalePrefix } from '@i18n-tiny/astro/router'
+
+removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
+```
 
 ### `hasLocalePrefix(pathname, locales)`
 
-パス名にロケールプレフィックスが含まれているかチェックします。
-`@i18n-tiny/astro/router` からインポートできます。
+Checks if a pathname contains a locale prefix.
+Can be imported from `@i18n-tiny/astro/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `pathname` | `string` | Required | チェックするパス名 |
-| `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `pathname` | `string` | Required | The pathname to check |
+| `locales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `boolean`: プレフィックスが含まれていれば `true`。
+**Returns:**
+- `boolean`: `true` if prefix exists.
+
+**Example:**
+
+```typescript
+import { hasLocalePrefix } from '@i18n-tiny/astro/router'
+
+hasLocalePrefix('/ja/about', ['en', 'ja'])  // true
+```
 
 ### `getLinkHref(href, currentPathname, currentLocale, options?)`
 
-リンク用のURLを生成するユーティリティ。
-`@i18n-tiny/astro/router` からインポートできます。
+Utility to generate final URLs for links.
+Can be imported from `@i18n-tiny/astro/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `href` | `string` | Required | リンク先のパス |
-| `currentPathname` | `string` | Required | 現在のパス名 |
-| `currentLocale` | `string` \| `undefined` | Required | 現在のロケール |
-| `options` | `GetLinkHrefOptions` | | ロケール指定や正規化用のオプション |
+| `href` | `string` | Required | Destination path |
+| `currentPathname` | `string` | Required | Current pathname |
+| `currentLocale` | `string` \| `undefined` | Required | Current locale |
+| `options` | `GetLinkHrefOptions` | | Options for explicit locale or normalization |
 
-**戻り値:**
-- `string`: 生成された最終的なURL。
+**Returns:**
+- `string`: The final generated URL.
 
-**例:**
+**Example:**
 
 ```typescript
 import { getLinkHref } from '@i18n-tiny/astro/router'

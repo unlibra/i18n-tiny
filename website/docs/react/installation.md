@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-# インストール
+# Installation
 
-標準パッケージ、またはインポートが少し短くなるエイリアスパッケージのいずれかをインストールできます。
+You can install either the standard package or an alias package for shorter imports.
 
-### 標準パッケージ
+### Standard Package
 
 ```bash
 npm install @i18n-tiny/react
@@ -16,9 +16,9 @@ pnpm add @i18n-tiny/react
 yarn add @i18n-tiny/react
 ```
 
-### エイリアスパッケージ
+### Alias Package
 
-`@i18n-tiny/react` のエイリアスとして `react-i18n-tiny` を使用できます。
+You can use `react-i18n-tiny` as an alias for `@i18n-tiny/react`.
 
 ```bash
 npm install react-i18n-tiny

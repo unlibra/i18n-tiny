@@ -2,39 +2,39 @@
 sidebar_position: 4
 ---
 
-# APIリファレンス
+# API Reference
 
 ## @i18n-tiny/next
 
 ### `define(config)`
 
-自動型推論を備えたi18nインスタンスを定義します。
+Defines an i18n instance with automatic type inference.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locales` | `readonly string[]` | Required | サポートするロケールの配列 (例: `['en', 'ja'] as const`) |
-| `defaultLocale` | `string` | Required | デフォルトのロケール |
-| `messages` | `Record<Locale, Messages>` | Required | ロケールをキーとしたメッセージオブジェクト |
+| `locales` | `readonly string[]` | Required | Array of supported locales (e.g., `['en', 'ja'] as const`) |
+| `defaultLocale` | `string` | Required | The default locale |
+| `messages` | `Record<Locale, Messages>` | Required | Message objects keyed by locale |
 
-#### 戻り値 (Properties of `i18n`)
+#### Return Value (Properties of `i18n`)
 
-`define` は、以下のプロパティを含むオブジェクト（例: `i18n`）を返します。
+`define` returns an object (e.g., `i18n`) containing the following properties:
 
 ##### `i18n.Provider`
 
-アプリをラップしてクライアントコンポーネントにi18nコンテキストを提供するコンポーネント。
+A component that wraps your app to provide i18n context to Client Components.
 
 **Props:**
 
-| プロパティ | 型 | 必須 | 説明 |
+| Prop | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` | Required | 現在のロケール |
-| `messages` | `Messages` | Required | 現在のロケールのメッセージ辞書 |
-| `children` | `ReactNode` | Required | 子コンポーネント |
+| `locale` | `string` | Required | The current locale |
+| `messages` | `Messages` | Required | Message dictionary for the current locale |
+| `children` | `ReactNode` | Required | Child components |
 
-**例:**
+**Example:**
 
 ```tsx
 <Provider locale={locale} messages={messages}>
@@ -44,59 +44,59 @@ sidebar_position: 4
 
 ##### `i18n.server.getMessages(locale)`
 
-指定されたロケールのメッセージオブジェクトを返します（サーバーコンポーネント用）。
+Returns the message object for the specified locale (for Server Components).
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` | Required | 取得するメッセージのロケール |
+| `locale` | `string` | Required | The locale to retrieve messages for |
 
-**戻り値:**
-- `Messages`: 該当するロケールのメッセージオブジェクト。
+**Returns:**
+- `Messages`: The message object for the given locale.
 
-**例:**
+**Example:**
 
 ```typescript
-const messages = await getMessages('ja')
+const messages = await getMessages('en')
 console.log(messages.common.title)
 ```
 
 ##### `i18n.server.getTranslations(locale, namespace?)`
 
-指定されたロケールの翻訳関数 `t` を返します（サーバーコンポーネント用）。
+Returns a translation function `t` for the specified locale (for Server Components).
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` | Required | 翻訳に使用するロケール |
-| `namespace` | `string` | | キーを絞り込むための名前空間（オプション） |
+| `locale` | `string` | Required | The locale to use for translations |
+| `namespace` | `string` | | Optional namespace to scope the keys |
 
-**戻り値:**
-- `t(key, vars?)`: 翻訳関数。
-    - `key`: メッセージキー。
-    - `vars`: 補間用変数（オプション）。
-    - 戻り値: `string`（翻訳された文字列）。
+**Returns:**
+- `t(key, vars?)`: The translation function.
+    - `key`: The message key (type-safe with autocomplete).
+    - `vars`: Interpolation variables (optional, required variables are typed).
+    - Returns: `string` (The translated string).
 
-**例:**
+**Example:**
 
 ```typescript
-const t = await getTranslations('ja')
+const t = await getTranslations('en')
 const title = t('common.title')
 
-const tNav = await getTranslations('ja', 'nav')
-const home = tNav('home') // 'nav.home' のショートカット
+const tNav = await getTranslations('en', 'nav')
+const home = tNav('home') // Shortcut for 'nav.home'
 ```
 
 ##### `i18n.client.useMessages()`
 
-現在のコンテキストからメッセージオブジェクトを取得するフック（クライアントコンポーネント用）。
+A hook to retrieve the message object from the current context (for Client Components).
 
-**戻り値:**
-- `Messages`: 現在のロケールのメッセージオブジェクト。
+**Returns:**
+- `Messages`: Message object for the current locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const messages = useMessages()
@@ -105,18 +105,18 @@ return <h1>{messages.common.title}</h1>
 
 ##### `i18n.client.useTranslations(namespace?)`
 
-現在のコンテキストから翻訳関数 `t` を取得するフック（クライアントコンポーネント用）。
+A hook to retrieve the translation function `t` from the current context (for Client Components).
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `namespace` | `string` | | キーを絞り込むための名前空間（オプション） |
+| `namespace` | `string` | | Optional namespace to scope the keys |
 
-**戻り値:**
-- `t(key, vars?)`: 翻訳関数。
+**Returns:**
+- `t(key, vars?)`: The translation function.
 
-**例:**
+**Example:**
 
 ```tsx
 const t = useTranslations('common')
@@ -125,12 +125,12 @@ return <p>{t('welcome', { name: 'John' })}</p>
 
 ##### `i18n.client.useLocale()`
 
-現在のコンテキストからロケール文字列を取得するフック（クライアントコンポーネント用）。
+A hook to retrieve the current locale string (for Client Components).
 
-**戻り値:**
-- `string`: 現在のロケール。
+**Returns:**
+- `string`: The current locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const locale = useLocale() // 'en' | 'ja'
@@ -138,12 +138,12 @@ const locale = useLocale() // 'en' | 'ja'
 
 ##### `i18n.client.useLocales()`
 
-サポートされているロケールの配列を取得するフック（クライアントコンポーネント用）。
+A hook to retrieve the array of supported locales (for Client Components).
 
-**戻り値:**
-- `readonly string[]`: 設定されたロケールの配列。
+**Returns:**
+- `readonly string[]`: The configured locales array.
 
-**例:**
+**Example:**
 
 ```tsx
 const locales = useLocales() // ['en', 'ja']
@@ -151,12 +151,12 @@ const locales = useLocales() // ['en', 'ja']
 
 ##### `i18n.client.useDefaultLocale()`
 
-デフォルトのロケール文字列を取得するフック（クライアントコンポーネント用）。
+A hook to retrieve the default locale string (for Client Components).
 
-**戻り値:**
-- `string`: デフォルトのロケール。
+**Returns:**
+- `string`: The default locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const defaultLocale = useDefaultLocale() // 'en'
@@ -164,15 +164,15 @@ const defaultLocale = useDefaultLocale() // 'en'
 
 ##### `i18n.locales`
 
-設定された `locales` 配列。
+The configured `locales` array.
 
 ##### `i18n.defaultLocale`
 
-設定された `defaultLocale` 文字列。
+The configured `defaultLocale` string.
 
 ### `DefineConfig` (type)
 
-`define()` に渡される設定オブジェクトの型。 `@i18n-tiny/next` から直接インポートできます。
+The type of the configuration object passed to `define()`. Can be imported directly from `@i18n-tiny/next`.
 
 ---
 
@@ -180,48 +180,48 @@ const defaultLocale = useDefaultLocale() // 'en'
 
 ### `create(config)`
 
-i18nルーティング用のNext.jsプロキシ（ミドルウェア）ハンドラを作成します。
+Creates a Next.js Proxy (Middleware) handler for i18n routing.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | デフォルト値 | 説明 |
+| Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `locales` | `readonly string[]` | Required | - | サポートするロケールの配列 |
-| `defaultLocale` | `string` | Required | - | リダイレクト用のデフォルトロケール |
-| `fallbackLocale` | `string` | | `defaultLocale` | 検出に失敗した場合のフォールバック |
-| `prefixDefault` | `boolean` | | `false` | デフォルトロケールのURLにプレフィックスを付けるかどうか |
-| `detectLanguage` | `boolean` | | `true` | Accept-Languageから検出するかどうか |
-| `routing` | `'rewrite'` | | - | SSRリライトモード（prefixDefault/detectLanguageとは排他） |
+| `locales` | `readonly string[]` | Required | - | Array of supported locales |
+| `defaultLocale` | `string` | Required | - | Default locale for redirects |
+| `fallbackLocale` | `string` | | `defaultLocale` | Fallback if detection fails |
+| `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale in URLs |
+| `detectLanguage` | `boolean` | | `true` | Whether to detect language from Accept-Language header |
+| `routing` | `'rewrite'` | | - | SSR rewrite mode (mutually exclusive with prefixDefault/detectLanguage) |
 
-**戻り値:**
-- `(request: NextRequest) => NextResponse | void`: Next.jsのミドルウェア関数。
+**Returns:**
+- `(request: NextRequest) => NextResponse | void`: Next.js middleware function.
 
-**ルーティング動作マトリックス:**
+**Routing Behavior Matrix:**
 
-| prefixDefault | detectLanguage | `/` の動作 |
+| prefixDefault | detectLanguage | Behavior at `/` |
 | --- | --- | --- |
-| `false` | `false` | fallbackLocaleを提供、検出なし |
-| `false` | `true` | 検出、非デフォルトをリダイレクト、デフォルトをリライト |
-| `true` | `false` | `/[defaultLocale]` にリダイレクト |
-| `true` | `true` | 検出して、検出されたロケールにリダイレクト |
+| `false` | `false` | Serves fallbackLocale, no detection |
+| `false` | `true` | Detects, redirects non-default, rewrites default |
+| `true` | `false` | Redirects to `/[defaultLocale]` |
+| `true` | `true` | Detects and redirects to detected locale |
 
-**例:**
+**Example:**
 
 ```typescript
-// デフォルト: 言語検出、非デフォルトをリダイレクト、デフォルトをリライト
+// Default: Language detection, non-default redirects, default rewrites
 export const proxy = create({
   locales: ['en', 'ja'],
   defaultLocale: 'en'
 })
 
-// 常にすべてのロケール（デフォルトを含む）にプレフィックスを付ける
+// Always prefix all locales (including default)
 export const proxy = create({
   locales: ['en', 'ja'],
   defaultLocale: 'en',
   prefixDefault: true
 })
 
-// SSRリライトモード（x-localeヘッダー内のロケール）
+// SSR rewrite mode (locale in x-locale header)
 export const proxy = create({
   locales: ['en', 'ja'],
   defaultLocale: 'en',
@@ -231,20 +231,20 @@ export const proxy = create({
 
 ### `detectLocale(acceptLanguage, supportedLocales)`
 
-Accept-Languageヘッダーから最も一致するロケールを検出します。
-`@i18n-tiny/next/proxy` から直接インポートできます。
+Detects the best matching locale from the Accept-Language header.
+Can be imported directly from `@i18n-tiny/next/proxy`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `acceptLanguage` | `string` \| `null` | Required | Accept-Languageヘッダーの値 |
-| `supportedLocales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `acceptLanguage` | `string` \| `null` | Required | Value of Accept-Language header |
+| `supportedLocales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `string | null`: 一致したロケール、または一致しない場合は `null`。
+**Returns:**
+- `string | null`: The matched locale, or `null` if no match is found.
 
-**例:**
+**Example:**
 
 ```typescript
 import { detectLocale } from '@i18n-tiny/next/proxy'
@@ -258,58 +258,58 @@ const locale = detectLocale(request.headers.get('accept-language'), ['en', 'ja']
 
 ### `Link`
 
-現在のURLからロケールを自動検出するローカライズされたLinkコンポーネント。
+A localized Link component that automatically detects the locale from the current URL.
 
 **Props:**
 
-| プロパティ | 型 | 必須 | デフォルト値 | 説明 |
+| Prop | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `href` | `string` \| `UrlObject` | Required | - | リンク先のパス |
-| `locale` | `string` \| `false` | | - | ロケールを明示的に指定する場合に使用。`false` または `''` でローカライズを無効化（生のパス）。 |
-| `normalize` | `boolean` | | `false` | `href` に既存のロケールプレフィックスが含まれている場合、それを削除してから処理します。 |
-| その他 | `NextLinkProps` | | - | Next.jsの `Link` コンポーネントのその他のProps |
+| `href` | `string` \| `UrlObject` | Required | - | Destination path |
+| `locale` | `string` \| `false` | | - | Explicitly set locale. `false` or `''` disables localization (raw path). |
+| `normalize` | `boolean` | | `false` | If true, removes existing locale prefix from `href` before processing. |
+| Others | `NextLinkProps` | | - | Other props for Next.js `Link` component |
 
-**例:**
+**Example:**
 
 ```typescript
 import { Link } from '@i18n-tiny/next/router'
 
-// 自動ローカライズ（現在のURLパターンを維持）
+// Auto-localized (maintains current URL pattern)
 <Link href="/about">About</Link>
 
-// ロケールの明示的な指定
+// Explicit locale override
 <Link href="/" locale="ja">日本語</Link>
 
-// 生のパス（ローカライズなし）
+// Raw path (no localization)
 <Link href="/" locale="">English</Link>
 <Link href="/" locale={false}>English</Link>
 
-// 条件付きロケール
+// Conditional locale
 <Link href="/" locale={condition && 'ja'}>Conditional</Link>
 
-// パスの正規化
+// Path normalization (useful for language switchers)
 const pathname = usePathname() // '/ja/about'
 <Link href={pathname} locale="en" normalize>English</Link> // -> '/en/about'
 ```
 
 ### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
 
-ロケールプレフィックス付きのローカライズされたパスを生成します。
-`@i18n-tiny/next/router` からインポートできます。
+Generates a localized path with a locale prefix.
+Can be imported from `@i18n-tiny/next/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | デフォルト値 | 説明 |
+| Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
-| `path` | `string` | Required | - | ローカライズするパス |
-| `locale` | `string` | Required | - | ターゲットロケール |
-| `defaultLocale` | `string` | Required | - | デフォルトロケール |
-| `prefixDefault` | `boolean` | | `false` | デフォルトロケールにプレフィックスを付けるかどうか |
+| `path` | `string` | Required | - | The path to localize |
+| `locale` | `string` | Required | - | Target locale |
+| `defaultLocale` | `string` | Required | - | Default locale |
+| `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale |
 
-**戻り値:**
-- `string`: ローカライズされたパス（例: `/ja/about`）。
+**Returns:**
+- `string`: The localized path (e.g., `/ja/about`).
 
-**例:**
+**Example:**
 
 ```typescript
 import { getLocalizedPath } from '@i18n-tiny/next/router'
@@ -321,20 +321,20 @@ getLocalizedPath('/about', 'en', 'en', true)  // '/en/about'
 
 ### `removeLocalePrefix(pathname, locales)`
 
-パス名からロケールプレフィックスを削除します。
-`@i18n-tiny/next/router` からインポートできます。
+Removes the locale prefix from a pathname.
+Can be imported from `@i18n-tiny/next/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `pathname` | `string` | Required | 処理するパス名 |
-| `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `pathname` | `string` | Required | The pathname to process |
+| `locales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `string`: プレフィックスが削除されたパス名（例: `/ja/about` → `/about`）。
+**Returns:**
+- `string`: Pathname without prefix (e.g., `/ja/about` → `/about`).
 
-**例:**
+**Example:**
 
 ```typescript
 import { removeLocalePrefix } from '@i18n-tiny/next/router'
@@ -344,20 +344,20 @@ removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
 
 ### `hasLocalePrefix(pathname, locales)`
 
-パス名にロケールプレフィックスが含まれているかチェックします。
-`@i18n-tiny/next/router` からインポートできます。
+Checks if a pathname contains a locale prefix.
+Can be imported from `@i18n-tiny/next/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `pathname` | `string` | Required | チェックするパス名 |
-| `locales` | `readonly string[]` | Required | サポートされているロケールの配列 |
+| `pathname` | `string` | Required | The pathname to check |
+| `locales` | `readonly string[]` | Required | Array of supported locales |
 
-**戻り値:**
-- `boolean`: プレフィックスが含まれていれば `true`、そうでなければ `false`。
+**Returns:**
+- `boolean`: `true` if prefix exists, otherwise `false`.
 
-**例:**
+**Example:**
 
 ```typescript
 import { hasLocalePrefix } from '@i18n-tiny/next/router'
@@ -367,22 +367,22 @@ hasLocalePrefix('/ja/about', ['en', 'ja'])  // true
 
 ### `getLinkHref(href, currentPathname, currentLocale, options?)`
 
-リンク用のURLを生成するユーティリティ。`Link` コンポーネントの内部で使用されています。
-`@i18n-tiny/next/router` からインポートできます。
+Utility to generate final URLs for links. Used internally by the `Link` component.
+Can be imported from `@i18n-tiny/next/router`.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `href` | `string` | Required | リンク先のパス |
-| `currentPathname` | `string` | Required | 現在のパス名 |
-| `currentLocale` | `string` \| `undefined` | Required | 現在のロケール |
-| `options` | `GetLinkHrefOptions` | | ロケール指定や正規化用のオプション |
+| `href` | `string` | Required | Destination path |
+| `currentPathname` | `string` | Required | Current pathname |
+| `currentLocale` | `string` \| `undefined` | Required | Current locale |
+| `options` | `GetLinkHrefOptions` | | Options for explicit locale or normalization |
 
-**戻り値:**
-- `string`: 生成された最終的なURL。
+**Returns:**
+- `string`: The final generated URL.
 
-**例:**
+**Example:**
 
 ```typescript
 import { getLinkHref } from '@i18n-tiny/next/router'

@@ -2,75 +2,80 @@
 sidebar_position: 3
 ---
 
-# 使い方
+# Usage
 
-## クイックスタート
+## 1. Create Messages
 
-### 1. i18nの定義 - これだけでOK
+Create message files for each locale.
 
 ```typescript
-// src/i18n.ts
-import { define } from '@i18n-tiny/react'
-
-const enMessages = {
+// messages/en.ts
+export default {
   common: {
-    title: 'Hello',
-    welcome: 'Welcome, {name}!'
+    title: "My React App",
+    welcome: "Hello, {name}!"
   }
-} as const
+}
 
-const jaMessages = {
+// messages/ja.ts
+export default {
   common: {
-    title: 'こんにちは',
-    welcome: 'ようこそ、{name}さん！'
+    title: "Reactアプリ",
+    welcome: "こんにちは、{name}さん！"
   }
-} as const
-
-// define() が必要なものすべてを提供します
-export const { Provider, useMessages, useTranslations, useLocale } = define({
-  locales: ['en', 'ja'] as const,
-  defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
-})
-```
-
-### 2. Providerでラップする
-
-```tsx
-// src/App.tsx
-import { useState } from 'react'
-import { Provider } from './i18n'
-
-function App() {
-  const [locale, setLocale] = useState('en')
-
-  return (
-    <Provider locale={locale} messages={messages[locale]}>
-      <YourApp />
-      <button onClick={() => setLocale(locale === 'en' ? 'ja' : 'en')}>
-        Toggle Language
-      </button>
-    </Provider>
-  )
 }
 ```
 
-### 3. コンポーネントでの使用
+## 2. Define i18n Instance
+
+Import `define` from `@i18n-tiny/react` to create your i18n instance.
+
+```typescript
+// i18n.ts
+import { define } from '@i18n-tiny/react'
+import en from './messages/en'
+import ja from './messages/ja'
+
+export const { Provider, useTranslations, useLocale } = define({
+  locales: ['en', 'ja'] as const,
+  defaultLocale: 'en',
+  messages: { en, ja }
+})
+```
+
+## 3. Wrap Your App
+
+Use the `Provider` to wrap your application and pass the current locale and messages.
 
 ```tsx
-// src/components/Greeting.tsx
-import { useMessages, useTranslations, useLocale } from '../i18n'
+// main.tsx
+import { Provider } from './i18n'
+import enMessages from './messages/en'
 
-function Greeting() {
-  const messages = useMessages()
-  const t = useTranslations()
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <Provider locale="en" messages={enMessages}>
+    <App />
+  </Provider>
+)
+```
+
+## 4. Use Hooks in Components
+
+Access your translations using the `useTranslations` hook.
+
+```tsx
+// App.tsx
+import { useTranslations, useLocale } from './i18n'
+
+function App() {
+  const t = useTranslations('common')
   const locale = useLocale()
 
   return (
     <div>
-      <h1>{messages.common.title}</h1>
-      <p>{t('common.welcome', { name: 'User' })}</p>
-      <p>Current locale: {locale}</p>
+      <h1>{t('title')}</h1>
+      <p>{t('welcome', { name: 'React User' })}</p>
+      <p>Current Locale: {locale}</p>
     </div>
   )
 }

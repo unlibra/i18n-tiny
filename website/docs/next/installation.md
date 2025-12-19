@@ -2,11 +2,11 @@
 sidebar_position: 2
 ---
 
-# インストール
+# Installation
 
-標準パッケージ、またはインポートが少し短くなるエイリアスパッケージのいずれかをインストールできます。
+You can install either the standard package or an alias package for shorter imports.
 
-### 標準パッケージ
+### Standard Package
 
 ```bash
 npm install @i18n-tiny/next
@@ -16,9 +16,9 @@ pnpm add @i18n-tiny/next
 yarn add @i18n-tiny/next
 ```
 
-### エイリアスパッケージ
+### Alias Package
 
-`@i18n-tiny/next` のエイリアスとして `next-i18n-tiny` を使用できます。
+You can use `next-i18n-tiny` as an alias for `@i18n-tiny/next`.
 
 ```bash
 npm install next-i18n-tiny

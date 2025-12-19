@@ -1,170 +1,121 @@
---- 
+---
 sidebar_position: 3
 ---
 
-# 使い方
+# Usage
 
-## プロジェクト構成
+## 1. Create Messages
 
-```text
-your-app/
-├── app/
-│   └── [locale]/
-│       ├── layout.tsx
-│       └── page.tsx
-├── messages/
-│   ├── en.ts
-│   └── ja.ts
-├── i18n.ts
-└── proxy.ts
-```
-
-## 最低限のセットアップ
-
-### 1. メッセージファイルの作成
-
-このファイルはプロジェクト内のどこにでも配置できます。
+Create message files for each locale.
 
 ```typescript
 // messages/en.ts
 export default {
   common: {
-    title: "My Site",
-    description: "Welcome to my site"
-  },
-  nav: {
-    home: "Home",
-    about: "About"
+    title: "My App",
+    welcome: "Welcome, {name}!"
   }
 }
-```
 
-```typescript
 // messages/ja.ts
 export default {
   common: {
-    title: "マイサイト",
-    description: "サイトへようこそ"
-  },
-  nav: {
-    home: "ホーム",
-    about: "概要"
+    title: "マイアプリ",
+    welcome: "ようこそ、{name}さん！"
   }
 }
 ```
 
-### 2. i18nインスタンスの定義
+## 2. Define i18n Instance
 
-このファイルはプロジェクト内のどこにでも配置できます（`i18n.ts`、`lib/i18n/index.ts` など）。
+Import `define` from `@i18n-tiny/next` to create your i18n instance.
 
 ```typescript
 // i18n.ts
 import { define } from '@i18n-tiny/next'
-import { Link } from '@i18n-tiny/next/router'
-import enMessages from '@/messages/en'
-import jaMessages from '@/messages/ja'
+import en from './messages/en'
+import ja from './messages/ja'
 
-// 重要: 型推論のために `as const` が必要です
-export const locales = ['en', 'ja'] as const
-export type Locale = (typeof locales)[number]
-export const defaultLocale: Locale = 'en'
-
-const { client, server, Provider } = define({
+export const {
   locales,
   defaultLocale,
-  messages: { en: enMessages, ja: jaMessages }
+  server,
+  client,
+  Provider
+} = define({
+  locales: ['en', 'ja'] as const,
+  defaultLocale: 'en',
+  messages: { en, ja }
 })
-
-export { Link, Provider }
-export const { useMessages, useTranslations, useLocale } = client
-export const { getMessages, getTranslations } = server
 ```
 
-### 3. プロキシのセットアップ
+## 3. Setup Proxy (Middleware)
+
+Create a `middleware.ts` file to handle routing and language detection.
 
 ```typescript
-// proxy.ts (Next.js 16+) or middleware.ts (Next.js 15)
+// middleware.ts
 import { create } from '@i18n-tiny/next/proxy'
-import { locales, defaultLocale } from '@/i18n'
+import { locales, defaultLocale } from './i18n'
 
-export const proxy = create({
+export const middleware = create({
   locales,
   defaultLocale
 })
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)*']
+  // Skip internal paths and static files
+  matcher: ['/((?!api|_next|.*\..*).*)']
 }
 ```
 
-### 4. レイアウトでの使用
+## 4. Integrate into Root Layout
 
-```typescript
+Wrap your application with the `Provider` in your root layout.
+
+```tsx
 // app/[locale]/layout.tsx
-import { Provider, getMessages, type Locale } from '@/i18n'
+import { Provider, server } from '@/i18n'
 
-export default async function Layout({ children, params }) {
+export default async function RootLayout({ children, params }) {
   const { locale } = await params
-  const messages = await getMessages(locale)
+  const messages = await server.getMessages(locale)
 
   return (
-    <Provider locale={locale} messages={messages}>
-      {children}
-    </Provider>
+    <html lang={locale}>
+      <body>
+        <Provider locale={locale} messages={messages}>
+          {children}
+        </Provider>
+      </body>
+    </html>
   )
 }
 ```
 
-### 5. コンポーネントでの使用
+## 5. Use in Components
 
-```typescript
-// Server Component
-import { getMessages, getTranslations, type Locale } from '@/i18n'
+### Server Components
 
-export async function ServerComponent({ locale }: { locale: Locale }) {
-  /* オブジェクトへの直接アクセス */
-  const messages = await getMessages(locale)
-  /* 関数呼び出し */
-  const t = await getTranslations(locale)
+```tsx
+import { server } from '@/i18n'
 
-  return (
-    <div>
-      <h1>{messages.common.title}</h1>
-      {/*           ^^^^^ 自動補完 */}
-      <p>{t('common.description')}</p>
-      {/*    ^^^^^^^^^^^^^^^^^^ 自動補完 */}
-    </div>
-  )
+export default async function Page({ params }) {
+  const { locale } = await params
+  const t = await server.getTranslations(locale)
+
+  return <h1>{t('common.title')}</h1>
 }
 ```
 
-```typescript
-// Client Component
+### Client Components
+
+```tsx
 'use client'
-import { Link, useMessages, useTranslations } from '@/i18n'
+import { client } from '@/i18n'
 
-export function ClientComponent() {
-  /* オブジェクトへの直接アクセス */
-  const messages = useMessages()
-  /* 関数呼び出し */
-  const t = useTranslations()
-
-  return (
-    <div>
-      <h1>{messages.common.title}</h1>
-      {/*           ^^^^^ 自動補完 */}
-      <Link href="/about">{t('nav.about')}</Link>
-      {/*                    ^^^^^^^^^ 自動補完 */}
-    </div>
-  )
+export default function ClientComponent() {
+  const t = client.useTranslations('common')
+  return <p>{t('welcome', { name: 'User' })}</p>
 }
 ```
-
-以上です！**型は自動的に推論されます** - 手動で型注釈を付ける必要はありません。
-
-**翻訳にアクセスする2つの方法:**
-
-- `messages.common.title` - オブジェクトへの直接アクセス（シンプルで明確）
-- `t('common.title')` - 関数呼び出し（動的なキーに便利）
-
-どちらも完全に型付けされ、自動補完されます。お好きな方をお使いください！

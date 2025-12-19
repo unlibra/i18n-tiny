@@ -2,37 +2,37 @@
 sidebar_position: 4
 ---
 
-# APIリファレンス
+# API Reference
 
 ## `define(config)`
 
-型安全なフックを備えたi18nインスタンスを作成します。
+Creates an i18n instance with type-safe hooks.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locales` | `readonly string[]` | Required | サポートするロケールの配列 |
-| `defaultLocale` | `string` | Required | デフォルトロケール |
-| `messages` | `Record<Locale, Messages>` | Required | ロケールをキーとしたメッセージオブジェクト |
+| `locales` | `readonly string[]` | Required | Array of supported locales |
+| `defaultLocale` | `string` | Required | The default locale |
+| `messages` | `Record<Locale, Messages>` | Required | Message objects keyed by locale |
 
-#### 戻り値 (Properties of `i18n`)
+#### Return Value (Properties of `i18n`)
 
-`define` は、以下のプロパティを含むオブジェクト（例: `i18n`）を返します。
+`define` returns an object (e.g., `i18n`) containing the following properties:
 
 ##### `i18n.Provider`
 
-アプリをラップしてi18nコンテキストを提供します。
+A component that wraps your app to provide i18n context.
 
 **Props:**
 
-| プロパティ | 型 | 必須 | 説明 |
+| Prop | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `locale` | `string` | Required | 現在のロケール |
-| `messages` | `MessageType` | Required | 現在のロケールのメッセージ辞書 |
-| `children` | `ReactNode` | Required | 子コンポーネント |
+| `locale` | `string` | Required | The current locale |
+| `messages` | `MessageType` | Required | Message dictionary for the current locale |
+| `children` | `ReactNode` | Required | Child components |
 
-**例:**
+**Example:**
 
 ```tsx
 <Provider locale="en" messages={messages.en}>
@@ -42,12 +42,12 @@ sidebar_position: 4
 
 ##### `i18n.useMessages()`
 
-現在のコンテキストから生のメッセージオブジェクトを取得します。
+A hook to retrieve the raw message object from the current context.
 
-**戻り値:**
-- `Messages`: 現在のロケールのメッセージ辞書。
+**Returns:**
+- `Messages`: The message dictionary for the current locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const messages = useMessages()
@@ -56,21 +56,21 @@ return <h1>{messages.common.title}</h1>
 
 ##### `i18n.useTranslations(namespace?)`
 
-現在のコンテキストから翻訳関数 `t` を取得します。
+A hook to retrieve the translation function `t` from the current context.
 
-**パラメータ:**
+**Parameters:**
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `namespace` | `string` | | キーを絞り込むための名前空間（オプション） |
+| `namespace` | `string` | | Optional namespace to scope the keys |
 
-**戻り値:**
-- `t(key, vars?)`: 補間をサポートする翻訳関数。
-    - `key`: メッセージキー。
-    - `vars`: 補間用変数。
-    - 戻り値: `string`。
+**Returns:**
+- `t(key, vars?)`: A translation function that supports interpolation.
+    - `key`: The message key.
+    - `vars`: Interpolation variables.
+    - Returns: `string`.
 
-**例:**
+**Example:**
 
 ```tsx
 const t = useTranslations('common')
@@ -79,12 +79,12 @@ return <p>{t('welcome', { name: 'John' })}</p>
 
 ##### `i18n.useLocale()`
 
-現在のコンテキストからロケール文字列を取得します。
+A hook to retrieve the current locale string.
 
-**戻り値:**
-- `string`: 現在のロケール。
+**Returns:**
+- `string`: The current locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const locale = useLocale() // 'en' | 'ja'
@@ -92,12 +92,12 @@ const locale = useLocale() // 'en' | 'ja'
 
 ##### `i18n.useLocales()`
 
-設定された `locales` 配列を取得します。
+A hook to retrieve the configured array of locales.
 
-**戻り値:**
-- `readonly string[]`: サポートするロケールの配列。
+**Returns:**
+- `readonly string[]`: Supported locales array.
 
-**例:**
+**Example:**
 
 ```tsx
 const locales = useLocales() // ['en', 'ja']
@@ -105,12 +105,12 @@ const locales = useLocales() // ['en', 'ja']
 
 ##### `i18n.useDefaultLocale()`
 
-設定された `defaultLocale` 文字列を取得します。
+A hook to retrieve the configured default locale string.
 
-**戻り値:**
-- `string`: デフォルトのロケール。
+**Returns:**
+- `string`: The default locale.
 
-**例:**
+**Example:**
 
 ```tsx
 const defaultLocale = useDefaultLocale() // 'en'
@@ -118,35 +118,35 @@ const defaultLocale = useDefaultLocale() // 'en'
 
 ##### `i18n.locales`
 
-設定された `locales` 配列。
+The configured `locales` array.
 
 ##### `i18n.defaultLocale`
 
-設定された `defaultLocale` 文字列。
+The configured `defaultLocale` string.
 
 ---
 
 ### `DefineConfig` (type)
 
-`define()` に渡される設定オブジェクトの型。 `@i18n-tiny/react` から直接インポートできます。
+The type of the configuration object passed to `define()`. Can be imported directly from `@i18n-tiny/react`.
 
 ### `I18nProvider` (alias for `Provider`)
 
-`Provider` コンポーネントの別名。
+An alias for the `Provider` component.
 
 ---
 
 ## TypeScript
 
-完全な型推論が自動的に行われます:
+Type inference happens automatically based on your configuration:
 
 ```typescript
 const { useTranslations } = i18n
 const t = useTranslations()
 
-// 型エラー: 'invalid.key' は存在しません
+// TypeScript Error: 'invalid.key' does not exist
 t('invalid.key')
 
-// 型エラー: 必要な変数が不足しています
-t('common.welcome') // エラー: { name: string } が必要です
+// TypeScript Error: Missing required interpolation variable 'name'
+t('common.welcome') // Error: { name: string } required
 ```

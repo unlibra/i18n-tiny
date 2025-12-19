@@ -1,20 +1,46 @@
 ---
-sidebar_position: 4
+sidebar_position: 1
 ---
 
-# TypeScript
+# TypeScript Support
 
-## Astro.locals の型安全性
+i18n-tiny is built with TypeScript and provides excellent type safety for your translations.
 
-`Astro.locals.locale` への型安全なアクセスのために、プロジェクトに型参照を追加してください。
+## Type-Safe Message Resolution
+
+When you define your i18n instance using `define`, the types are automatically inferred from your message objects.
 
 ```typescript
-// src/env.d.ts
-/// <reference types="astro/client" />
+// i18n.ts
+const messages = {
+  en: {
+    welcome: "Welcome, {name}!"
+  },
+  ja: {
+    welcome: "ようこそ、{name}さん！"
+  }
+}
+
+export const { getTranslations } = define({ messages })
+
+// Usage
+const t = getTranslations('en')
+
+t('welcome', { name: 'John' }) // Valid
+t('invalid') // TypeScript Error: Argument of type '"invalid"' is not assignable...
+t('welcome') // TypeScript Error: Property 'name' is missing...
+```
+
+## Astro Locals Type
+
+For type-safe access to `Astro.locals.locale` (when using SSR Rewrite Mode), add the type reference to your project's `src/env.d.ts`:
+
+```typescript
 /// <reference types="@i18n-tiny/astro/locals" />
 ```
 
-これにより、以下の型が提供されます。
-- `Astro.locals.locale` - 現在のロケール
-- `Astro.locals.locales` - サポートされているロケールの配列
-- `Astro.locals.originalPathname` - 元のパス（リライトモード時）
+This provides types for:
+
+- `Astro.locals.locale` - Current locale string
+- `Astro.locals.locales` - Array of supported locales
+- `Astro.locals.originalPathname` - Original pathname (before rewrite)

@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# はじめに
+# Introduction
 
 [![npm version](https://img.shields.io/npm/v/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
 [![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
@@ -10,31 +10,31 @@ sidebar_position: 1
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-**Next.js**のための、依存関係なし、型安全、最小限のi18nライブラリです。
+A dependency-free, type-safe, minimal i18n library for **Next.js**.
 
-翻訳ファイルを用意して `define` 関数を呼び出すだけで、サーバーコンポーネントとクライアントコンポーネントの両方ですぐに使用できます。
-`messages.site.title` や `t("site.title")` のようなすべてのキーパスは完全に型付けされ、自動補完されるため、タイプミスを排除できます。
+Simply prepare translation files and call the `define` function—it's immediately usable in both Server and Client Components.
+All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
 
-## 特徴
+## Features
 
-- **型安全**: 完全なTypeScriptサポートと**自動型推論** - `messages.site.name`、`t('common.title')`、およびすべてのネストされたキーの自動補完
-- **依存関係ゼロ**: 外部i18nライブラリは不要
-- **サーバーコンポーネント**: ネイティブRSCサポート
-- **最小限のSSG**: `layout.tsx` で一度 `generateStaticParams` を定義するだけで、すべてのページを静的に生成できます。
-- **シンプルなAPI**: 単一の設定、最小限のボイラープレート
-- **軽量**: 最小限のバンドルサイズ
-- **グローバル状態なし**: 純粋な関数ファクトリーパターン
+- **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for `messages.site.name`, `t('common.title')`, and all nested keys.
+- **Zero dependencies**: No external i18n libraries needed.
+- **Server Components**: Native RSC support.
+- **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages.
+- **Simple API**: Single configuration, minimal boilerplate.
+- **Lightweight**: Minimal bundle size.
+- **No global state**: Pure function factory pattern.
 
-## インストール
+## Installation
 
 ```bash
 npm install @i18n-tiny/next
 ```
 
-## 使い方
+## Usage
 
 ```typescript
-// i18n.ts - define() ですべてを生成
+// i18n.ts - define() generates everything you need
 import { define } from '@i18n-tiny/next'
 
 const { client, server, Provider } = define({
@@ -52,19 +52,19 @@ export const { getMessages, getTranslations } = server
 // Server Component
 const messages = await getMessages(locale)
 const t = await getTranslations(locale)
-return <h1>{messages.common.title}</h1>  // ← 型安全！自動補完
-return <p>{t('greeting', { name })}</p>  // ← 補間もサポート
+return <h1>{messages.common.title}</h1>  // ← Type-safe! Autocomplete
+return <p>{t('greeting', { name })}</p>  // ← Interpolation support
 
 // Client Component
 const messages = useMessages()
 const t = useTranslations()
-return <p>{messages.common.welcome}</p>  // ← 型安全！自動補完
-return <p>{t('greeting', { name })}</p>  // ← 補間もサポート
+return <p>{messages.common.welcome}</p>  // ← Type-safe! Autocomplete
+return <p>{t('greeting', { name })}</p>  // ← Interpolation support
 ```
 
-## 次のステップ
+## Next Steps
 
-- [インストール](./installation)
-- [使い方](./usage)
-- [APIリファレンス](./api-reference)
+- [Installation](./installation)
+- [Usage](./usage)
+- [API Reference](./api-reference)
 - [TIPS](./tips/ssg)

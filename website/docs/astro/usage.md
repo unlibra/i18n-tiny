@@ -2,11 +2,11 @@
 sidebar_position: 3
 ---
 
-# 使い方
+# Usage
 
-## 1. メッセージの作成
+## 1. Create Messages
 
-ロケールごとにメッセージファイルを作成します。
+Create message files for each locale.
 
 ```typescript
 // src/messages/en.ts
@@ -26,9 +26,9 @@ export default {
 }
 ```
 
-## 2. i18nインスタンスの定義
+## 2. Define i18n Instance
 
-`@i18n-tiny/astro` から `define` をインポートし、インスタンスを作成します。
+Import `define` from `@i18n-tiny/astro` to create your instance.
 
 ```typescript
 // src/i18n.ts
@@ -41,13 +41,13 @@ export const { getMessages, getTranslations } = define({
 })
 ```
 
-## 3. 追加の設定 (Optional)
+## 3. Advanced Setup (Optional)
 
-必要に応じて、インテグレーション（SSG用）やミドルウェア（SSR用）を追加できます。
+Depending on your project's output mode, you can add an Integration (for SSG) or Middleware (for SSR).
 
 ### SSG
 
-ビルド後にデフォルトロケールのコンテンツをルートディレクトリにコピーし、ロケールプレフィックスなし（例: `/about`）でアクセス可能にする場合にインテグレーションを使用します。
+Use the Integration if you want to copy the default locale's content to the root directory after build, allowing access without a prefix (e.g., `/about` instead of `/en/about`).
 
 ```typescript
 // astro.config.mjs
@@ -55,7 +55,7 @@ import { defineConfig } from 'astro/config'
 import { create } from '@i18n-tiny/astro/integration'
 
 export default defineConfig({
-  output: 'static', // デフォルト
+  output: 'static', // Default
   integrations: [
     create({ defaultLocale: 'en' })
   ]
@@ -64,7 +64,7 @@ export default defineConfig({
 
 ### SSR
 
-サーバーサイドレンダリングの場合、言語検出やリダイレクトを行うためにミドルウェアを使用します。
+Use the Middleware for Server-Side Rendering to handle language detection and redirects.
 
 ```typescript
 // src/middleware.ts
@@ -79,9 +79,9 @@ export const onRequest = defineMiddleware(
 )
 ```
 
-## 4. ページでの利用
+## 4. Use in Pages
 
-`[locale]` ディレクトリ配下でメッセージを取得します。
+Retrieve messages within your `[locale]` directory.
 
 ```astro
 ---

@@ -2,11 +2,15 @@
 sidebar_position: 3
 ---
 
-# Astro組み込みのi18nとの併用
+# Using with Astro's Built-in i18n
 
-翻訳機能のみに `@i18n-tiny/astro` を使用し、ルーティングにはAstroの組み込みi18n機能を使用することもできます。
+Astro 4.0+ has built-in routing support for i18n. You can combine it with i18n-tiny to get the best of both worlds: Astro's native routing and i18n-tiny's type-safe translations.
 
-```javascript
+## Configuration
+
+Set up your `astro.config.mjs` using Astro's native `i18n` configuration.
+
+```typescript
 // astro.config.mjs
 import { defineConfig } from 'astro/config'
 
@@ -21,19 +25,24 @@ export default defineConfig({
 })
 ```
 
+## Integration
+
+Since Astro handles the routing, you only need i18n-tiny for message resolution.
+
 ```astro
 ---
 // src/pages/[locale]/index.astro
-import { getMessages } from '../../i18n'
+import { getTranslations } from '../../i18n'
+const { locale } = Astro.params
 
-// Astro 4.0以降では Astro.currentLocale が利用可能です
-const locale = Astro.currentLocale
-const messages = getMessages(locale)
+const t = getTranslations(locale)
 ---
 
-<html lang={locale}>
-  <body>
-    <h1>{messages.common.title}</h1>
-  </body>
-</html>
+<h1>{t('common.title')}</h1>
 ```
+
+### Benefits of this approach
+
+- Use Astro's native `Astro.currentLocale`.
+- Use Astro's automatic redirect features.
+- Keep the ultra-simple and type-safe translation API of i18n-tiny.
