@@ -17,17 +17,17 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/next/introduction">
+            to="/next/introduction">
             Next.js
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/astro/introduction">
+            to="/astro/introduction">
             Astro
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/react/introduction">
+            to="/react/introduction">
             React
           </Link>
         </div>

@@ -41,6 +41,7 @@ const config: Config = {
       'classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
@@ -127,15 +128,15 @@ const config: Config = {
           items: [
             {
               label: 'Next.js',
-              to: '/docs/next/introduction',
+              to: '/next/introduction',
             },
             {
               label: 'Astro',
-              to: '/docs/astro/introduction',
+              to: '/astro/introduction',
             },
             {
               label: 'React',
-              to: '/docs/react/introduction',
+              to: '/react/introduction',
             },
           ],
         },
