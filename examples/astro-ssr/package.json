@@ -13,7 +13,7 @@
   "dependencies": {
     "@i18n-tiny/astro": "workspace:*",
     "@i18n-tiny/core": "workspace:*",
-    "@astrojs/node": "^9.5.1",
+    "@astrojs/node": "^9.5.4",
     "astro": "^5.16.6"
   },
   "devDependencies": {
