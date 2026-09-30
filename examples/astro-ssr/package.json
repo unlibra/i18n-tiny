@@ -11,10 +11,10 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^9.5.5",
     "@i18n-tiny/astro": "workspace:*",
     "@i18n-tiny/core": "workspace:*",
-    "@astrojs/node": "^9.5.4",
-    "astro": "^5.16.6"
+    "astro": "^5.18.2"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
