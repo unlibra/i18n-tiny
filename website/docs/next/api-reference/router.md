@@ -1,7 +1,3 @@
----
-sidebar_position: 3
----
-
 # Router
 
 Router utilities for localized navigation.

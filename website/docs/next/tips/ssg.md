@@ -1,7 +1,3 @@
----
-sidebar_position: 1
----
-
 # Static Site Generation (SSG)
 
 When using Static Site Generation in Next.js (App Router), you typically need to define `generateStaticParams` in every page (`page.tsx`).

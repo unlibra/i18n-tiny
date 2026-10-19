@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # Language Switcher
 
 To create a language switcher in Astro that maintains the current page, use the `normalize` prop of the `Link` component.
