@@ -3,7 +3,7 @@
 [![CI](https://github.com/unlibra/i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/i18n-tiny/actions)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://unlibra.github.io/i18n-tiny/)
+[![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/)
 
 The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup.
 
@@ -14,7 +14,7 @@ One function for fully-typed translations.
 
 Currently supports: **Next.js** | **Astro**
 
-**[Documentation](https://unlibra.github.io/i18n-tiny/)**
+**[Documentation](https://docs.unlibra.com/i18n-tiny/)**
 
 ## Quick Start
 
