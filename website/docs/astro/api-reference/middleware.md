@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # Middleware
 
 SSR middleware for automatic locale detection and routing.

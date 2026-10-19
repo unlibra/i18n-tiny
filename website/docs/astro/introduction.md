@@ -1,14 +1,4 @@
----
-sidebar_position: 1
----
-
 # Introduction
-
-[![npm version](https://img.shields.io/npm/v/@i18n-tiny/astro.svg)](https://www.npmjs.com/package/@i18n-tiny/astro)
-[![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/astro.svg)](https://www.npmjs.com/package/@i18n-tiny/astro)
-[![CI](https://github.com/unlibra/i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/i18n-tiny/actions)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 A zero-dependency, type-safe, minimal internationalization library for **Astro**.
 
@@ -69,5 +59,5 @@ const t = getTranslations(locale)
 
 - [Installation](./installation)
 - [Usage](./usage)
-- [API Reference](./api-reference)
+- [API Reference](./api-reference/)
 - [TIPS](./tips/typescript)

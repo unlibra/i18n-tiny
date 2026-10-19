@@ -27,26 +27,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The website is not part of the root workspace and pins its own pnpm.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: website/package.json
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
-          cache-dependency-path: website/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: website/pnpm-lock.yaml
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./website/build
+          path: ./website/docs/.vitepress/dist
 
   deploy:
     name: Deploy to GitHub Pages

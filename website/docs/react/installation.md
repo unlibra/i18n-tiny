@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # Installation
 
 You can install either the standard package or an alias package for shorter imports.

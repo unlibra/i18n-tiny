@@ -1,7 +1,3 @@
----
-sidebar_position: 3
----
-
 # Integration
 
 SSG integration for static file generation.

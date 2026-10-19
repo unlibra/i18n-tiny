@@ -1,7 +1,3 @@
----
-sidebar_position: 2
----
-
 # Proxy
 
 Next.js middleware for automatic locale detection and routing.

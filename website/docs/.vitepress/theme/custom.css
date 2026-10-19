@@ -1,0 +1,76 @@
+/*
+ * Shared look for the unlibra documentation sites: keep the default layout
+ * and override only fonts and brand colors. The brand colors are not decided
+ * yet and still use the VitePress defaults.
+ *
+ * One web font each (loaded in config.ts), then the reader's own fonts.
+ */
+:root {
+  --vp-font-family-base: "Noto Sans JP", sans-serif;
+  --vp-font-family-mono: "Geist Mono", ui-monospace, monospace;
+}
+
+/*
+ * On wide screens the default theme centers a 90rem layout, which moves the
+ * sidebar away from the left edge. Use the full width so the sidebar stays at
+ * the left edge; the doc column keeps its own max width. The doubled
+ * selector outranks the theme's own :root rule, which loads later.
+ */
+:root:root {
+  --vp-layout-max-width: 100%;
+}
+
+/*
+ * The nav bar subtracts 4rem from that width and centers the rest, which
+ * would indent the site title past the sidebar items. Let it fill the bar.
+ */
+.VPNavBar .container {
+  max-width: none !important;
+}
+
+
+/*
+ * Put the search box at the left end of the right-hand group of the nav bar.
+ * The default theme puts it right next to the site title and lets the nav
+ * menu fill the gap. The doubled classes outrank the theme's scoped rules,
+ * which load later.
+ */
+.VPNavBar .content-body > .search.search {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.VPNavBar .VPNavBarMenu.VPNavBarMenu {
+  flex-grow: 0;
+}
+
+/*
+ * Line the framework links up on the left, next to the site title, and keep
+ * the NPM menu in the right-hand group after the search box. Dissolving the
+ * menu's own boxes makes each link a flex item of the bar, so the links can
+ * be ordered around the search box. The nav overflow engine measures the
+ * items themselves, so this keeps working with it.
+ */
+@media (min-width: 48rem) {
+  .VPNavBar .VPNavBarMenu.VPNavBarMenu,
+  .VPNavBar .VPNavBarMenu .list.list {
+    display: contents;
+  }
+
+  /* The same gap as between the sidebar and the page content. */
+  .VPNavBarMenu .list > li:first-child {
+    margin-left: 1.25rem;
+  }
+
+  .VPNavBar .content-body > .search.search {
+    order: 1;
+  }
+
+  .VPNavBarMenu .list > li:has(> .VPNavBarMenuGroup) {
+    order: 2;
+  }
+
+  .VPNavBar .content-body > :is(.translations, .appearance, .social-links, .extra, .hamburger) {
+    order: 3;
+  }
+}

@@ -1,7 +1,3 @@
----
-sidebar_position: 1
----
-
 # TypeScript Support
 
 i18n-tiny is built with TypeScript and provides excellent type safety for your translations.

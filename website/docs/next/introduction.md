@@ -1,14 +1,4 @@
----
-sidebar_position: 1
----
-
 # Introduction
-
-[![npm version](https://img.shields.io/npm/v/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
-[![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/next.svg)](https://www.npmjs.com/package/@i18n-tiny/next)
-[![CI](https://github.com/unlibra/i18n-tiny/workflows/CI/badge.svg)](https://github.com/unlibra/i18n-tiny/actions)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/unlibra/i18n-tiny/blob/main/LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 A dependency-free, type-safe, minimal i18n library for **Next.js**.
 
@@ -66,5 +56,5 @@ return <p>{t('greeting', { name })}</p>  // ← Interpolation support
 
 - [Installation](./installation)
 - [Usage](./usage)
-- [API Reference](./api-reference)
+- [API Reference](./api-reference/)
 - [TIPS](./tips/ssg)
