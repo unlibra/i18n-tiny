@@ -51,23 +51,23 @@ export const {
 })
 ```
 
-## 3. Setup Proxy (Middleware)
+## 3. Setup Proxy
 
-Create a `middleware.ts` file to handle routing and language detection.
+Create a `proxy.ts` file to handle routing and language detection.
 
 ```typescript
-// middleware.ts
+// proxy.ts
 import { create } from '@i18n-tiny/next/proxy'
 import { locales, defaultLocale } from './i18n'
 
-export const middleware = create({
+export const proxy = create({
   locales,
   defaultLocale
 })
 
 export const config = {
   // Skip internal paths and static files
-  matcher: ['/((?!api|_next|.*\..*).*)']
+  matcher: ['/((?!api|_next|.*\\..*).*)']
 }
 ```
 
