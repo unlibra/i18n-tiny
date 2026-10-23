@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig } from 'vitepress'
 import llmstxt from 'vitepress-plugin-llms'
 
@@ -11,6 +13,35 @@ const FRAMEWORKS: Record<string, string> = {
   next: 'Next.js',
   astro: 'Astro',
   react: 'React'
+}
+
+// FAQPage structured data built from the page's own "## Question" sections,
+// so it always matches the text that readers see.
+function faqPage(markdown: string) {
+  const sections = markdown.replace(/^---\n[\s\S]*?\n---\n/, '').split(/^## /m).slice(1)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: sections.map((section) => {
+      const [question, ...answer] = section.split('\n')
+      return {
+        '@type': 'Question',
+        name: toPlainText(question),
+        acceptedAnswer: { '@type': 'Answer', text: toPlainText(answer.join('\n')) }
+      }
+    })
+  }
+}
+
+function toPlainText(markdown: string) {
+  return markdown
+    .replace(/```[^\n]*\n([\s\S]*?)```/g, '$1') // keep the code, drop the fences
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // keep the link text
+    .replace(/^\|?[\s|:-]+\|?$/gm, '') // drop table separator rows
+    .replace(/[`*]/g, '')
+    .replace(/\|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export default defineConfig({
@@ -102,6 +133,11 @@ export default defineConfig({
         })
       ])
     }
+
+    if (pageData.relativePath === 'faq.md') {
+      const markdown = readFileSync(join(siteConfig.srcDir, pageData.relativePath), 'utf-8')
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify(faqPage(markdown))])
+    }
   },
 
   head: [
@@ -129,6 +165,7 @@ export default defineConfig({
       { text: 'Next.js', link: '/next/introduction', activeMatch: '^/next/' },
       { text: 'Astro', link: '/astro/introduction', activeMatch: '^/astro/' },
       { text: 'React', link: '/react/introduction', activeMatch: '^/react/' },
+      { text: 'FAQ', link: '/faq' },
       {
         text: 'NPM',
         items: [
