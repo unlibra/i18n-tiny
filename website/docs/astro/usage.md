@@ -4,6 +4,8 @@ description: "Add multiple languages to an Astro site, step by step: create mess
 
 # How to Add i18n to an Astro Site
 
+**In short:** create one message file per locale, and call `define()` once to get typed `getMessages()` and `getTranslations()`. Optionally, add the i18n-tiny integration (SSG) or middleware (SSR) for locale routing. Then call the helpers in your pages with the current locale.
+
 ## 1. Create Messages
 
 Create message files for each locale.

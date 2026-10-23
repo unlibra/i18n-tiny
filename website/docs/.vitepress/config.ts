@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 // Published under https://docs.unlibra.com/i18n-tiny/ as the GitHub Pages
 // site of this repository (see .github/workflows/deploy-website.yml).
@@ -24,6 +25,43 @@ export default defineConfig({
 
   sitemap: {
     hostname: SITE_URL
+  },
+
+  // Generates llms.txt, llms-full.txt and a Markdown copy of each page, for
+  // coding agents and other LLM tools that read the docs.
+  vite: {
+    plugins: [
+      llmstxt({
+        domain: 'https://docs.unlibra.com',
+        // The hint is hidden text on the home page, which search engines may
+        // treat as cloaking. Pages still link to llms.txt in their <head>.
+        injectLLMHint: false,
+        // These index pages only list links to their child pages, which llms.txt
+        // lists anyway. Their Markdown copies move up a level, which would break
+        // their relative links.
+        ignoreFiles: ['*/api-reference/index.md', '*/tips/index.md'],
+        // The site has one sidebar per framework. Group llms.txt by framework
+        // too, so the repeated "API Reference" and "TIPS" sections stay apart.
+        // Keep every group one level deep: the plugin drops the base path from
+        // links in nested groups.
+        sidebar: (sidebar) =>
+          sidebar && !Array.isArray(sidebar)
+            ? Object.entries(sidebar).flatMap(([prefix, items]) => {
+                const framework = FRAMEWORKS[prefix.replaceAll('/', '')]
+                const pages = Array.isArray(items) ? items : items.items
+                return [
+                  { text: framework, items: pages.filter((page) => !page.items) },
+                  ...pages
+                    .filter((page) => page.items)
+                    .map((group) => ({
+                      text: `${framework} ${group.text}`,
+                      items: group.items
+                    }))
+                ]
+              })
+            : sidebar
+      })
+    ]
   },
 
   transformPageData(pageData, { siteConfig }) {
