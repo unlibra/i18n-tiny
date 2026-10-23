@@ -130,7 +130,7 @@ return <p>{t('greeting', { name })}</p>  // ← Interpolation
 - **Type-safe**: Full TypeScript support with automatic type inference
 - **Zero dependencies**: No external i18n libraries needed
 - **Framework support**: Next.js, Astro, React
-- **Minimal bundle**: No bloat, just what you need
+- **Minimal bundle**: under 1 KB minified and gzipped in the browser (`@i18n-tiny/react`, `@i18n-tiny/next`); `@i18n-tiny/astro` adds no JavaScript to the browser
 
 ## Security
 

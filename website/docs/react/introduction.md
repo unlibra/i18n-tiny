@@ -11,7 +11,7 @@ A tiny, type-safe i18n library for **React** with automatic type inference and z
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for message keys and interpolation variables.
 - **Zero dependencies**: No external i18n libraries needed.
 - **Simple API**: Single configuration with `define()`, returning everything you need (Provider, hooks, constants).
-- **Small**: Minimal bundle size.
+- **Small**: Under 1 KB minified and gzipped in the browser.
 - **No global state**: Pure function factory pattern.
 
 ## Installation

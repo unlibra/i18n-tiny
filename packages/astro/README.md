@@ -21,7 +21,7 @@ Locale handling in `getStaticPaths` requires only minimal setup, avoiding repeti
 - **Server-first**: Native Astro server-side rendering support
 - **Minimal SSG**: Works seamlessly with Astro's static site generation
 - **Simple API**: Single configuration, minimal boilerplate
-- **Small**: Minimal bundle size
+- **No client JavaScript**: in `.astro` files it runs at build time or on the server, so it adds no JavaScript to the browser
 - **Flexible**: Use with Astro's built-in i18n or standalone middleware
 
 ## Installation

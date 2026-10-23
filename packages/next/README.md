@@ -20,7 +20,7 @@ Routing, prefixes, and automatic language detection are all handled via a single
 - **Server Components**: Native RSC support
 - **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages. No per-page configuration needed.
 - **Simple API**: Single configuration, minimal boilerplate
-- **Small**: Minimal bundle size
+- **Small**: under 1 KB minified and gzipped in the browser
 - **No global state**: Pure function factory pattern
 
 ## Installation
@@ -114,7 +114,7 @@ export const { getMessages, getTranslations } = server
 #### **3. Setup Proxy**
 
 ```typescript
-// proxy.ts (Next.js 16+) or middleware.ts (Next.js 15)
+// proxy.ts
 import { create } from '@i18n-tiny/next/proxy'
 import { locales, defaultLocale } from '@/i18n'
 
@@ -124,9 +124,11 @@ export const proxy = create({
 })
 
 export const config = {
-  matcher: ['/((?!api|_next|.*\\..*).*)*']
+  matcher: ['/((?!api|_next|.*\\..*).*)']
 }
 ```
+
+On Next.js 15, name the file `middleware.ts` and use `export const middleware = create({ ... })` instead, because Next.js 15 does not recognize a `proxy` export.
 
 #### **4. Use in Layout**
 
