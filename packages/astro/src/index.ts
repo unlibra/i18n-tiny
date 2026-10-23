@@ -27,15 +27,16 @@ export interface I18nConfig<
  * import enMessages from './messages/en'
  * import jaMessages from './messages/ja'
  *
+ * // locales and defaultLocale are optional: types come from the messages
  * export const i18n = define({
- *   locales: ['en', 'ja'] as const,
+ *   locales: ['en', 'ja'],
  *   defaultLocale: 'en',
  *   messages: { en: enMessages, ja: jaMessages }
  * })
  *
- * // In .astro files
- * const messages = i18n.getMessages(Astro.currentLocale)
- * const t = i18n.getTranslations(Astro.currentLocale)
+ * // In .astro files under src/pages/[locale]/
+ * const messages = i18n.getMessages(Astro.params.locale)
+ * const t = i18n.getTranslations(Astro.params.locale)
  * ```
  */
 export function define<

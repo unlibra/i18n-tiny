@@ -25,7 +25,7 @@ export type { DefineConfig } from '@i18n-tiny/core'
  * import jaMessages from './messages/ja'
  * import enMessages from './messages/en'
  *
- * const messages = { ja: jaMessages, en: enMessages }
+ * export const messages = { ja: jaMessages, en: enMessages }
  *
  * export const i18n = define({
  *   locales: ['ja', 'en'] as const,
@@ -35,7 +35,7 @@ export type { DefineConfig } from '@i18n-tiny/core'
  *
  * // App.tsx
  * function App() {
- *   const [locale, setLocale] = useState('ja')
+ *   const [locale, setLocale] = useState<keyof typeof messages>('ja')
  *
  *   return (
  *     <i18n.Provider locale={locale} messages={messages[locale]}>

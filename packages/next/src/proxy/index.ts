@@ -25,30 +25,31 @@ export { detectLocale } from '@i18n-tiny/core/middleware'
 interface BaseConfig {
   /** Array of supported locales (e.g., ['en', 'ja']) */
   locales: readonly string[]
-  /** Default locale used for prefix routing redirect target */
+  /** Default locale: decides whether a locale is served without a prefix (rewrite) or redirected */
   defaultLocale: string
   /**
-   * Fallback locale when detection fails or for optional routing
+   * Locale used when detection finds no match or detectLanguage is false
    * @default defaultLocale
    */
   fallbackLocale?: string
 }
 
 /**
- * Standard routing configuration using prefixDefault and detectLanguage
+ * Standard routing configuration using prefixDefault and detectLanguage.
+ * The behavior applies to every URL without a locale prefix, not only /.
  *
  * | prefixDefault | detectLanguage | Behavior |
  * |---------------|----------------|----------|
  * | false | false | / serves fallbackLocale, no detection |
  * | false | true | / detects, redirects non-default, rewrites default |
- * | true | false | / redirects to /[defaultLocale] |
+ * | true | false | / redirects to /[fallbackLocale] |
  * | true | true | / detects and redirects to detected locale |
  */
 interface StandardRoutingConfig extends BaseConfig {
   routing?: never
   /**
    * Whether to prefix the default locale in URLs
-   * - true: / redirects to /[defaultLocale]
+   * - true: / redirects to /[detected locale], or to /[fallbackLocale] without detection
    * - false: / serves the default/detected locale without prefix
    * @default false
    */
