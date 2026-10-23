@@ -1,6 +1,6 @@
 {
   "name": "react-i18n-tiny",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "Alias package for @i18n-tiny/react - Tiny, type-safe i18n library for React",
   "keywords": [
@@ -19,22 +19,32 @@
     "directory": "packages/aliases/react-i18n-tiny"
   },
   "homepage": "https://docs.unlibra.com/i18n-tiny/react/introduction",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "@i18n-tiny/react/dist/index.d.ts",
-      "import": "@i18n-tiny/react/dist/index.js",
-      "require": "@i18n-tiny/react/dist/index.cjs"
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      }
     },
     "./internal": {
-      "types": "@i18n-tiny/react/dist/components.d.ts",
-      "import": "@i18n-tiny/react/dist/components.js",
-      "require": "@i18n-tiny/react/dist/components.cjs"
+      "import": {
+        "types": "./internal.d.ts",
+        "default": "./internal.js"
+      },
+      "require": {
+        "types": "./internal.d.cts",
+        "default": "./internal.cjs"
+      }
     }
   },
   "dependencies": {
-    "@i18n-tiny/react": "1.2.0"
+    "@i18n-tiny/react": "1.2.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

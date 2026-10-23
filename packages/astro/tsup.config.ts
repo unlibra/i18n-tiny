@@ -14,6 +14,8 @@ const sharedConfig: Options = {
   }
 }
 
+// The configs run in parallel, so none of them cleans dist: one that did could
+// delete files another has just written. The build script cleans it first.
 export default defineConfig([
   // Main entry
   {
@@ -21,7 +23,7 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts'
     },
-    clean: true
+    clean: false
   },
   // Middleware entry
   {

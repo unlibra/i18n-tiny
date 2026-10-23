@@ -8,9 +8,6 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: ['react'],
-  esbuildOptions (options) {
-    options.banner = {
-      js: '"use client";'
-    }
-  }
+  // The 'use client' directive at the top of each entry is kept in the output,
+  // so no banner is needed.
 })

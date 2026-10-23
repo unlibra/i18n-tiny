@@ -1,6 +1,6 @@
 {
   "name": "@i18n-tiny/next",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "Tiny, type-safe i18n library for Next.js with automatic type inference and zero dependencies",
   "keywords": [
@@ -28,35 +28,60 @@
   "exports": {
     ".": {
       "react-server": {
-        "types": "./dist/index.react-server.d.ts",
-        "import": "./dist/index.react-server.js",
-        "require": "./dist/index.react-server.cjs"
+        "import": {
+          "types": "./dist/index.react-server.d.ts",
+          "default": "./dist/index.react-server.js"
+        },
+        "require": {
+          "types": "./dist/index.react-server.d.cts",
+          "default": "./dist/index.react-server.cjs"
+        }
       },
-      "types": "./dist/index.react-client.d.ts",
-      "import": "./dist/index.react-client.js",
-      "require": "./dist/index.react-client.cjs"
+      "import": {
+        "types": "./dist/index.react-client.d.ts",
+        "default": "./dist/index.react-client.js"
+      },
+      "require": {
+        "types": "./dist/index.react-client.d.cts",
+        "default": "./dist/index.react-client.cjs"
+      }
     },
     "./types": {
-      "types": "./dist/types.d.ts",
-      "import": "./dist/types.js",
-      "require": "./dist/types.cjs"
+      "import": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/types.js"
+      },
+      "require": {
+        "types": "./dist/types.d.cts",
+        "default": "./dist/types.cjs"
+      }
     },
     "./proxy": {
-      "types": "./dist/proxy/index.d.ts",
-      "import": "./dist/proxy/index.js",
-      "require": "./dist/proxy/index.cjs"
+      "import": {
+        "types": "./dist/proxy/index.d.ts",
+        "default": "./dist/proxy/index.js"
+      },
+      "require": {
+        "types": "./dist/proxy/index.d.cts",
+        "default": "./dist/proxy/index.cjs"
+      }
     },
     "./router": {
-      "types": "./dist/router/index.d.ts",
-      "import": "./dist/router/index.js",
-      "require": "./dist/router/index.cjs"
+      "import": {
+        "types": "./dist/router/index.d.ts",
+        "default": "./dist/router/index.js"
+      },
+      "require": {
+        "types": "./dist/router/index.d.cts",
+        "default": "./dist/router/index.cjs"
+      }
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsup",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
