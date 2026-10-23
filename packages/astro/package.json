@@ -5,6 +5,7 @@
   "description": "Tiny, type-safe i18n library for Astro with automatic type inference and zero dependencies",
   "keywords": [
     "astro",
+    "astro-integration",
     "i18n",
     "internationalization",
     "typescript",
