@@ -1,6 +1,6 @@
 {
   "name": "react-i18n-tiny",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "description": "Alias package for @i18n-tiny/react - Tiny, type-safe i18n library for React",
   "keywords": [
@@ -44,7 +44,7 @@
     }
   },
   "dependencies": {
-    "@i18n-tiny/react": "1.2.0"
+    "@i18n-tiny/react": "1.2.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"
