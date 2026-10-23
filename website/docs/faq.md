@@ -75,4 +75,4 @@ Yes. Keep Astro's `i18n` configuration for routing, and use i18n-tiny for type-s
 
 ## What is the difference between `@i18n-tiny/next` and `next-i18n-tiny`?
 
-Nothing but the name. `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` are aliases that re-export `@i18n-tiny/next`, `@i18n-tiny/astro` and `@i18n-tiny/react`. Use version 1.2.1 or later of the aliases: earlier versions could not be imported.
+Nothing but the name. `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` are aliases that re-export `@i18n-tiny/next`, `@i18n-tiny/astro` and `@i18n-tiny/react`. Use version 1.3.0 or later of the aliases: versions before 1.2.1 could not be imported, and astro-i18n-tiny 1.2.1 lacked `astro-i18n-tiny/locals`.

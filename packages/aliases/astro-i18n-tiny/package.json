@@ -1,6 +1,6 @@
 {
   "name": "astro-i18n-tiny",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "type": "module",
   "description": "Alias package for @i18n-tiny/astro - Type-safe i18n for Astro that ships no client JavaScript",
   "keywords": [
@@ -68,7 +68,7 @@
     }
   },
   "dependencies": {
-    "@i18n-tiny/astro": "1.2.1"
+    "@i18n-tiny/astro": "1.3.0"
   },
   "peerDependencies": {
     "astro": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
