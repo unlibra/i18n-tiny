@@ -2,7 +2,7 @@
   "name": "astro-i18n-tiny",
   "version": "1.2.1",
   "type": "module",
-  "description": "Alias package for @i18n-tiny/astro - Tiny, type-safe i18n library for Astro",
+  "description": "Alias package for @i18n-tiny/astro - Type-safe i18n for Astro that ships no client JavaScript",
   "keywords": [
     "astro",
     "i18n",

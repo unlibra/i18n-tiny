@@ -2,12 +2,12 @@
 layout: home
 title: i18n-tiny
 titleTemplate: "Type-safe i18n for Next.js, Astro & React"
-description: "i18n-tiny is a tiny, type-safe, zero-dependency i18n library for Next.js, Astro and React. One define() call gives you fully typed translations."
+description: "A type-safe, zero-dependency i18n library for Next.js, Astro and React, under 1 KB in the browser. One define() call gives you fully typed translations."
 
 hero:
   name: i18n-tiny
   text: The simplest i18n library for modern frameworks
-  tagline: Type-safe, zero-dependency, minimal setup. One define() call gives you fully typed translations.
+  tagline: Type-safe, zero-dependency, minimal setup, under 1 KB. One define() call gives you fully typed translations.
 
 features:
   - title: Next.js

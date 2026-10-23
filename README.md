@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/)
 
-The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup.
+The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup, and under 1 KB.
 
 One function for fully-typed translations.
 `define()` gives you complete autocomplete for every translation key.
