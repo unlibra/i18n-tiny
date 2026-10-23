@@ -1,26 +1,8 @@
 ---
-description: "Answers to common i18n-tiny questions: supported frameworks, type-safe keys, missing keys, interpolation, plurals, language detection and locale prefixes."
+description: "Answers to common i18n-tiny questions: type-safe keys, missing keys, interpolation, plurals, language detection and locale prefixes."
 ---
 
 # i18n-tiny FAQ
-
-## What is i18n-tiny?
-
-i18n-tiny is a tiny, type-safe internationalization (i18n) library for Next.js, Astro and React. You pass your messages to a single `define()` call, and it returns translation helpers whose keys are typed from those messages.
-
-## Which frameworks and versions are supported?
-
-| Package | Framework versions |
-|---------|--------------------|
-| `@i18n-tiny/next` | Next.js 15 and 16, with React 18 or 19 |
-| `@i18n-tiny/astro` | Astro 4, 5, 6 and 7 |
-| `@i18n-tiny/react` | React 18 and 19 |
-
-For Next.js, the guides and examples use the App Router. See [How to Add i18n to a Next.js App Router Project](./next/usage).
-
-## Does it have any dependencies?
-
-No third-party dependencies. Each package depends only on other `@i18n-tiny` packages, and on the framework you already use as a peer dependency.
 
 ## How are translation keys type-checked?
 
