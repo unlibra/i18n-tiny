@@ -2,7 +2,7 @@
 description: "Switch languages in Astro without sending users back to the home page. Use the normalize prop of the i18n-tiny Link component."
 ---
 
-# Build a Language Switcher That Keeps the Current Page in Astro
+# Astro Language Switcher That Keeps the Page
 
 To create a language switcher in Astro that maintains the current page, use the `normalize` prop of the `Link` component.
 
