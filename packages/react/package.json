@@ -1,6 +1,6 @@
 {
   "name": "@i18n-tiny/react",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "type": "module",
   "description": "Type-safe i18n for React in under 1KB, with automatic type inference and zero dependencies",
   "keywords": [
