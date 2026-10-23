@@ -1,5 +1,5 @@
 ---
-description: "Answers to common i18n-tiny questions: type-safe keys, missing keys, interpolation, plurals, language detection and locale prefixes."
+description: "Answers to common i18n-tiny questions: type-safe keys, missing keys, interpolation, plurals, language detection, locale prefixes and the Next.js proxy."
 ---
 
 # i18n-tiny FAQ
@@ -44,6 +44,22 @@ Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side 
 ## Can the default locale have no URL prefix?
 
 Yes, and it is the default. With `prefixDefault: false`, the proxy or middleware serves the default locale at URLs without a prefix, such as `/about`, and other locales use one, such as `/ja/about`. Set `prefixDefault: true` to prefix every locale, including the default.
+
+## Should I use `middleware.ts` or `proxy.ts` in Next.js?
+
+Use `proxy.ts`. Next.js 16 deprecated the Middleware file convention and renamed it to Proxy, so the file is `proxy.ts` and it exports a function named `proxy`. The i18n-tiny handler comes from `@i18n-tiny/next/proxy`:
+
+```typescript
+// proxy.ts
+import { create } from '@i18n-tiny/next/proxy'
+import { locales, defaultLocale } from './i18n'
+
+export const proxy = create({ locales, defaultLocale })
+```
+
+If your project still has a `middleware.ts`, run the [Next.js codemod](https://nextjs.org/docs/app/api-reference/file-conventions/proxy#migration-to-proxy), which renames the file and the export: `npx @next/codemod@canary middleware-to-proxy .`. For the full setup, including the `matcher`, see [How to Add i18n to a Next.js App Router Project](./next/usage).
+
+Astro still calls this feature middleware: use `@i18n-tiny/astro/middleware` in `src/middleware.ts`.
 
 ## Do I need `generateStaticParams` in every Next.js page?
 
