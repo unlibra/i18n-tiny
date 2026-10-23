@@ -1,3 +1,7 @@
+---
+description: "Set up i18n-tiny in Next.js: create message files, call define(), add locale routing, and use typed translations in Server and Client Components."
+---
+
 # Usage
 
 ## 1. Create Messages

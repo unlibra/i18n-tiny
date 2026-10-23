@@ -1,3 +1,7 @@
+---
+description: "API reference for define() in @i18n-tiny/next: options, return values and types for typed messages and translation functions in Next.js."
+---
+
 # Core
 
 Core i18n functionality.

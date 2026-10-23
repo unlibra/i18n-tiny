@@ -1,3 +1,7 @@
+---
+description: "Install @i18n-tiny/next, or its alias next-i18n-tiny, with npm, pnpm or yarn to add type-safe i18n to your Next.js app."
+---
+
 # Installation
 
 You can install either the standard package or an alias package for shorter imports.

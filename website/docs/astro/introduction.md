@@ -1,3 +1,7 @@
+---
+description: "i18n-tiny for Astro: a tiny, type-safe, zero-dependency i18n library that works with both SSG and SSR, with fully typed translation keys."
+---
+
 # Introduction
 
 A zero-dependency, type-safe, minimal internationalization library for **Astro**.

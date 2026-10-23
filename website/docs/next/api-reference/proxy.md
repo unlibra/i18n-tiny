@@ -1,3 +1,7 @@
+---
+description: "API reference for the i18n-tiny Next.js Proxy (middleware): automatic locale detection, redirects and rewrites for localized routes."
+---
+
 # Proxy
 
 Next.js middleware for automatic locale detection and routing.

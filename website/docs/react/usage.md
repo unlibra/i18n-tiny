@@ -1,3 +1,7 @@
+---
+description: "Set up i18n-tiny in React: create message files, call define(), wrap your app in the Provider, and use typed translations through hooks."
+---
+
 # Usage
 
 ## 1. Create Messages

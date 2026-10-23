@@ -1,3 +1,7 @@
+---
+description: "API reference for @i18n-tiny/next: the core define() function, the Proxy (middleware) for locale routing, and router utilities."
+---
+
 # API Reference
 
 - [Core](./core): Core i18n functionality.

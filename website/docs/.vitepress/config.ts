@@ -2,18 +2,71 @@ import { defineConfig } from 'vitepress'
 
 // Published under https://docs.unlibra.com/i18n-tiny/ as the GitHub Pages
 // site of this repository (see .github/workflows/deploy-website.yml).
+const SITE_URL = 'https://docs.unlibra.com/i18n-tiny/'
+
+// Pages under each top-level directory document one framework package.
+// The framework goes into the title, since the pages share their names.
+const FRAMEWORKS: Record<string, string> = {
+  next: 'Next.js',
+  astro: 'Astro',
+  react: 'React'
+}
+
 export default defineConfig({
   lang: 'en',
   title: 'i18n-tiny',
-  description: 'Tiny i18n library for modern frameworks',
+  description: 'Tiny, type-safe, zero-dependency i18n library for Next.js, Astro and React.',
   base: '/i18n-tiny/',
   cleanUrls: true,
+  // Also feeds <lastmod> in the sitemap; the deploy workflow fetches the full
+  // git history for it.
+  lastUpdated: true,
 
   sitemap: {
-    hostname: 'https://docs.unlibra.com/i18n-tiny/'
+    hostname: SITE_URL
+  },
+
+  transformPageData(pageData, { siteConfig }) {
+    const framework = FRAMEWORKS[pageData.relativePath.split('/')[0]]
+    if (framework) {
+      pageData.titleTemplate = `:title - ${framework} | i18n-tiny`
+    }
+
+    // Matches the URLs cleanUrls serves: "foo/index.md" -> "foo/", "foo.md" -> "foo".
+    const url = SITE_URL + pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+    const title = framework ? `${pageData.title} - ${framework}` : pageData.title
+    const description = pageData.frontmatter.description ?? siteConfig.site.description
+    const head = (pageData.frontmatter.head ??= [])
+    head.push(
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: description }]
+    )
+
+    if (pageData.relativePath === 'index.md') {
+      head.push([
+        'script',
+        { type: 'application/ld+json' },
+        JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareSourceCode',
+          name: 'i18n-tiny',
+          description,
+          url: SITE_URL,
+          codeRepository: 'https://github.com/unlibra/i18n-tiny',
+          programmingLanguage: 'TypeScript',
+          runtimePlatform: ['Next.js', 'Astro', 'React'],
+          license: 'https://opensource.org/licenses/MIT'
+        })
+      ])
+    }
   },
 
   head: [
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:site_name', content: 'i18n-tiny' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
     // The shared unlibra symbol, served from the root of docs.unlibra.com.
     ['link', { rel: 'icon', type: 'image/svg+xml', href: 'https://docs.unlibra.com/brand/symbol.svg' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],

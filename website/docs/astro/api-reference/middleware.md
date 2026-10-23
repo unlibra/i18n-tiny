@@ -1,3 +1,7 @@
+---
+description: "API reference for the i18n-tiny Astro middleware: automatic locale detection and routing for server-side rendered (SSR) sites."
+---
+
 # Middleware
 
 SSR middleware for automatic locale detection and routing.

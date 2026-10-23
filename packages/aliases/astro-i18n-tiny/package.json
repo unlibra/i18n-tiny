@@ -18,7 +18,7 @@
     "url": "https://github.com/unlibra/i18n-tiny.git",
     "directory": "packages/aliases/astro-i18n-tiny"
   },
-  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/astro",
+  "homepage": "https://docs.unlibra.com/i18n-tiny/astro/introduction",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {

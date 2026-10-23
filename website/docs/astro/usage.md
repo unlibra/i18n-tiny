@@ -1,3 +1,7 @@
+---
+description: "Set up i18n-tiny in Astro: create message files, call define(), configure SSG or SSR locale routing, and use typed translations in pages."
+---
+
 # Usage
 
 ## 1. Create Messages
