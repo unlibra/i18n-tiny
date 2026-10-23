@@ -114,12 +114,18 @@ export interface GetLinkHrefOptions {
   locales?: readonly string[]
 }
 
+// Hrefs that are not paths on this site: absolute URLs (https:, mailto:, ...),
+// protocol-relative URLs, and in-page '#' or '?' links
+const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
+
 /**
  * Generate a link href based on current URL pattern
  *
  * Used by Link components to auto-detect whether to add locale prefix.
  * If current URL has locale prefix → add prefix to link
  * If current URL has no prefix → no prefix on link
+ * Hrefs that are not paths on this site, such as 'https://…', 'mailto:…',
+ * '#top' or '?page=2', are returned unchanged.
  *
  * @param href - The target path (e.g., '/about')
  * @param currentPathname - The current URL pathname
@@ -158,6 +164,10 @@ export function getLinkHref(
     : { locale: options }
 
   const { locale: overrideLocale, locales } = opts
+
+  if (NON_PATH_HREF.test(href)) {
+    return href
+  }
 
   // Normalize href by removing locale prefix if locales provided
   let cleanPath = href.startsWith('/') ? href : `/${href}`

@@ -53,7 +53,7 @@ export function define<
   // Server API - fully functional
   const server = {
     getMessages: async (locale: string): Promise<MessageType> => {
-      const moduleObj = messages[locale as L[number]]
+      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
       return structuredClone(moduleObj) as MessageType
     },
 
@@ -61,7 +61,7 @@ export function define<
       locale: string,
       namespace?: N
     ): Promise<(key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string> => {
-      const moduleObj = messages[locale as L[number]]
+      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
       const msgs = structuredClone(moduleObj)
 
       return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {

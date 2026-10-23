@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `astro-i18n-tiny/locals`, the same `Astro.locals` types as
   `@i18n-tiny/astro/locals`.
 
+### Fixed
+
+- `Link` (Next.js and Astro) prefixed hrefs that are not paths on the site:
+  `https://…` and `mailto:…` links, protocol-relative URLs, and `#…` or `?…`
+  links became paths such as `/ja/https://…`. They are now left unchanged.
+- The Next.js `Link` turned a `UrlObject` without `pathname`, such as
+  `{ query: { page: 2 } }`, into a link to `/` or `/ja`.
+- The Astro middleware dropped the query string when it redirected or
+  rewrote a request.
+- In Next.js, `getMessages()` and `getTranslations()` returned no messages
+  for a locale without messages; they now fall back to the default locale,
+  as in Astro.
+
 ## [1.2.1] - 2026-10-23
 
 ### Fixed

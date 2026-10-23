@@ -150,7 +150,8 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
   const detectLanguage = isRewriteMode ? true : (config.detectLanguage ?? true)
 
   return async (context, next) => {
-    const { pathname } = context.url
+    // The query string is carried over to every redirect and rewrite target
+    const { pathname, search } = context.url
     const locals = context.locals as Record<string, unknown>
 
     // Always store locales for Link component normalization
@@ -190,7 +191,7 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
         const cleanPathname = pathname === `/${urlLocale}`
           ? '/'
           : pathname.slice(`/${urlLocale}`.length)
-        return context.rewrite(cleanPathname)
+        return context.rewrite(cleanPathname + search)
       } else {
         // / → detect locale, store in locals, no redirect
         const acceptLanguage = context.request.headers.get('accept-language')
@@ -218,13 +219,13 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
 
       if (prefixDefault) {
         // Always redirect to prefixed URL
-        return context.redirect(newPathname, 302)
+        return context.redirect(newPathname + search, 302)
       } else {
         // Redirect non-default, rewrite default
         if (detectedLocale !== defaultLocale) {
-          return context.redirect(newPathname, 302)
+          return context.redirect(newPathname + search, 302)
         } else {
-          return context.rewrite(newPathname)
+          return context.rewrite(newPathname + search)
         }
       }
     } else {
@@ -235,10 +236,10 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
 
       if (prefixDefault) {
         // Redirect to default locale prefix
-        return context.redirect(newPathname, 302)
+        return context.redirect(newPathname + search, 302)
       } else {
         // Rewrite to fallback locale
-        return context.rewrite(newPathname)
+        return context.rewrite(newPathname + search)
       }
     }
   }

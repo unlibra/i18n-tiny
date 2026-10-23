@@ -107,6 +107,27 @@ describe('create (middleware)', () => {
       expect(redirectCalls[0].pathname).toBe('/ja/about')
     })
 
+    it('should keep the query string when redirecting and rewriting', async () => {
+      const middleware = create(baseConfig)
+      const next = createMockNext()
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await middleware(createMockContext('/about?utm_source=mail', 'ja') as any, next)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await middleware(createMockContext('/?q=1', 'en') as any, next)
+
+      expect(redirectCalls[0].pathname).toBe('/ja/about?utm_source=mail')
+      expect(rewriteCalls[0]).toBe('/en?q=1')
+    })
+
+    it('should keep the query string in rewrite mode', async () => {
+      const middleware = create({ ...baseConfig, routing: 'rewrite' })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await middleware(createMockContext('/ja/about?page=2') as any, createMockNext())
+
+      expect(rewriteCalls[0]).toBe('/about?page=2')
+    })
+
     it('should redirect root to detected locale', async () => {
       const middleware = create(baseConfig)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
