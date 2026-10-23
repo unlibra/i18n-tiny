@@ -4,6 +4,8 @@ description: "Add multiple languages to a React app, step by step: create messag
 
 # How to Add i18n to a React App
 
+**In short:** create one message file per locale, and call `define()` once to get a typed `Provider` and hooks. Wrap your app in `Provider` with the current locale and its messages. Then read translations with `useTranslations()` in any component.
+
 ## 1. Create Messages
 
 Create message files for each locale.

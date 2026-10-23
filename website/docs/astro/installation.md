@@ -4,6 +4,8 @@ description: "Install @i18n-tiny/astro, or its alias astro-i18n-tiny, with npm, 
 
 # Installation
 
+Requires Astro 4, 5, 6 or 7.
+
 You can install either the standard package or an alias package for shorter imports.
 
 ### Standard Package

@@ -4,6 +4,8 @@ description: "Add multiple languages to a Next.js App Router app, step by step: 
 
 # How to Add i18n to a Next.js App Router Project
 
+**In short:** create one message file per locale, and call `define()` once to get typed helpers. Add the i18n-tiny proxy for locale routing, and wrap the root layout in `Provider`. Then read translations with `server.getTranslations()` in Server Components and `client.useTranslations()` in Client Components.
+
 ## 1. Create Messages
 
 Create message files for each locale.

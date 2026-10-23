@@ -4,6 +4,8 @@ description: "Install @i18n-tiny/react, or its alias react-i18n-tiny, with npm, 
 
 # Installation
 
+Requires React 18 or 19.
+
 You can install either the standard package or an alias package for shorter imports.
 
 ### Standard Package

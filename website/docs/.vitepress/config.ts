@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { defineConfig } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 // Published under https://docs.unlibra.com/i18n-tiny/ as the GitHub Pages
 // site of this repository (see .github/workflows/deploy-website.yml).
@@ -10,6 +13,35 @@ const FRAMEWORKS: Record<string, string> = {
   next: 'Next.js',
   astro: 'Astro',
   react: 'React'
+}
+
+// FAQPage structured data built from the page's own "## Question" sections,
+// so it always matches the text that readers see.
+function faqPage(markdown: string) {
+  const sections = markdown.replace(/^---\n[\s\S]*?\n---\n/, '').split(/^## /m).slice(1)
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: sections.map((section) => {
+      const [question, ...answer] = section.split('\n')
+      return {
+        '@type': 'Question',
+        name: toPlainText(question),
+        acceptedAnswer: { '@type': 'Answer', text: toPlainText(answer.join('\n')) }
+      }
+    })
+  }
+}
+
+function toPlainText(markdown: string) {
+  return markdown
+    .replace(/```[^\n]*\n([\s\S]*?)```/g, '$1') // keep the code, drop the fences
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1') // keep the link text
+    .replace(/^\|?[\s|:-]+\|?$/gm, '') // drop table separator rows
+    .replace(/[`*]/g, '')
+    .replace(/\|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export default defineConfig({
@@ -24,6 +56,43 @@ export default defineConfig({
 
   sitemap: {
     hostname: SITE_URL
+  },
+
+  // Generates llms.txt, llms-full.txt and a Markdown copy of each page, for
+  // coding agents and other LLM tools that read the docs.
+  vite: {
+    plugins: [
+      llmstxt({
+        domain: 'https://docs.unlibra.com',
+        // The hint is hidden text on the home page, which search engines may
+        // treat as cloaking. Pages still link to llms.txt in their <head>.
+        injectLLMHint: false,
+        // These index pages only list links to their child pages, which llms.txt
+        // lists anyway. Their Markdown copies move up a level, which would break
+        // their relative links.
+        ignoreFiles: ['*/api-reference/index.md', '*/tips/index.md'],
+        // The site has one sidebar per framework. Group llms.txt by framework
+        // too, so the repeated "API Reference" and "TIPS" sections stay apart.
+        // Keep every group one level deep: the plugin drops the base path from
+        // links in nested groups.
+        sidebar: (sidebar) =>
+          sidebar && !Array.isArray(sidebar)
+            ? Object.entries(sidebar).flatMap(([prefix, items]) => {
+                const framework = FRAMEWORKS[prefix.replaceAll('/', '')]
+                const pages = Array.isArray(items) ? items : items.items
+                return [
+                  { text: framework, items: pages.filter((page) => !page.items) },
+                  ...pages
+                    .filter((page) => page.items)
+                    .map((group) => ({
+                      text: `${framework} ${group.text}`,
+                      items: group.items
+                    }))
+                ]
+              })
+            : sidebar
+      })
+    ]
   },
 
   transformPageData(pageData, { siteConfig }) {
@@ -64,6 +133,11 @@ export default defineConfig({
         })
       ])
     }
+
+    if (pageData.relativePath === 'faq.md') {
+      const markdown = readFileSync(join(siteConfig.srcDir, pageData.relativePath), 'utf-8')
+      head.push(['script', { type: 'application/ld+json' }, JSON.stringify(faqPage(markdown))])
+    }
   },
 
   head: [
@@ -91,6 +165,7 @@ export default defineConfig({
       { text: 'Next.js', link: '/next/introduction', activeMatch: '^/next/' },
       { text: 'Astro', link: '/astro/introduction', activeMatch: '^/astro/' },
       { text: 'React', link: '/react/introduction', activeMatch: '^/react/' },
+      { text: 'FAQ', link: '/faq' },
       {
         text: 'NPM',
         items: [
