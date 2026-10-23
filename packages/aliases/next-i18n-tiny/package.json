@@ -21,7 +21,7 @@
     "url": "https://github.com/unlibra/i18n-tiny.git",
     "directory": "packages/aliases/next-i18n-tiny"
   },
-  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/next",
+  "homepage": "https://docs.unlibra.com/i18n-tiny/next/introduction",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {

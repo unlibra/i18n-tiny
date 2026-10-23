@@ -1,3 +1,7 @@
+---
+description: "API reference for the i18n-tiny Astro integration: generate localized static pages for every locale in static (SSG) builds."
+---
+
 # Integration
 
 SSG integration for static file generation.

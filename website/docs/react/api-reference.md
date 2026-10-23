@@ -1,3 +1,7 @@
+---
+description: "API reference for @i18n-tiny/react: define() options and the Provider, hooks and constants it returns, with their TypeScript types."
+---
+
 # API Reference
 
 ## `define(config)`

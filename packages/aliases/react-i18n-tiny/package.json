@@ -18,7 +18,7 @@
     "url": "https://github.com/unlibra/i18n-tiny.git",
     "directory": "packages/aliases/react-i18n-tiny"
   },
-  "homepage": "https://github.com/unlibra/i18n-tiny/tree/main/packages/react",
+  "homepage": "https://docs.unlibra.com/i18n-tiny/react/introduction",
   "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {

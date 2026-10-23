@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/astro-i18n-tiny.svg)](https://www.npmjs.com/package/astro-i18n-tiny)
 [![npm downloads](https://img.shields.io/npm/dm/astro-i18n-tiny.svg)](https://www.npmjs.com/package/astro-i18n-tiny)
+[![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/astro/introduction)
 
 Alternative package name for [`@i18n-tiny/astro`](https://www.npmjs.com/package/@i18n-tiny/astro).
 

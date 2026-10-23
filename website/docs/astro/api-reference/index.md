@@ -1,3 +1,7 @@
+---
+description: "API reference for @i18n-tiny/astro: the core define() function, SSR middleware, the SSG integration, and router utilities."
+---
+
 # API Reference
 
 - [Core](./core): Core i18n functionality.

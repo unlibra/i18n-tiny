@@ -1,3 +1,7 @@
+---
+description: "Build a Next.js language switcher with i18n-tiny that keeps the current page, using the normalize prop of the localized Link component."
+---
+
 # Language Switcher
 
 To create a language switcher that maintains the current page, use the `normalize` prop of the `Link` component.

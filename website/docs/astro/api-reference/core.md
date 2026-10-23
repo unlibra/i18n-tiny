@@ -1,3 +1,7 @@
+---
+description: "API reference for define() in @i18n-tiny/astro: options, return values and types for typed messages and translation functions in Astro."
+---
+
 # Core
 
 Core i18n functionality.

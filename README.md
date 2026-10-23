@@ -12,9 +12,9 @@ One function for fully-typed translations.
 
 *Optional routing support with `create()` for Next.js and Astro.*
 
-Currently supports: **Next.js** | **Astro**
+Currently supports: **Next.js** | **Astro** | **React**
 
-**[Documentation](https://docs.unlibra.com/i18n-tiny/)**
+**[Documentation](https://docs.unlibra.com/i18n-tiny/)** **[npm](https://www.npmjs.com/org/i18n-tiny)** 
 
 ## Quick Start
 
