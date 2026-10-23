@@ -49,7 +49,7 @@ export const {
 })
 ```
 
-## 3. Setup Proxy (Middleware)
+## 3. Setup Proxy
 
 Create a `proxy.ts` file to handle routing and language detection.
 
@@ -67,16 +67,6 @@ export const config = {
   // Skip internal paths and static files
   matcher: ['/((?!api|_next|.*\\..*).*)']
 }
-```
-
-On Next.js 15, name the file `middleware.ts` and export the handler as `middleware` instead, because Next.js 15 does not recognize a `proxy` export:
-
-```typescript
-// middleware.ts (Next.js 15)
-export const middleware = create({
-  locales,
-  defaultLocale
-})
 ```
 
 ## 4. Integrate into Root Layout

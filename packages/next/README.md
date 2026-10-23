@@ -128,8 +128,6 @@ export const config = {
 }
 ```
 
-On Next.js 15, name the file `middleware.ts` and use `export const middleware = create({ ... })` instead, because Next.js 15 does not recognize a `proxy` export.
-
 #### **4. Use in Layout**
 
 ```typescript
