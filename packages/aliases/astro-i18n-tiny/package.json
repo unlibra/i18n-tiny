@@ -62,7 +62,10 @@
         "default": "./router.cjs"
       }
     },
-    "./router/Link.astro": "./router/Link.astro"
+    "./router/Link.astro": "./router/Link.astro",
+    "./locals": {
+      "types": "./locals.d.ts"
+    }
   },
   "dependencies": {
     "@i18n-tiny/astro": "1.2.1"
