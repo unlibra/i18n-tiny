@@ -5,7 +5,7 @@
  * Type-safe, zero-dependency, minimal setup.
  */
 
-import type { NestedKeys } from '@i18n-tiny/core/internal'
+import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
 import { resolveMessage } from '@i18n-tiny/core/internal'
 
 export interface I18nConfig<
@@ -39,14 +39,15 @@ export interface I18nConfig<
  * ```
  */
 export function define<
-  L extends readonly string[],
-  M extends Record<string, unknown>,
-  Msgs extends Record<L[number], M>
+  Msgs extends Record<string, Record<string, unknown>>,
+  L extends readonly string[] = readonly (keyof Msgs & string)[]
 >(config: { locales?: L; defaultLocale?: L[number]; messages: Msgs }) {
   const { locales, defaultLocale, messages } = config
 
-  type MessageType = Msgs[L[number]]
-  type MessageKeys = NestedKeys<MessageType>
+  // Typed from the messages rather than from locales, so keys are typed even
+  // when locales is left out. Locales without messages fall back at run time.
+  type MessageType = Msgs[keyof Msgs & string]
+  type Namespace = NamespaceKeys<MessageType>
 
   // Get available locales from messages if not provided
   const availableLocales = (locales ?? Object.keys(messages)) as L
@@ -59,7 +60,7 @@ export function define<
    */
   function getMessages(locale: string | undefined): MessageType {
     const resolvedLocale = locale ?? resolvedDefaultLocale
-    const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
+    const moduleObj = messages[resolvedLocale as keyof Msgs] ?? messages[resolvedDefaultLocale as keyof Msgs]
     // Convert ES module namespace to plain object
     return structuredClone(moduleObj) as MessageType
   }
@@ -69,15 +70,16 @@ export function define<
    * Keys are automatically inferred and provide autocomplete
    * Supports variable interpolation with {key} syntax
    */
-  function getTranslations(
+  // With a namespace, keys are relative to it: getTranslations(locale, 'common') takes 'title' for 'common.title'
+  function getTranslations<N extends Namespace | undefined = undefined>(
     locale: string | undefined,
-    namespace?: string
-  ): (key: MessageKeys, vars?: Record<string, string | number>) => string {
+    namespace?: N
+  ): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
     const resolvedLocale = locale ?? resolvedDefaultLocale
-    const moduleObj = messages[resolvedLocale as L[number]] ?? messages[resolvedDefaultLocale as L[number]]
+    const moduleObj = messages[resolvedLocale as keyof Msgs] ?? messages[resolvedDefaultLocale as keyof Msgs]
     const msgs = structuredClone(moduleObj)
 
-    return (key: MessageKeys, vars?: Record<string, string | number>): string => {
+    return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {
       return resolveMessage(msgs, key, namespace, resolvedLocale, vars)
     }
   }

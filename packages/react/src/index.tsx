@@ -9,7 +9,7 @@ import {
   useLocales as baseUseLocales,
   useDefaultLocale as baseUseDefaultLocale
 } from './components'
-import type { NestedKeys } from '@i18n-tiny/core/internal'
+import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
 
 // Re-export types for Provider
 export type { ProviderProps } from './components'
@@ -62,7 +62,7 @@ export function define<
 
   // Type aliases for automatic inference
   type MessageType = Msgs[L[0]]
-  type MessageKeys = NestedKeys<MessageType>
+  type Namespace = NamespaceKeys<MessageType>
 
   // Provider wrapper
   function Provider ({ locale, messages: msgs, children }: {
@@ -87,8 +87,9 @@ export function define<
     return baseUseMessages<MessageType>()
   }
 
-  function useTranslations (namespace?: string): (key: MessageKeys, vars?: Record<string, string | number>) => string {
-    return baseUseTranslations<MessageKeys>(namespace)
+  // With a namespace, keys are relative to it: useTranslations('common') takes 'title' for 'common.title'
+  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
+    return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 
   function useLocale (): string {
