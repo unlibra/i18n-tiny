@@ -17,15 +17,18 @@
     "lint:fix": "eslint packages/*/src --fix",
     "test": "pnpm -r test",
     "check:packages": "node scripts/check-packages.mjs",
+    "size": "size-limit",
     "test:watch": "pnpm --filter @i18n-tiny/next test:watch"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@size-limit/preset-small-lib": "^14.2.0",
     "@types/eslint__js": "^8.42.3",
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "publint": "^0.3.25",
+    "size-limit": "^14.2.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.0"
   },
