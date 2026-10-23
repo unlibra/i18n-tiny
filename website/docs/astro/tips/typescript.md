@@ -1,8 +1,8 @@
 ---
-description: "How i18n-tiny infers TypeScript types from your Astro message files, giving autocomplete and compile-time checks for every translation key."
+description: "Get autocomplete and compile-time errors for translation keys in Astro. i18n-tiny infers types from your message files, so a typo fails the type check."
 ---
 
-# TypeScript Support
+# Catch Missing Translation Keys in Astro with TypeScript
 
 i18n-tiny is built with TypeScript and provides excellent type safety for your translations.
 

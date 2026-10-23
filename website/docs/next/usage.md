@@ -1,8 +1,8 @@
 ---
-description: "Set up i18n-tiny in Next.js: create message files, call define(), add locale routing, and use typed translations in Server and Client Components."
+description: "Add multiple languages to a Next.js App Router app, step by step: create message files, call define(), add locale routing, and use typed translations."
 ---
 
-# Usage
+# How to Add i18n to a Next.js App Router Project
 
 ## 1. Create Messages
 

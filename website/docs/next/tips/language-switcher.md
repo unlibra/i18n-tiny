@@ -1,8 +1,8 @@
 ---
-description: "Build a Next.js language switcher with i18n-tiny that keeps the current page, using the normalize prop of the localized Link component."
+description: "Switch languages in Next.js without sending users back to the home page. Use the normalize prop of the i18n-tiny Link component with usePathname()."
 ---
 
-# Language Switcher
+# Build a Language Switcher That Keeps the Current Page in Next.js
 
 To create a language switcher that maintains the current page, use the `normalize` prop of the `Link` component.
 

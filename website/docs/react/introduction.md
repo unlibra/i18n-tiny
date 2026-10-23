@@ -1,8 +1,8 @@
 ---
-description: "i18n-tiny for React: a tiny, type-safe, zero-dependency i18n library with a Provider and hooks, automatic type inference and no global state."
+description: "Add i18n to a React app with a Provider and hooks. i18n-tiny infers types from your messages, needs zero dependencies, and uses no global state."
 ---
 
-# Introduction
+# Type-Safe i18n for React with Hooks
 
 A tiny, type-safe i18n library for **React** with automatic type inference and zero dependencies.
 

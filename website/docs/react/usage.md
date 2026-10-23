@@ -1,8 +1,8 @@
 ---
-description: "Set up i18n-tiny in React: create message files, call define(), wrap your app in the Provider, and use typed translations through hooks."
+description: "Add multiple languages to a React app, step by step: create message files, call define(), wrap your app in the Provider, and use typed hooks."
 ---
 
-# Usage
+# How to Add i18n to a React App
 
 ## 1. Create Messages
 

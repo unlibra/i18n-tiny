@@ -28,13 +28,16 @@ export default defineConfig({
 
   transformPageData(pageData, { siteConfig }) {
     const framework = FRAMEWORKS[pageData.relativePath.split('/')[0]]
+    // Titles phrased as a problem already name the framework.
+    const frameworkSuffix =
+      framework && !pageData.title.includes(framework) ? ` - ${framework}` : ''
     if (framework) {
-      pageData.titleTemplate = `:title - ${framework} | i18n-tiny`
+      pageData.titleTemplate = `:title${frameworkSuffix} | i18n-tiny`
     }
 
     // Matches the URLs cleanUrls serves: "foo/index.md" -> "foo/", "foo.md" -> "foo".
     const url = SITE_URL + pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
-    const title = framework ? `${pageData.title} - ${framework}` : pageData.title
+    const title = pageData.title + frameworkSuffix
     const description = pageData.frontmatter.description ?? siteConfig.site.description
     const head = (pageData.frontmatter.head ??= [])
     head.push(

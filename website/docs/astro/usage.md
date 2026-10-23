@@ -1,8 +1,8 @@
 ---
-description: "Set up i18n-tiny in Astro: create message files, call define(), configure SSG or SSR locale routing, and use typed translations in pages."
+description: "Add multiple languages to an Astro site, step by step: create message files, call define(), set up SSG or SSR locale routing, and use typed translations."
 ---
 
-# Usage
+# How to Add i18n to an Astro Site
 
 ## 1. Create Messages
 
