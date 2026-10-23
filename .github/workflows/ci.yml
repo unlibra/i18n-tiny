@@ -53,15 +53,43 @@ jobs:
       - name: Check bundle size
         run: pnpm size
 
+  # Builds the VitePress site, as the deploy workflow does on main, so dead
+  # links and config errors fail the pull request instead of the deploy.
+  website:
+    name: Build website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      # The website is not part of the root workspace and pins its own pnpm.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: website/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
   # Job to verify that all tests passed
   # Use this job name in Branch Protection Rules
   status-check:
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [test, website]
     if: always()
     steps:
       - name: Check test status
-        if: ${{ needs.test.result != 'success' }}
+        if: ${{ needs.test.result != 'success' || needs.website.result != 'success' }}
         run: exit 1
       - name: All tests passed
         run: echo "All tests passed"
