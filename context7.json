@@ -1,0 +1,12 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "i18n-tiny",
+  "description": "Type-safe i18n for Next.js, Astro and React in under 1KB, with one define() call and zero dependencies.",
+  "folders": ["website/docs"],
+  "rules": [
+    "Call define() once in a shared module, such as i18n.ts, and import the helpers it returns from that module.",
+    "In Next.js, use the server helpers (getMessages, getTranslations) in Server Components and the client hooks (useMessages, useTranslations) in Client Components. The client hooks throw in Server Components.",
+    "Interpolated values are not HTML-escaped. Sanitize user input before rendering a translation with dangerouslySetInnerHTML or set:html.",
+    "Import only the documented entry points. The internal subpaths of @i18n-tiny/core and @i18n-tiny/react are shared between the packages and are not part of the public API."
+  ]
+}
