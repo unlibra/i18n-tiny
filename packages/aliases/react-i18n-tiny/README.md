@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/react-i18n-tiny.svg)](https://www.npmjs.com/package/react-i18n-tiny)
 [![npm downloads](https://img.shields.io/npm/dm/react-i18n-tiny.svg)](https://www.npmjs.com/package/react-i18n-tiny)
+[![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/react/introduction)
 
 Alternative package name for [`@i18n-tiny/react`](https://www.npmjs.com/package/@i18n-tiny/react).
 

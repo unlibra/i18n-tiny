@@ -1,3 +1,7 @@
+---
+description: "Combine Astro's built-in i18n routing with i18n-tiny's type-safe translations, configured in astro.config.mjs."
+---
+
 # Using with Astro's Built-in i18n
 
 Astro 4.0+ has built-in routing support for i18n. You can combine it with i18n-tiny to get the best of both worlds: Astro's native routing and i18n-tiny's type-safe translations.

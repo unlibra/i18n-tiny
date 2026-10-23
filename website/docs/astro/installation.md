@@ -1,3 +1,7 @@
+---
+description: "Install @i18n-tiny/astro, or its alias astro-i18n-tiny, with npm, pnpm or yarn to add type-safe i18n to your Astro site."
+---
+
 # Installation
 
 You can install either the standard package or an alias package for shorter imports.

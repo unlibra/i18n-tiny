@@ -1,3 +1,7 @@
+---
+description: "Statically generate every locale in Next.js App Router with i18n-tiny by defining generateStaticParams once in the root layout instead of every page."
+---
+
 # Static Site Generation (SSG)
 
 When using Static Site Generation in Next.js (App Router), you typically need to define `generateStaticParams` in every page (`page.tsx`).

@@ -1,3 +1,7 @@
+---
+description: "Tips for i18n-tiny with Astro: TypeScript support, a language switcher that keeps the current page, and use with Astro's built-in i18n routing."
+---
+
 # TIPS
 
 - [TypeScript Support](./typescript): Type safety for your translations.

@@ -1,3 +1,7 @@
+---
+description: "API reference for i18n-tiny router utilities in Astro: a localized Link component and helpers for locale-aware navigation."
+---
+
 # Router
 
 Router utilities for localized navigation.
