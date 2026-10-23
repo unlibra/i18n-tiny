@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/astro/introduction)
 
-A zero-dependency, type-safe, minimal internationalization library for Astro.
+A zero-dependency, type-safe, minimal internationalization library for Astro that ships no client JavaScript.
 Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
 Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
 

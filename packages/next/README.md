@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/next/introduction)
 
-A dependency-free, type-safe, minimal i18n library for Next.js.
+A dependency-free, type-safe, minimal i18n library for Next.js, under 1KB in the browser.
 Simply prepare translation files and call the define function—usable in both Server and Client Components immediately.
 All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
 Static generation features like `generateStaticParams` can be written cleanly without per-page duplication.
@@ -20,7 +20,7 @@ Routing, prefixes, and automatic language detection are all handled via a single
 - **Server Components**: Native RSC support
 - **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages. No per-page configuration needed.
 - **Simple API**: Single configuration, minimal boilerplate
-- **Small**: under 1 KB minified and gzipped in the browser
+- **Small**: under 1KB minified and gzipped in the browser
 - **No global state**: Pure function factory pattern
 
 ## Installation

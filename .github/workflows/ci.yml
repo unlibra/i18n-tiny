@@ -49,6 +49,10 @@ jobs:
       - name: Check packages
         run: pnpm check:packages
 
+      # Fails when a browser bundle grows past the 1KB the docs promise.
+      - name: Check bundle size
+        run: pnpm size
+
   # Job to verify that all tests passed
   # Use this job name in Branch Protection Rules
   status-check:

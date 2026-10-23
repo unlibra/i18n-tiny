@@ -16,7 +16,7 @@ All key paths such as `messages.site.title` and `t("site.title")` are fully type
 - **Server Components**: Native RSC support.
 - **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages.
 - **Simple API**: Single configuration, minimal boilerplate.
-- **Lightweight**: Under 1 KB minified and gzipped in the browser.
+- **Lightweight**: Under 1KB minified and gzipped in the browser.
 - **No global state**: Pure function factory pattern.
 
 ## Installation

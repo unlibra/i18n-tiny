@@ -2,7 +2,7 @@
   "name": "@i18n-tiny/next",
   "version": "1.2.1",
   "type": "module",
-  "description": "Tiny, type-safe i18n library for Next.js with automatic type inference and zero dependencies",
+  "description": "Type-safe i18n for Next.js in under 1KB, with automatic type inference and zero dependencies",
   "keywords": [
     "nextjs",
     "next",
