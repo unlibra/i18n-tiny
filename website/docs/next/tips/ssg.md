@@ -2,7 +2,7 @@
 description: "Stop repeating generateStaticParams in every page. Define it once in the root layout and Next.js generates every page for every locale."
 ---
 
-# Generate Static Pages for Every Locale in Next.js
+# Statically Generate Every Locale in Next.js
 
 When using Static Site Generation in Next.js (App Router), you typically need to define `generateStaticParams` in every page (`page.tsx`).
 
