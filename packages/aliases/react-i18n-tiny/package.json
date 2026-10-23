@@ -19,18 +19,28 @@
     "directory": "packages/aliases/react-i18n-tiny"
   },
   "homepage": "https://docs.unlibra.com/i18n-tiny/react/introduction",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "@i18n-tiny/react/dist/index.d.ts",
-      "import": "@i18n-tiny/react/dist/index.js",
-      "require": "@i18n-tiny/react/dist/index.cjs"
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      }
     },
     "./internal": {
-      "types": "@i18n-tiny/react/dist/components.d.ts",
-      "import": "@i18n-tiny/react/dist/components.js",
-      "require": "@i18n-tiny/react/dist/components.cjs"
+      "import": {
+        "types": "./internal.d.ts",
+        "default": "./internal.js"
+      },
+      "require": {
+        "types": "./internal.d.cts",
+        "default": "./internal.cjs"
+      }
     }
   },
   "dependencies": {

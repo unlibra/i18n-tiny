@@ -29,6 +29,8 @@ async function addUseClientDirective(files: string[]) {
   }
 }
 
+// The configs run in parallel, so none of them cleans dist: one that did could
+// delete files another has just written. The build script cleans it first.
 export default defineConfig([
   // Router utilities (Client Components)
   {
@@ -36,7 +38,7 @@ export default defineConfig([
     entry: {
       'router/index': 'src/router/index.ts'
     },
-    clean: true,
+    clean: false,
     async onSuccess () {
       await addUseClientDirective([
         'dist/router/index.js',

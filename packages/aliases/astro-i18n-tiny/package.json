@@ -19,30 +19,50 @@
     "directory": "packages/aliases/astro-i18n-tiny"
   },
   "homepage": "https://docs.unlibra.com/i18n-tiny/astro/introduction",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "@i18n-tiny/astro/dist/index.d.ts",
-      "import": "@i18n-tiny/astro/dist/index.js",
-      "require": "@i18n-tiny/astro/dist/index.cjs"
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      }
     },
     "./middleware": {
-      "types": "@i18n-tiny/astro/dist/middleware.d.ts",
-      "import": "@i18n-tiny/astro/dist/middleware.js",
-      "require": "@i18n-tiny/astro/dist/middleware.cjs"
+      "import": {
+        "types": "./middleware.d.ts",
+        "default": "./middleware.js"
+      },
+      "require": {
+        "types": "./middleware.d.cts",
+        "default": "./middleware.cjs"
+      }
     },
     "./integration": {
-      "types": "@i18n-tiny/astro/dist/integration.d.ts",
-      "import": "@i18n-tiny/astro/dist/integration.js",
-      "require": "@i18n-tiny/astro/dist/integration.cjs"
+      "import": {
+        "types": "./integration.d.ts",
+        "default": "./integration.js"
+      },
+      "require": {
+        "types": "./integration.d.cts",
+        "default": "./integration.cjs"
+      }
     },
     "./router": {
-      "types": "@i18n-tiny/astro/dist/router.d.ts",
-      "import": "@i18n-tiny/astro/dist/router.js",
-      "require": "@i18n-tiny/astro/dist/router.cjs"
+      "import": {
+        "types": "./router.d.ts",
+        "default": "./router.js"
+      },
+      "require": {
+        "types": "./router.d.cts",
+        "default": "./router.cjs"
+      }
     },
-    "./router/Link.astro": "@i18n-tiny/astro/src/router/Link.astro"
+    "./router/Link.astro": "./router/Link.astro"
   },
   "dependencies": {
     "@i18n-tiny/astro": "1.2.0"

@@ -25,24 +25,44 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.js",
-      "require": "./dist/middleware.cjs"
+      "import": {
+        "types": "./dist/middleware.d.ts",
+        "default": "./dist/middleware.js"
+      },
+      "require": {
+        "types": "./dist/middleware.d.cts",
+        "default": "./dist/middleware.cjs"
+      }
     },
     "./router": {
-      "types": "./dist/router.d.ts",
-      "import": "./dist/router.js",
-      "require": "./dist/router.cjs"
+      "import": {
+        "types": "./dist/router.d.ts",
+        "default": "./dist/router.js"
+      },
+      "require": {
+        "types": "./dist/router.d.cts",
+        "default": "./dist/router.cjs"
+      }
     },
     "./integration": {
-      "types": "./dist/integration.d.ts",
-      "import": "./dist/integration.js",
-      "require": "./dist/integration.cjs"
+      "import": {
+        "types": "./dist/integration.d.ts",
+        "default": "./dist/integration.js"
+      },
+      "require": {
+        "types": "./dist/integration.d.cts",
+        "default": "./dist/integration.cjs"
+      }
     },
     "./router/*": "./src/router/*",
     "./locals": {
@@ -55,7 +75,7 @@
     "src/locals.d.ts"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsup",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

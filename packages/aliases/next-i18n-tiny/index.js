@@ -1,3 +1,2 @@
-// Alias package for @i18n-tiny/next
-// Both packages provide the exact same functionality
+// Alias of @i18n-tiny/next: re-exports it unchanged.
 export * from '@i18n-tiny/next'

@@ -1,3 +1,2 @@
-// Alias package for @i18n-tiny/astro
-// Both packages provide the exact same functionality
+// Alias of @i18n-tiny/astro: re-exports it unchanged.
 export * from '@i18n-tiny/astro'

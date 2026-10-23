@@ -22,33 +22,48 @@
     "directory": "packages/aliases/next-i18n-tiny"
   },
   "homepage": "https://docs.unlibra.com/i18n-tiny/next/introduction",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "react-server": {
-        "types": "@i18n-tiny/next/dist/index.react-server.d.ts",
-        "import": "@i18n-tiny/next/dist/index.react-server.js",
-        "require": "@i18n-tiny/next/dist/index.react-server.cjs"
+      "import": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
       },
-      "types": "@i18n-tiny/next/dist/index.react-client.d.ts",
-      "import": "@i18n-tiny/next/dist/index.react-client.js",
-      "require": "@i18n-tiny/next/dist/index.react-client.cjs"
+      "require": {
+        "types": "./index.d.cts",
+        "default": "./index.cjs"
+      }
     },
     "./types": {
-      "types": "@i18n-tiny/next/dist/types.d.ts",
-      "import": "@i18n-tiny/next/dist/types.js",
-      "require": "@i18n-tiny/next/dist/types.cjs"
+      "import": {
+        "types": "./types.d.ts",
+        "default": "./types.js"
+      },
+      "require": {
+        "types": "./types.d.cts",
+        "default": "./types.cjs"
+      }
     },
     "./proxy": {
-      "types": "@i18n-tiny/next/dist/proxy/index.d.ts",
-      "import": "@i18n-tiny/next/dist/proxy/index.js",
-      "require": "@i18n-tiny/next/dist/proxy/index.cjs"
+      "import": {
+        "types": "./proxy.d.ts",
+        "default": "./proxy.js"
+      },
+      "require": {
+        "types": "./proxy.d.cts",
+        "default": "./proxy.cjs"
+      }
     },
     "./router": {
-      "types": "@i18n-tiny/next/dist/router/index.d.ts",
-      "import": "@i18n-tiny/next/dist/router/index.js",
-      "require": "@i18n-tiny/next/dist/router/index.cjs"
+      "import": {
+        "types": "./router.d.ts",
+        "default": "./router.js"
+      },
+      "require": {
+        "types": "./router.d.cts",
+        "default": "./router.cjs"
+      }
     }
   },
   "dependencies": {
