@@ -1,8 +1,8 @@
 ---
-description: "i18n-tiny for Next.js: a tiny, type-safe, zero-dependency i18n library for the App Router. Fully typed translations in Server and Client Components."
+description: "Add i18n to the Next.js App Router without heavy setup. i18n-tiny gives fully typed translations in Server and Client Components, with zero dependencies."
 ---
 
-# Introduction
+# Type-Safe i18n for the Next.js App Router
 
 A dependency-free, type-safe, minimal i18n library for **Next.js**.
 

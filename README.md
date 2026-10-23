@@ -14,7 +14,7 @@ One function for fully-typed translations.
 
 Currently supports: **Next.js** | **Astro** | **React**
 
-**[Documentation](https://docs.unlibra.com/i18n-tiny/)** **[npm](https://www.npmjs.com/org/i18n-tiny)** 
+**[Documentation](https://docs.unlibra.com/i18n-tiny/)** · **[npm](https://www.npmjs.com/org/i18n-tiny)**
 
 ## Quick Start
 
@@ -89,12 +89,47 @@ const t = getTranslations(locale)
 
 [Full documentation →](./packages/astro/README.md)
 
+### React
+
+[![npm version](https://img.shields.io/npm/v/@i18n-tiny/react.svg)](https://www.npmjs.com/package/@i18n-tiny/react)
+[![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/react.svg)](https://www.npmjs.com/package/@i18n-tiny/react)
+
+```bash
+npm install @i18n-tiny/react
+```
+
+```typescript
+// i18n.ts - define() gives you everything
+import { define } from '@i18n-tiny/react'
+
+export const { Provider, useMessages, useTranslations } = define({
+  locales: ['en', 'ja'] as const,
+  defaultLocale: 'en',
+  messages: { en: enMessages, ja: jaMessages }
+})
+```
+
+```tsx
+// Wrap your app
+<Provider locale={locale} messages={messages[locale]}>
+  <App />
+</Provider>
+
+// Any component
+const messages = useMessages()
+const t = useTranslations()
+return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
+return <p>{t('greeting', { name })}</p>  // ← Interpolation
+```
+
+[Full documentation →](./packages/react/README.md)
+
 ## Features
 
 - **One function**: Just `define()` - get Provider, hooks, and utilities
 - **Type-safe**: Full TypeScript support with automatic type inference
 - **Zero dependencies**: No external i18n libraries needed
-- **Framework support**: Next.js, Astro
+- **Framework support**: Next.js, Astro, React
 - **Minimal bundle**: No bloat, just what you need
 
 ## Security
