@@ -8,7 +8,7 @@ Router utilities for localized navigation.
 
 ## `Link`
 
-A localized Link component that automatically detects the locale from the current URL.
+A localized wrapper around the Next.js `Link` component. It takes the current locale from the `Provider` (`useLocale()`), so use it inside the `Provider`. The current URL only decides whether to add a locale prefix: on a prefixed URL such as `/ja/page`, `href="/about"` becomes `/ja/about`; on a URL without a prefix, it stays `/about`.
 
 **Props:**
 
@@ -21,10 +21,11 @@ A localized Link component that automatically detects the locale from the curren
 
 **Example:**
 
-```typescript
+```tsx
+import { usePathname } from 'next/navigation'
 import { Link } from '@i18n-tiny/next/router'
 
-// Auto-localized (maintains current URL pattern)
+// Auto-localized (current locale, current URL pattern)
 <Link href="/about">About</Link>
 
 // Explicit locale override
@@ -92,9 +93,9 @@ import { removeLocalePrefix } from '@i18n-tiny/next/router'
 removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
 ```
 
-## `hasLocalePrefix(pathname, locales)`
+## `hasLocalePrefix(pathname, locale)`
 
-Checks if a pathname contains a locale prefix.
+Checks if a pathname starts with the given locale prefix.
 Can be imported from `@i18n-tiny/next/router`.
 
 **Parameters:**
@@ -102,40 +103,16 @@ Can be imported from `@i18n-tiny/next/router`.
 | Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
 | `pathname` | `string` | Required | The pathname to check |
-| `locales` | `readonly string[]` | Required | Array of supported locales |
+| `locale` | `string` | Required | The locale to check for |
 
 **Returns:**
-- `boolean`: `true` if prefix exists, otherwise `false`.
+- `boolean`: `true` if the pathname is `/[locale]` or starts with `/[locale]/`, otherwise `false`.
 
 **Example:**
 
 ```typescript
 import { hasLocalePrefix } from '@i18n-tiny/next/router'
 
-hasLocalePrefix('/ja/about', ['en', 'ja'])  // true
-```
-
-## `getLinkHref(href, currentPathname, currentLocale, options?)`
-
-Utility to generate final URLs for links. Used internally by the `Link` component.
-Can be imported from `@i18n-tiny/next/router`.
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | :---: | --- |
-| `href` | `string` | Required | Destination path |
-| `currentPathname` | `string` | Required | Current pathname |
-| `currentLocale` | `string` \| `undefined` | Required | Current locale |
-| `options` | `GetLinkHrefOptions` | | Options for explicit locale or normalization |
-
-**Returns:**
-- `string`: The final generated URL.
-
-**Example:**
-
-```typescript
-import { getLinkHref } from '@i18n-tiny/next/router'
-
-const href = getLinkHref('/about', '/ja', 'ja', { locale: 'en' }) // '/en/about'
+hasLocalePrefix('/ja/about', 'ja')  // true
+hasLocalePrefix('/about', 'ja')     // false
 ```

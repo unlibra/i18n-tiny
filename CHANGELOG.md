@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- With a namespace, translation keys are typed relative to it:
+  `useTranslations('common')` and `getTranslations(locale, 'common')` accept
+  `'title'` for `'common.title'`, in `@i18n-tiny/react`, `@i18n-tiny/next` and
+  `@i18n-tiny/astro`. The namespace must be a path to a nested object. Code
+  that passed full key paths together with a namespace, which returned the key
+  itself at run time, now fails the type check.
+- `define()` in `@i18n-tiny/astro` takes its types from the messages, so keys
+  stay typed when `locales` is left out or passed without `as const`. Locales
+  without messages still fall back to the default locale.
+
+### Added
+
+- `astro-i18n-tiny/locals`, the same `Astro.locals` types as
+  `@i18n-tiny/astro/locals`.
+
+### Fixed
+
+- `Link` (Next.js and Astro) prefixed hrefs that are not paths on the site:
+  `https://…` and `mailto:…` links, protocol-relative URLs, and `#…` or `?…`
+  links became paths such as `/ja/https://…`. They are now left unchanged.
+- The Next.js `Link` turned a `UrlObject` without `pathname`, such as
+  `{ query: { page: 2 } }`, into a link to `/` or `/ja`.
+- The Astro middleware dropped the query string when it redirected or
+  rewrote a request.
+- In Next.js, `getMessages()` and `getTranslations()` returned no messages
+  for a locale without messages; they now fall back to the default locale,
+  as in Astro.
+
 ## [1.2.1] - 2026-10-23
 
 ### Fixed

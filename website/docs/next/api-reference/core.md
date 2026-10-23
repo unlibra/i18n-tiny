@@ -55,7 +55,7 @@ Returns the message object for the specified locale (for Server Components).
 | `locale` | `string` | Required | The locale to retrieve messages for |
 
 **Returns:**
-- `Messages`: The message object for the given locale.
+- `Promise<Messages>`: A promise of the message object for the given locale.
 
 **Example:**
 
@@ -73,12 +73,12 @@ Returns a translation function `t` for the specified locale (for Server Componen
 | Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
 | `locale` | `string` | Required | The locale to use for translations |
-| `namespace` | `string` | | Optional namespace to scope the keys |
+| `namespace` | `string` | | Optional path to a nested object in the messages, such as `'nav'` (type-checked). Keys are then relative to it. |
 
 **Returns:**
-- `t(key, vars?)`: The translation function.
-    - `key`: The message key (type-safe with autocomplete).
-    - `vars`: Interpolation variables (optional, required variables are typed).
+- `Promise<t>`: A promise of the translation function `t(key, vars?)`.
+    - `key`: The message key (type-safe with autocomplete). With a namespace, the key is relative to it.
+    - `vars`: Interpolation variables for `{name}` placeholders (optional). The type is `Record<string, string | number>`; variable names are not type-checked.
     - Returns: `string` (The translated string).
 
 **Example:**
@@ -88,7 +88,8 @@ const t = await getTranslations('en')
 const title = t('common.title')
 
 const tNav = await getTranslations('en', 'nav')
-const home = tNav('home') // Shortcut for 'nav.home'
+const home = tNav('home') // Resolves 'nav.home'
+tNav('nav.home')          // Type error: keys are relative to the namespace
 ```
 
 ### Client-side APIs
@@ -115,16 +116,16 @@ A hook to retrieve the translation function `t` from the current context (for Cl
 
 | Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
-| `namespace` | `string` | | Optional namespace to scope the keys |
+| `namespace` | `string` | | Optional path to a nested object in the messages, such as `'common'` (type-checked). Keys are then relative to it. |
 
 **Returns:**
-- `t(key, vars?)`: The translation function.
+- `t(key, vars?)`: The translation function, the same as the one from `getTranslations`.
 
 **Example:**
 
 ```tsx
 const t = useTranslations('common')
-return <p>{t('welcome', { name: 'John' })}</p>
+return <p>{t('welcome', { name: 'John' })}</p> // Resolves 'common.welcome'
 ```
 
 #### `i18n.client.useLocale()`

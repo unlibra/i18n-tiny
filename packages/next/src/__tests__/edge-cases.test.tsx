@@ -60,6 +60,23 @@ describe('Edge Cases & Bug Fixes', () => {
       expect(link.closest('a')).toHaveAttribute('href', '/ja/about')
     })
 
+    it('should leave hrefs that are not site paths unchanged', async () => {
+      const { usePathname } = await import('next/navigation')
+      vi.mocked(usePathname).mockReturnValue('/ja/home')
+
+      const messages = await i18n.server.getMessages('ja')
+      render(
+        <i18n.Provider locale="ja" messages={messages}>
+          <Link href="https://github.com/x">External</Link>
+          <Link href="#top">Top</Link>
+          <Link href={{ query: { page: '2' } }}>Next page</Link>
+        </i18n.Provider>
+      )
+      expect(screen.getByText('External').closest('a')).toHaveAttribute('href', 'https://github.com/x')
+      expect(screen.getByText('Top').closest('a')).toHaveAttribute('href', '#top')
+      expect(screen.getByText('Next page').closest('a')?.getAttribute('href')).not.toMatch(/^\/ja/)
+    })
+
     it('should handle relative paths correctly by adding a leading slash', async () => {
       const { usePathname } = await import('next/navigation')
       vi.mocked(usePathname).mockReturnValue('/ja/home')

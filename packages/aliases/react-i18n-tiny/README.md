@@ -18,25 +18,34 @@ npm install react-i18n-tiny
 npm install @i18n-tiny/react
 ```
 
+Use version 1.2.1 or later of `react-i18n-tiny`: earlier versions could not be imported.
+
 ## Documentation
 
-See the full documentation at [@i18n-tiny/react](https://github.com/unlibra/i18n-tiny/tree/main/packages/react).
+See the full documentation at [docs.unlibra.com](https://docs.unlibra.com/i18n-tiny/react/introduction).
 
 ## Quick Start
 
 ```typescript
 // i18n.ts
 import { define } from 'react-i18n-tiny'
+import enMessages from './messages/en'
+import jaMessages from './messages/ja'
+
+export const messages = { en: enMessages, ja: jaMessages }
 
 export const i18n = define({
   locales: ['en', 'ja'] as const,
   defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  messages
 })
 
 // App.tsx
+import { useState } from 'react'
+import { i18n, messages } from './i18n'
+
 function App() {
-  const [locale, setLocale] = useState('en')
+  const [locale, setLocale] = useState(i18n.defaultLocale)
 
   return (
     <i18n.Provider locale={locale} messages={messages[locale]}>
@@ -46,6 +55,8 @@ function App() {
 }
 
 // Component.tsx
+import { i18n } from './i18n'
+
 function Component() {
   const messages = i18n.useMessages()
   const t = i18n.useTranslations()

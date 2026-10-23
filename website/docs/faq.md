@@ -6,7 +6,11 @@ description: "Answers to common i18n-tiny questions: type-safe keys, missing key
 
 ## How are translation keys type-checked?
 
-`define()` infers the key types from the messages you pass to it. Your editor autocompletes keys such as `t('common.title')`, and a key that does not exist fails the TypeScript type check. See [Type-Check Translation Keys in Astro](./astro/tips/typescript) for examples.
+`define()` infers the key types from the messages you pass to it. Your editor autocompletes keys such as `t('common.title')`, and a key that does not exist fails the TypeScript type check.
+
+With a namespace, such as `useTranslations('common')` or `getTranslations(locale, 'common')`, keys are relative to it: `t('title')` reads `common.title`, and the full path `t('common.title')` fails the type check. The namespace must point to a nested object. Without a namespace, use full paths.
+
+A key that points to a nested object, such as `t('common')` without a namespace, still passes the type check. At run time it returns the key and, in development, logs a warning. See [Type-Check Translation Keys in Astro](./astro/tips/typescript) for examples.
 
 ## What happens if a key is missing at runtime?
 
@@ -39,7 +43,7 @@ There are no built-in plural rules; messages support placeholders only. To choos
 
 ## How do I detect the visitor's language?
 
-Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering. By default, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header. If it is another locale, they redirect to its prefixed URL, such as `/ja/about`. If it is the default locale, they serve the page as is. Set `detectLanguage: false` to turn this off. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
+Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering. By default, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header. If it is another locale, they redirect to its prefixed URL, such as `/ja/about`. If it is the default locale, they rewrite the request internally and keep the URL unchanged. Set `detectLanguage: false` to turn this off. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
 
 ## Can the default locale have no URL prefix?
 

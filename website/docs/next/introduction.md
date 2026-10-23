@@ -14,7 +14,7 @@ All key paths such as `messages.site.title` and `t("site.title")` are fully type
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for `messages.site.name`, `t('common.title')`, and all nested keys.
 - **Zero dependencies**: No external i18n libraries needed.
 - **Server Components**: Native RSC support.
-- **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages.
+- **Minimal SSG**: With the `app/[locale]` root layout, define `generateStaticParams` once there; Next.js applies it to every page below.
 - **Simple API**: Single configuration, minimal boilerplate.
 - **Lightweight**: Under 1KB minified and gzipped in the browser.
 - **No global state**: Pure function factory pattern.

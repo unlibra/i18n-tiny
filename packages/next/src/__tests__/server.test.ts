@@ -51,6 +51,19 @@ describe('Server version - define()', () => {
       expect(messages.common.world).toBe('World')
     })
 
+    it('should fall back to the default locale for a locale without messages', async () => {
+      const i18n = define({
+        locales: ['en', 'ja'] as const,
+        defaultLocale: 'en',
+        messages: { en: enMessages, ja: jaMessages }
+      })
+
+      const messages = await i18n.server.getMessages('fr')
+      const t = await i18n.server.getTranslations('fr')
+      expect(messages.common.hello).toBe('Hello')
+      expect(t('common.hello')).toBe('Hello')
+    })
+
     it('should return Japanese messages', async () => {
       const i18n = define({
         locales: ['en', 'ja'] as const,

@@ -19,7 +19,7 @@
  * <Link href="/" locale={false}>English</Link>
  *
  * // With href normalization (removes existing locale prefix before processing)
- * // Useful when href comes from usePathname() or similar
+ * // Useful when href is the current path, such as Astro.url.pathname
  * <Link href="/ja/about" locale="en" normalize>English</Link>  // → /en/about
  * ```
  */

@@ -466,6 +466,19 @@ describe('Router Matrix Tests', () => {
      * Auto-detects whether to add locale prefix based on current URL pattern
      */
 
+    describe('hrefs that are not site paths', () => {
+      it.each([
+        ['https://github.com/x'],
+        ['mailto:hello@example.com'],
+        ['//cdn.example.com/a.js'],
+        ['#top'],
+        ['?page=2']
+      ])('leaves %s unchanged', (href) => {
+        expect(getLinkHref(href, '/ja/page', 'ja')).toBe(href)
+        expect(getLinkHref(href, '/ja/page', 'ja', { locale: 'en', locales: ['en', 'ja'] })).toBe(href)
+      })
+    })
+
     describe('auto-detect mode (overrideLocale = undefined)', () => {
       it.each([
         // [href, currentPathname, currentLocale, expected, description]

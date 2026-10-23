@@ -110,9 +110,7 @@ describe('define()', () => {
       })
 
       const t = await i18n.server.getTranslations('en', 'common')
-      // @ts-expect-error Testing namespace with partial key
       expect(t('hello')).toBe('Hello')
-      // @ts-expect-error Testing namespace with partial key
       expect(t('world')).toBe('World')
     })
   })

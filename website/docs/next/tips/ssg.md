@@ -4,27 +4,36 @@ description: "Stop repeating generateStaticParams in every page. Define it once 
 
 # Statically Generate Every Locale in Next.js
 
-When using Static Site Generation in Next.js (App Router), you typically need to define `generateStaticParams` in every page (`page.tsx`).
+In the Next.js App Router, the params that a layout returns from `generateStaticParams` apply to every page below it. This is Next.js behavior, not an i18n-tiny feature.
 
-However, **with i18n-tiny, you only need to define it once in the root layout (`layout.tsx`).**
+**With i18n-tiny's `app/[locale]` root layout, you only need to define it once there**, instead of in every page (`page.tsx`).
 
-This prevents you from having to write repetitive `generateStaticParams` for every new page, keeping your codebase extremely clean.
+This prevents you from having to write repetitive `generateStaticParams` for every new page, keeping your codebase clean. Pages with their own dynamic segments, such as `[slug]`, still define `generateStaticParams` for those segments.
 
 ## Implementation
 
 Simply add the following code to your `app/[locale]/layout.tsx`:
 
-```typescript
+```tsx
 // app/[locale]/layout.tsx
+import type { ReactNode } from 'react'
 import { locales } from '@/i18n'
 
 // By adding this to the root layout once,
-// all child pages will be statically generated at build time.
+// Next.js statically generates all child pages for every locale at build time.
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-export default function Layout({ children, params }) {
+export default async function Layout({
+  children,
+  params
+}: {
+  children: ReactNode
+  params: Promise<{ locale: string }>
+}) {
   // ...
 }
 ```
+
+This applies to the default `[locale]` routing. [Rewrite mode](../api-reference/proxy#rewrite-mode) reads the locale from request headers, so its pages are rendered on each request.

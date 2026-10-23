@@ -10,15 +10,15 @@
 A dependency-free, type-safe, minimal i18n library for Next.js, under 1KB in the browser.
 Simply prepare translation files and call the define function—usable in both Server and Client Components immediately.
 All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
-Static generation features like `generateStaticParams` can be written cleanly without per-page duplication.
-Routing, prefixes, and automatic language detection are all handled via a single middleware `create()` API.
+With the `app/[locale]` root layout, `generateStaticParams` is defined once there, and Next.js applies it to every page below.
+Routing, prefixes, and automatic language detection are all handled by a single `create()` call in the Next.js Proxy (formerly Middleware).
 
 ## Features
 
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for `messages.site.name`, `t('common.title')`, and all nested keys
 - **Zero dependencies**: No external i18n libraries needed
 - **Server Components**: Native RSC support
-- **Minimal SSG**: Define `generateStaticParams` once in `layout.tsx` to statically generate all pages. No per-page configuration needed.
+- **Minimal SSG**: With the `app/[locale]` root layout, define `generateStaticParams` once there; Next.js applies it to every page below. No per-page configuration needed.
 - **Simple API**: Single configuration, minimal boilerplate
 - **Small**: under 1KB minified and gzipped in the browser
 - **No global state**: Pure function factory pattern
@@ -132,16 +132,27 @@ export const config = {
 
 ```typescript
 // app/[locale]/layout.tsx
-import { Provider, getMessages, type Locale } from '@/i18n'
+import type { ReactNode } from 'react'
+import { Provider, getMessages } from '@/i18n'
 
-export default async function Layout({ children, params }) {
+export default async function Layout({
+  children,
+  params
+}: {
+  children: ReactNode
+  params: Promise<{ locale: string }>
+}) {
   const { locale } = await params
   const messages = await getMessages(locale)
 
   return (
-    <Provider locale={locale} messages={messages}>
-      {children}
-    </Provider>
+    <html lang={locale}>
+      <body>
+        <Provider locale={locale} messages={messages}>
+          {children}
+        </Provider>
+      </body>
+    </html>
   )
 }
 ```
@@ -225,15 +236,19 @@ Defines an i18n instance with automatic type inference.
   defaultLocale: string
   server: {
     getMessages: (locale: string) => Promise<Messages>
-    getTranslations: (locale: string, namespace?: string) => Promise<TranslationFunction>
+    getTranslations: (locale: string, namespace?: Namespace) => Promise<TranslationFunction>
   }
   client: {
     useMessages: () => Messages
-    useTranslations: (namespace?: string) => TranslationFunction
+    useTranslations: (namespace?: Namespace) => TranslationFunction
     useLocale: () => string
+    useLocales: () => readonly string[]
+    useDefaultLocale: () => string
   }
 }
 ```
+
+`Namespace` is a path to a nested object in your messages, such as `'common'`. With a namespace, the keys of `TranslationFunction` are relative to it and still type-checked: `useTranslations('common')` accepts `'title'` for `common.title`, and `'common.title'` is a type error. Interpolation variables are `Record<string, string | number>` and are not type-checked.
 
 #### `DefineConfig` (type)
 
@@ -243,27 +258,29 @@ Type for the configuration object passed to `define()`.
 
 #### `create(config)`
 
-Creates a Next.js proxy (middleware) handler for i18n routing.
+Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequest) => NextResponse`.
 
 **Parameters:**
 
 | Parameter        | Type                | Default         | Description                                                             |
 | ---------------- | ------------------- | --------------- | ----------------------------------------------------------------------- |
 | `locales`        | `readonly string[]` | -               | Array of supported locales                                              |
-| `defaultLocale`  | `string`            | -               | Default locale for redirects                                            |
-| `fallbackLocale` | `string`            | `defaultLocale` | Fallback when detection fails                                           |
+| `defaultLocale`  | `string`            | -               | Default locale, served without a prefix when `prefixDefault` is `false` |
+| `fallbackLocale` | `string`            | `defaultLocale` | Used when detection fails, and when `detectLanguage` is `false`         |
 | `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs                                |
 | `detectLanguage` | `boolean`           | `true`          | Whether to detect from Accept-Language                                  |
 | `routing`        | `'rewrite'`         | -               | SSR rewrite mode (mutually exclusive with prefixDefault/detectLanguage) |
 
 **Routing Behavior Matrix:**
 
-| prefixDefault | detectLanguage | `/` behavior                                     |
-| ------------- | -------------- | ------------------------------------------------ |
-| `false`       | `false`        | Serves fallbackLocale, no detection              |
-| `false`       | `true`         | Detects, redirects non-default, rewrites default |
-| `true`        | `false`        | Redirects to `/[defaultLocale]`                  |
-| `true`        | `true`         | Detects and redirects to detected locale         |
+Applies to every URL without a locale prefix, such as `/` or `/about` (the path is kept). URLs with a locale prefix are served as is.
+
+| prefixDefault | detectLanguage | Behavior for URLs without a locale prefix                     |
+| ------------- | -------------- | ------------------------------------------------------------- |
+| `false`       | `false`        | Serves fallbackLocale (rewrite), no detection                 |
+| `false`       | `true`         | Detects, redirects non-default, rewrites default              |
+| `true`        | `false`        | Redirects to `/[fallbackLocale]` (default: `defaultLocale`)   |
+| `true`        | `true`         | Detects and redirects to detected locale                      |
 
 **Examples:**
 
@@ -296,15 +313,29 @@ export const proxy = create({
 })
 ```
 
+In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale in the `x-locale` header (detected from Accept-Language for URLs without a prefix). Put routes directly under `app/`, without `app/[locale]`, and read the locale in Server Components with `(await headers()).get('x-locale')`. See [Rewrite Mode](https://docs.unlibra.com/i18n-tiny/next/api-reference/proxy#rewrite-mode).
+
 #### `ProxyConfig` (type)
 
 Type for the configuration object passed to `create()`.
+
+#### `detectLocale(acceptLanguage, supportedLocales)`
+
+Detects the best matching locale from the Accept-Language header.
+
+```typescript
+import { detectLocale } from '@i18n-tiny/next/proxy'
+
+const acceptLanguage = request.headers.get('accept-language')
+const locale = detectLocale(acceptLanguage, ['en', 'ja'])
+// Returns: 'en' | 'ja' | null
+```
 
 ### `@i18n-tiny/next/router`
 
 #### `Link`
 
-Localized Link component that auto-detects locale from current URL.
+Localized Link component. It takes the current locale from the `Provider` (`useLocale()`), so use it inside the `Provider`. The current URL only decides whether to add a locale prefix: on `/ja/page`, `href="/about"` becomes `/ja/about`; on a URL without a prefix, it stays `/about`.
 
 ```typescript
 import { Link } from '@i18n-tiny/next/router'
@@ -323,28 +354,12 @@ import { Link } from '@i18n-tiny/next/router'
 <Link href="/" locale={condition && 'ja'}>Conditional</Link>
 ```
 
-### `@i18n-tiny/core`
-
-#### `detectLocale(acceptLanguage, supportedLocales)`
-
-Detects the best matching locale from the Accept-Language header.
-
-```typescript
-import { detectLocale } from '@i18n-tiny/core/middleware'
-
-const acceptLanguage = request.headers.get('accept-language')
-const locale = detectLocale(acceptLanguage, ['en', 'ja'])
-// Returns: 'en' | 'ja' | null
-```
-
-### `@i18n-tiny/core/router`
-
 #### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
 
 Generate a localized path with locale prefix.
 
 ```typescript
-import { getLocalizedPath } from '@i18n-tiny/core/router'
+import { getLocalizedPath } from '@i18n-tiny/next/router'
 
 getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
 getLocalizedPath('/about', 'en', 'en')        // '/about'
@@ -356,11 +371,22 @@ getLocalizedPath('/about', 'en', 'en', true)  // '/en/about'
 Remove locale prefix from pathname.
 
 ```typescript
-import { removeLocalePrefix } from '@i18n-tiny/core/router'
+import { removeLocalePrefix } from '@i18n-tiny/next/router'
 
 removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
 removeLocalePrefix('/ja', ['en', 'ja'])        // '/'
 removeLocalePrefix('/about', ['en', 'ja'])     // '/about'
+```
+
+#### `hasLocalePrefix(pathname, locale)`
+
+Check if pathname starts with the given locale prefix.
+
+```typescript
+import { hasLocalePrefix } from '@i18n-tiny/next/router'
+
+hasLocalePrefix('/ja/about', 'ja')  // true
+hasLocalePrefix('/about', 'ja')     // false
 ```
 
 ## Advanced Usage
@@ -371,32 +397,44 @@ To generate static pages for all locales at build time, add `generateStaticParam
 
 ```typescript
 // app/[locale]/layout.tsx
+import type { ReactNode } from 'react'
 import { locales } from '@/i18n'
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }
 
-export default function Layout({ children, params }) {
+export default async function Layout({
+  children,
+  params
+}: {
+  children: ReactNode
+  params: Promise<{ locale: string }>
+}) {
   // ...
 }
 ```
+
+The params apply to every page below the layout. This is Next.js behavior.
 
 ### Language Switcher
 
 ```typescript
 'use client'
-import { Link, useLocale } from '@/i18n'
+import { usePathname } from 'next/navigation'
+import { Link } from '@/i18n'
 
 export function LanguageSwitcher() {
   const pathname = usePathname()
 
   return (
     <div>
-      <Link href={pathname} locale="en" normalize> // /ja/about -> /en/about
+      {/* /ja/about -> /en/about */}
+      <Link href={pathname} locale="en" normalize>
         English
       </Link>
-      <Link href={pathname} locale="ja" normalize> // /en/about -> /ja/about
+      {/* /en/about -> /ja/about */}
+      <Link href={pathname} locale="ja" normalize>
         日本語
       </Link>
     </div>

@@ -75,10 +75,13 @@ export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
   // Get locales for normalization if enabled
   const normalizeLocales = normalize ? locales : undefined
 
-  // Handle both string and UrlObject
+  // Handle both string and UrlObject. A UrlObject without pathname, such as
+  // { query: { page: 2 } }, points at the current page and is left as is.
   const localizedHref = typeof href === 'string'
     ? getLinkHref(href, pathname ?? '', currentLocale, { locale, locales: normalizeLocales })
-    : { ...href, pathname: getLinkHref(href.pathname ?? '', pathname ?? '', currentLocale, { locale, locales: normalizeLocales }) }
+    : href.pathname == null
+      ? href
+      : { ...href, pathname: getLinkHref(href.pathname, pathname ?? '', currentLocale, { locale, locales: normalizeLocales }) }
 
   return <NextLink href={localizedHref} {...props} />
 }

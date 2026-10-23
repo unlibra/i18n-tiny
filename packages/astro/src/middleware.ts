@@ -22,10 +22,10 @@ const DEFAULT_EXCLUDE_PATHS = ['/_astro', '/_image']
 interface BaseConfig {
   /** Array of supported locales (e.g., ['en', 'ja']) */
   locales: readonly string[]
-  /** Default locale used for prefix routing redirect target */
+  /** Default locale: decides whether a locale is served without a prefix (rewrite) or redirected */
   defaultLocale: string
   /**
-   * Fallback locale when detection fails or for optional routing
+   * Locale used when detection finds no match or detectLanguage is false
    * @default defaultLocale
    */
   fallbackLocale?: string
@@ -39,20 +39,21 @@ interface BaseConfig {
 }
 
 /**
- * Standard routing configuration using prefixDefault and detectLanguage
+ * Standard routing configuration using prefixDefault and detectLanguage.
+ * The behavior applies to every URL without a locale prefix, not only /.
  *
  * | prefixDefault | detectLanguage | Behavior |
  * |---------------|----------------|----------|
  * | false | false | / serves fallbackLocale, no detection |
  * | false | true | / detects, redirects non-default, rewrites default |
- * | true | false | / redirects to /[defaultLocale] |
+ * | true | false | / redirects to /[fallbackLocale] |
  * | true | true | / detects and redirects to detected locale |
  */
 interface StandardRoutingConfig extends BaseConfig {
   routing?: never
   /**
    * Whether to prefix the default locale in URLs
-   * - true: / redirects to /[defaultLocale]
+   * - true: / redirects to /[detected locale], or to /[fallbackLocale] without detection
    * - false: / serves the default/detected locale without prefix
    * @default false
    */
@@ -149,7 +150,8 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
   const detectLanguage = isRewriteMode ? true : (config.detectLanguage ?? true)
 
   return async (context, next) => {
-    const { pathname } = context.url
+    // The query string is carried over to every redirect and rewrite target
+    const { pathname, search } = context.url
     const locals = context.locals as Record<string, unknown>
 
     // Always store locales for Link component normalization
@@ -189,7 +191,7 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
         const cleanPathname = pathname === `/${urlLocale}`
           ? '/'
           : pathname.slice(`/${urlLocale}`.length)
-        return context.rewrite(cleanPathname)
+        return context.rewrite(cleanPathname + search)
       } else {
         // / → detect locale, store in locals, no redirect
         const acceptLanguage = context.request.headers.get('accept-language')
@@ -217,13 +219,13 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
 
       if (prefixDefault) {
         // Always redirect to prefixed URL
-        return context.redirect(newPathname, 302)
+        return context.redirect(newPathname + search, 302)
       } else {
         // Redirect non-default, rewrite default
         if (detectedLocale !== defaultLocale) {
-          return context.redirect(newPathname, 302)
+          return context.redirect(newPathname + search, 302)
         } else {
-          return context.rewrite(newPathname)
+          return context.rewrite(newPathname + search)
         }
       }
     } else {
@@ -234,10 +236,10 @@ export function create(config: MiddlewareConfig): MiddlewareHandler {
 
       if (prefixDefault) {
         // Redirect to default locale prefix
-        return context.redirect(newPathname, 302)
+        return context.redirect(newPathname + search, 302)
       } else {
         // Rewrite to fallback locale
-        return context.rewrite(newPathname)
+        return context.rewrite(newPathname + search)
       }
     }
   }

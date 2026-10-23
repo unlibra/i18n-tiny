@@ -97,7 +97,6 @@ describe('define', () => {
 
     it('should support namespace', () => {
       const t = i18n.getTranslations('en', 'common')
-      // @ts-expect-error Testing namespace with partial key
       expect(t('title')).toBe('Hello')
     })
 

@@ -10,7 +10,7 @@ import {
   useLocales as baseUseLocales,
   useDefaultLocale as baseUseDefaultLocale
 } from '@i18n-tiny/react/internal'
-import type { NestedKeys } from '@i18n-tiny/core/internal'
+import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
 import { resolveMessage } from '@i18n-tiny/core/internal'
 
 // Re-export DefineConfig for users who want to type their config
@@ -50,7 +50,7 @@ export function define<
   // Type aliases for automatic inference
   // Use the default locale's message type for consistent typing
   type MessageType = Msgs[L[0]]
-  type MessageKeys = NestedKeys<MessageType>
+  type Namespace = NamespaceKeys<MessageType>
 
   // Server API
   const server = {
@@ -59,7 +59,7 @@ export function define<
      * Types are automatically inferred from the messages passed to define
      */
     getMessages: async (locale: string): Promise<MessageType> => {
-      const moduleObj = messages[locale as L[number]]
+      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
       // Convert ES module namespace to plain object (required for Client Components)
       return structuredClone(moduleObj) as MessageType
     },
@@ -68,14 +68,14 @@ export function define<
      * Get translation function for server components
      * Keys are automatically inferred and provide autocomplete
      */
-    getTranslations: async (
+    getTranslations: async <N extends Namespace | undefined = undefined>(
       locale: string,
-      namespace?: string
-    ): Promise<(key: MessageKeys, vars?: Record<string, string | number>) => string> => {
-      const moduleObj = messages[locale as L[number]]
+      namespace?: N
+    ): Promise<(key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string> => {
+      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
       const msgs = structuredClone(moduleObj)
 
-      return (key: MessageKeys, vars?: Record<string, string | number>): string => {
+      return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {
         return resolveMessage(msgs, key, namespace, locale, vars)
       }
     }
@@ -104,8 +104,9 @@ export function define<
     return baseUseMessages<MessageType>()
   }
 
-  function useTranslations (namespace?: string): (key: MessageKeys, vars?: Record<string, string | number>) => string {
-    return baseUseTranslations<MessageKeys>(namespace)
+  // With a namespace, keys are relative to it: useTranslations('common') takes 'title' for 'common.title'
+  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
+    return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 
   function useLocale (): string {
