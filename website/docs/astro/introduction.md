@@ -7,7 +7,7 @@ description: "Add i18n to an Astro site, static or server-rendered, without heav
 A zero-dependency, type-safe, minimal internationalization library for **Astro**.
 
 Works with both SSG and SSR. Configuration is handled by a single `define` function, providing full auto-completion for key paths like `messages.common.title`.
-Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
+For static builds, each `[locale]` page lists its locales in a short `getStaticPaths` that maps over the `locales` returned by `define`.
 
 ## Features
 
@@ -30,9 +30,11 @@ npm install @i18n-tiny/astro
 ```typescript
 // src/i18n.ts
 import { define } from '@i18n-tiny/astro'
+import enMessages from './messages/en'
+import jaMessages from './messages/ja'
 
-export const { getMessages, getTranslations } = define({
-  locales: ['en', 'ja'] as const,
+export const { locales, getMessages, getTranslations } = define({
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en: enMessages, ja: jaMessages }
 })
@@ -41,7 +43,13 @@ export const { getMessages, getTranslations } = define({
 ```astro
 ---
 // src/pages/[locale]/index.astro
-import { getMessages, getTranslations } from '../../i18n'
+import { locales, getMessages, getTranslations } from '../../i18n'
+
+// Static output: build one page per locale
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
 const { locale } = Astro.params
 
 const messages = getMessages(locale)
@@ -58,6 +66,8 @@ const t = getTranslations(locale)
   </body>
 </html>
 ```
+
+With `output: 'server'` and an adapter (SSR), leave out `getStaticPaths`.
 
 ## Next Steps
 

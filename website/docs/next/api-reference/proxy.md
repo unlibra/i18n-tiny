@@ -4,33 +4,35 @@ description: "API reference for the i18n-tiny Next.js Proxy (middleware): automa
 
 # Proxy
 
-Next.js middleware for automatic locale detection and routing.
+Next.js Proxy (formerly Middleware) for automatic locale detection and routing.
 
 ## `create(config)`
 
-Creates a Next.js Proxy (Middleware) handler for i18n routing.
+Creates a Next.js Proxy handler for i18n routing.
 
 **Parameters:**
 
 | Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
 | `locales` | `readonly string[]` | Required | - | Array of supported locales |
-| `defaultLocale` | `string` | Required | - | Default locale for redirects |
-| `fallbackLocale` | `string` | | `defaultLocale` | Fallback if detection fails |
+| `defaultLocale` | `string` | Required | - | Default locale, served without a prefix when `prefixDefault` is `false` |
+| `fallbackLocale` | `string` | | `defaultLocale` | Used when detection fails, and for every URL without a locale prefix when `detectLanguage` is `false` |
 | `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale in URLs |
 | `detectLanguage` | `boolean` | | `true` | Whether to detect language from Accept-Language header |
 | `routing` | `'rewrite'` | | - | SSR rewrite mode (mutually exclusive with prefixDefault/detectLanguage) |
 
 **Returns:**
-- `(request: NextRequest) => NextResponse | void`: Next.js middleware function.
+- `(request: NextRequest) => NextResponse`: Next.js Proxy function.
 
 **Routing Behavior Matrix:**
 
-| prefixDefault | detectLanguage | Behavior at `/` |
+URLs with a locale prefix, such as `/ja/about`, are served as is. The matrix applies to every URL without a locale prefix, such as `/` or `/about`. The path is kept: `/about` goes to `/ja/about`.
+
+| prefixDefault | detectLanguage | Behavior for URLs without a locale prefix |
 | --- | --- | --- |
-| `false` | `false` | Serves fallbackLocale, no detection |
+| `false` | `false` | Serves fallbackLocale (rewrite), no detection |
 | `false` | `true` | Detects, redirects non-default, rewrites default |
-| `true` | `false` | Redirects to `/[defaultLocale]` |
+| `true` | `false` | Redirects to `/[fallbackLocale]` (default: `defaultLocale`) |
 | `true` | `true` | Detects and redirects to detected locale |
 
 **Example:**
@@ -56,6 +58,49 @@ export const proxy = create({
   routing: 'rewrite'
 })
 ```
+
+## Rewrite Mode
+
+With `routing: 'rewrite'`, the proxy never redirects. It passes the locale in the `x-locale` header:
+
+- `/ja/about` is rewritten to `/about`, with `x-locale: ja`.
+- A URL without a locale prefix, such as `/about`, is served as is. The locale is detected from Accept-Language, or `fallbackLocale` if nothing matches.
+
+Because the proxy rewrites to paths without a prefix, put your routes directly under `app/`, without an `app/[locale]` segment:
+
+```text
+app/
+├── layout.tsx
+├── page.tsx
+└── about/
+    └── page.tsx
+```
+
+Read the locale with `headers()` in Server Components:
+
+```tsx
+// app/layout.tsx
+import type { ReactNode } from 'react'
+import { headers } from 'next/headers'
+import { Provider, server, defaultLocale } from '@/i18n'
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = (await headers()).get('x-locale') ?? defaultLocale
+  const messages = await server.getMessages(locale)
+
+  return (
+    <html lang={locale}>
+      <body>
+        <Provider locale={locale} messages={messages}>
+          {children}
+        </Provider>
+      </body>
+    </html>
+  )
+}
+```
+
+Pages read the locale the same way. Because they use `headers()`, they are rendered on each request, so [Static Site Generation](../tips/ssg) does not apply to this mode.
 
 ## `detectLocale(acceptLanguage, supportedLocales)`
 

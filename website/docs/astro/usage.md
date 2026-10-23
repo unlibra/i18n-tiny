@@ -38,7 +38,7 @@ import { define } from '@i18n-tiny/astro'
 import en from './messages/en'
 import ja from './messages/ja'
 
-export const { getMessages, getTranslations } = define({
+export const { locales, getMessages, getTranslations } = define({
   messages: { en, ja }
 })
 ```
@@ -50,6 +50,8 @@ Depending on your project's output mode, you can add an Integration (for SSG) or
 ### SSG
 
 Use the Integration if you want to copy the default locale's content to the root directory after build, allowing access without a prefix (e.g., `/about` instead of `/en/about`).
+
+The pages are copied as they are, so links inside the copied root pages still point to `/en/...`.
 
 ```typescript
 // astro.config.mjs
@@ -66,7 +68,18 @@ export default defineConfig({
 
 ### SSR
 
-Use the Middleware for Server-Side Rendering to handle language detection and redirects.
+Use the Middleware for Server-Side Rendering to handle language detection and redirects. The middleware runs on each request, so set `output: 'server'` and add an adapter:
+
+```typescript
+// astro.config.mjs
+import { defineConfig } from 'astro/config'
+import node from '@astrojs/node'
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' })
+})
+```
 
 ```typescript
 // src/middleware.ts
@@ -88,7 +101,13 @@ Retrieve messages within your `[locale]` directory.
 ```astro
 ---
 // src/pages/[locale]/index.astro
-import { getMessages } from '../../i18n'
+import { locales, getMessages } from '../../i18n'
+
+// Static output: build one page per locale (leave this out with output: 'server')
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
 const { locale } = Astro.params
 
 const messages = getMessages(locale)

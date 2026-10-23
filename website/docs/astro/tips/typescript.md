@@ -12,6 +12,8 @@ When you define your i18n instance using `define`, the types are automatically i
 
 ```typescript
 // i18n.ts
+import { define } from '@i18n-tiny/astro'
+
 const messages = {
   en: {
     welcome: "Welcome, {name}!"
@@ -28,7 +30,6 @@ const t = getTranslations('en')
 
 t('welcome', { name: 'John' }) // Valid
 t('invalid') // TypeScript Error: Argument of type '"invalid"' is not assignable...
-t('welcome') // TypeScript Error: Property 'name' is missing...
 ```
 
 ## Astro Locals Type
@@ -39,8 +40,12 @@ For type-safe access to `Astro.locals.locale` (when using SSR Rewrite Mode), add
 /// <reference types="@i18n-tiny/astro/locals" />
 ```
 
+With the alias package, `astro-i18n-tiny/locals` provides the same types.
+
 This provides types for:
 
-- `Astro.locals.locale` - Current locale string
-- `Astro.locals.locales` - Array of supported locales
-- `Astro.locals.originalPathname` - Original pathname (before rewrite)
+- `Astro.locals.locale` - Current locale string (rewrite mode only)
+- `Astro.locals.locales` - Array of supported locales (every routing mode)
+- `Astro.locals.originalPathname` - Original pathname before rewrite (rewrite mode only)
+
+These values are set by the i18n-tiny middleware.

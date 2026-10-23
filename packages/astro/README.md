@@ -9,7 +9,7 @@
 
 A zero-dependency, type-safe, minimal internationalization library for Astro that ships no client JavaScript.
 Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
-Locale handling in `getStaticPaths` requires only minimal setup, avoiding repetitive per-page definitions.
+For static builds, each `[locale]` page lists its locales in a short `getStaticPaths` that maps over your `locales` array.
 
 **SSR**: Use `middleware.create()` for routing with automatic language detection.
 **SSG**: Use `integration.create()` to copy default locale content to root at build time.
@@ -33,6 +33,8 @@ pnpm add @i18n-tiny/astro
 # or
 yarn add @i18n-tiny/astro
 ```
+
+Requires Astro 4, 5, 6 or 7. The middleware uses `context.rewrite`, which became stable in Astro 4.13, so use 4.13 or later with Astro 4.
 
 ## Usage
 
@@ -95,7 +97,7 @@ import { define } from '@i18n-tiny/astro'
 import enMessages from './messages/en'
 import jaMessages from './messages/ja'
 
-// IMPORTANT: `as const` is required for type inference
+// Keys are typed from the messages. `as const` only keeps the Locale type narrow ('en' | 'ja')
 export const locales = ['en', 'ja'] as const
 export type Locale = (typeof locales)[number]
 export const defaultLocale: Locale = 'en'
@@ -108,6 +110,19 @@ export const { getMessages, getTranslations } = define({
 ```
 
 #### **3. Setup middleware**
+
+The middleware runs on each request, so it needs `output: 'server'` and an adapter:
+
+```typescript
+// astro.config.mjs
+import { defineConfig } from 'astro/config'
+import node from '@astrojs/node'
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' })
+})
+```
 
 ```typescript
 // src/middleware.ts
@@ -150,6 +165,8 @@ const t = getTranslations(locale)
 
 That's it! **Types are automatically inferred** - no manual type annotations needed.
 
+For static output (no middleware), each `[locale]` page also needs `getStaticPaths`. See [Static Site Generation (SSG)](#static-site-generation-ssg).
+
 ## API Reference
 
 ### `@i18n-tiny/astro`
@@ -166,6 +183,10 @@ Defines an i18n instance with automatic type inference.
 | `defaultLocale` | `string`                   | Default locale (optional, uses first locale)                  |
 | `messages`      | `Record<Locale, Messages>` | Messages object keyed by locale                               |
 
+Types are taken from `messages`, so keys are typed even when `locales` is left out, and `locales` needs no `as const`. `getMessages` and `getTranslations` fall back to `defaultLocale` when the locale is `undefined` or has no messages.
+
+With a namespace, keys are relative to it: `getTranslations(locale, 'common')` takes `'title'` for `common.title`, and a full path is a type error. The namespace must point to a nested object. Interpolation variables (`vars`) are `Record<string, string | number>` and are not type-checked.
+
 **Returns:**
 
 ```typescript
@@ -177,9 +198,17 @@ Defines an i18n instance with automatic type inference.
 }
 ```
 
-#### `DefineConfig` (type)
+#### `DefineConfig<L, M>` (type)
 
-Type for the configuration object passed to `define()`.
+A config type with two type arguments, `L` for the locale strings and `M` for the message type. Unlike the argument of `define()`, `locales` and `defaultLocale` are required in it:
+
+```typescript
+interface DefineConfig<L extends string, M extends Record<string, any>> {
+  locales: readonly L[]
+  defaultLocale: L
+  messages: Record<L, M>
+}
+```
 
 ### `@i18n-tiny/astro/middleware` (SSR only)
 
@@ -187,27 +216,31 @@ Type for the configuration object passed to `define()`.
 
 Creates an Astro middleware handler for i18n routing.
 
-> **Note**: Middleware only works in SSR mode. For SSG, use the integration instead.
+> **Note**: Middleware only works in SSR mode (`output: 'server'` with an adapter). For SSG, use the integration instead.
 
 **Parameters:**
 
 | Parameter        | Type                | Default         | Description                                                             |
 | ---------------- | ------------------- | --------------- | ----------------------------------------------------------------------- |
 | `locales`        | `readonly string[]` | -               | Array of supported locales                                              |
-| `defaultLocale`  | `string`            | -               | Default locale for redirects                                            |
-| `fallbackLocale` | `string`            | `defaultLocale` | Fallback when detection fails                                           |
-| `excludePaths`   | `string[]`          | `[]`            | Paths to exclude from i18n handling                                     |
+| `defaultLocale`  | `string`            | -               | Decides whether a URL without a prefix is redirected or rewritten       |
+| `fallbackLocale` | `string`            | `defaultLocale` | Locale used when detection finds no match or is turned off              |
+| `excludePaths`   | `string[]`          | `[]`            | Additional paths to exclude from i18n handling (prefix match)           |
 | `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs                                |
 | `detectLanguage` | `boolean`           | `true`          | Whether to detect from Accept-Language                                  |
 | `routing`        | `'rewrite'`         | -               | SSR rewrite mode (mutually exclusive with prefixDefault/detectLanguage) |
 
+`/_astro` and `/_image` are always excluded. `excludePaths` uses a prefix match (`startsWith`), so `/api` also matches `/apiary`. Requests for static files (such as `.png`, `.css` or `.js`) are skipped as well.
+
 **Routing Behavior Matrix:**
 
-| prefixDefault | detectLanguage | `/` behavior                                     |
+This applies to every URL without a locale prefix (`/`, `/about`, ...). Redirects go to the detected locale, or to `fallbackLocale` when detection finds no match. `defaultLocale` only decides between redirect and rewrite.
+
+| prefixDefault | detectLanguage | Behavior for a URL without a locale prefix       |
 | ------------- | -------------- | ------------------------------------------------ |
-| `false`       | `false`        | Serves fallbackLocale, no detection              |
+| `false`       | `false`        | Serves fallbackLocale (rewrite), no detection    |
 | `false`       | `true`         | Detects, redirects non-default, rewrites default |
-| `true`        | `false`        | Redirects to `/[defaultLocale]`                  |
+| `true`        | `false`        | Redirects to `/[fallbackLocale]`                 |
 | `true`        | `true`         | Detects and redirects to detected locale         |
 
 **Examples:**
@@ -251,7 +284,7 @@ export const onRequest = defineMiddleware(
 
 **SSR Rewrite Mode:**
 
-When using `routing: 'rewrite'`, the locale is stored in `Astro.locals.locale`:
+When using `routing: 'rewrite'`, the locale is stored in `Astro.locals.locale`, and the original pathname in `Astro.locals.originalPathname`. These two are set only in this mode. `Astro.locals.locales` is set in every routing mode:
 
 ```astro
 ---
@@ -272,6 +305,18 @@ const messages = getMessages(locale)
 #### `MiddlewareConfig` (type)
 
 Type for the configuration object passed to `create()`.
+
+#### `detectLocale(acceptLanguage, supportedLocales)`
+
+Detects the best matching locale from the Accept-Language header.
+
+```typescript
+import { detectLocale } from '@i18n-tiny/astro/middleware'
+
+const acceptLanguage = request.headers.get('accept-language')
+const locale = detectLocale(acceptLanguage, ['en', 'ja'])
+// Returns: 'en' | 'ja' | null
+```
 
 ### `@i18n-tiny/astro/integration` (SSG only)
 
@@ -320,7 +365,7 @@ dist/
 
 > **Important**: In SSG mode, automatic language detection (`detectLanguage`) does not work because there is no server to read the `Accept-Language` header. Users will always see the default locale first when visiting `/`.
 
-#### `IntegrationConfig` (type)
+#### `I18nIntegrationConfig` (type)
 
 Type for the configuration object passed to `create()`.
 
@@ -343,30 +388,21 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 
 <!-- Raw path (no localization) -->
 <Link href="/" locale="">English</Link>
+
+<!-- Path normalization (requires the i18n-tiny middleware) -->
+<Link href="/ja/about" locale="en" normalize>English</Link>
 ```
 
-### `@i18n-tiny/core`
+"Maintains current URL pattern" means the link gets a locale prefix only when the current URL has one. The root pages copied by the SSG integration are copies of the `/[defaultLocale]/` pages, so their links still point to `/[defaultLocale]/...`.
 
-#### `detectLocale(acceptLanguage, supportedLocales)`
-
-Detects the best matching locale from the Accept-Language header.
-
-```typescript
-import { detectLocale } from '@i18n-tiny/core/middleware'
-
-const acceptLanguage = request.headers.get('accept-language')
-const locale = detectLocale(acceptLanguage, ['en', 'ja'])
-// Returns: 'en' | 'ja' | null
-```
-
-### `@i18n-tiny/core/router`
+`normalize` reads the locales from `Astro.locals.locales`, which only the i18n-tiny middleware sets. Without the middleware, remove the prefix yourself: `href={removeLocalePrefix(Astro.url.pathname, locales)} locale={loc}`.
 
 #### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
 
 Generate a localized path with locale prefix.
 
 ```typescript
-import { getLocalizedPath } from '@i18n-tiny/core/router'
+import { getLocalizedPath } from '@i18n-tiny/astro/router'
 
 getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
 getLocalizedPath('/about', 'en', 'en')        // '/about'
@@ -378,7 +414,7 @@ getLocalizedPath('/about', 'en', 'en', true)  // '/en/about'
 Remove locale prefix from pathname.
 
 ```typescript
-import { removeLocalePrefix } from '@i18n-tiny/core/router'
+import { removeLocalePrefix } from '@i18n-tiny/astro/router'
 
 removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
 removeLocalePrefix('/ja', ['en', 'ja'])        // '/'
@@ -428,7 +464,7 @@ const messages = getMessages(locale)
 </html>
 ```
 
-> **Note**: The integration copies `/en/*` to `/*` after build, so users can access the site at `/` without a locale prefix. Middleware is not needed for SSG.
+> **Note**: The integration copies `/en/*` to `/*` after build, so users can access the site at `/` without a locale prefix. The pages are copied as they are, so links inside them still point to `/en/...`. Middleware is not needed for SSG.
 
 ### Language Switcher
 
@@ -480,9 +516,14 @@ export default defineConfig({
 ```astro
 ---
 // src/pages/[locale]/index.astro
-import { getMessages } from '../../i18n'
+import { locales, getMessages } from '../../i18n'
 
-// Astro.currentLocale is available in Astro 4.0+
+// Static output: build one page per locale (leave this out with output: 'server')
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
+// Astro.currentLocale is set by Astro's built-in i18n (Astro 4.0+)
 const locale = Astro.currentLocale
 const messages = getMessages(locale)
 ---
@@ -498,7 +539,7 @@ const messages = getMessages(locale)
 
 ### Astro.locals Type Safety
 
-For type-safe access to `Astro.locals.locale`, add the type reference to your project:
+For type-safe access to `Astro.locals.locale` (set only in `routing: 'rewrite'` mode), add the type reference to your project:
 
 ```typescript
 // src/env.d.ts
@@ -508,9 +549,9 @@ For type-safe access to `Astro.locals.locale`, add the type reference to your pr
 
 This provides types for:
 
-- `Astro.locals.locale` - Current locale
-- `Astro.locals.locales` - Supported locales array
-- `Astro.locals.originalPathname` - Original path (rewrite mode)
+- `Astro.locals.locale` - Current locale (rewrite mode only)
+- `Astro.locals.locales` - Supported locales array (every routing mode)
+- `Astro.locals.originalPathname` - Original path (rewrite mode only)
 
 ## License
 

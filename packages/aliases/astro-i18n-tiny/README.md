@@ -6,7 +6,9 @@
 
 Alternative package name for [`@i18n-tiny/astro`](https://www.npmjs.com/package/@i18n-tiny/astro).
 
-> **Note**: This is an alias package. Both `astro-i18n-tiny` and `@i18n-tiny/astro` provide the exact same functionality.
+> **Note**: This is an alias package. Both `astro-i18n-tiny` and `@i18n-tiny/astro` provide the exact same functionality, including `astro-i18n-tiny/locals` for the `Astro.locals` types.
+>
+> Use `astro-i18n-tiny` 1.2.1 or later. Earlier versions of the alias could not be imported.
 
 ## Installation
 
@@ -20,16 +22,18 @@ npm install @i18n-tiny/astro
 
 ## Documentation
 
-See the full documentation at [@i18n-tiny/astro](https://github.com/unlibra/i18n-tiny/tree/main/packages/astro).
+See the full documentation at [docs.unlibra.com](https://docs.unlibra.com/i18n-tiny/astro/introduction), or the [@i18n-tiny/astro README](https://github.com/unlibra/i18n-tiny/tree/main/packages/astro).
 
 ## Quick Start
 
 ```typescript
-// i18n.ts
+// src/i18n.ts
 import { define } from 'astro-i18n-tiny'
+import enMessages from './messages/en'
+import jaMessages from './messages/ja'
 
-export const { getMessages, getTranslations } = define({
-  locales: ['en', 'ja'] as const,
+export const { locales, getMessages, getTranslations } = define({
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en: enMessages, ja: jaMessages }
 })
@@ -37,10 +41,15 @@ export const { getMessages, getTranslations } = define({
 
 ```astro
 ---
-// page.astro
-import { getMessages } from '@/i18n'
+// src/pages/[locale]/index.astro
+import { locales, getMessages } from '../../i18n'
 
-const locale = Astro.currentLocale
+// Static output: build one page per locale (leave this out with output: 'server')
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
 const messages = getMessages(locale)
 ---
 

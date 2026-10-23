@@ -4,7 +4,7 @@ description: "Install @i18n-tiny/next, or its alias next-i18n-tiny, with npm, pn
 
 # Installation
 
-Requires Next.js 16, with React 18 or 19. The guides and examples use the App Router.
+Requires Next.js 16. The guides and examples use the App Router, which runs on React 19.
 
 You can install either the standard package or an alias package for shorter imports.
 

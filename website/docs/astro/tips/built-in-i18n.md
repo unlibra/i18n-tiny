@@ -32,10 +32,15 @@ Since Astro handles the routing, you only need i18n-tiny for message resolution.
 ```astro
 ---
 // src/pages/[locale]/index.astro
-import { getTranslations } from '../../i18n'
-const { locale } = Astro.params
+import { locales, getTranslations } from '../../i18n'
 
-const t = getTranslations(locale)
+// Static output: build one page per locale (leave this out with output: 'server')
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
+// Set by Astro's built-in i18n
+const t = getTranslations(Astro.currentLocale)
 ---
 
 <h1>{t('common.title')}</h1>

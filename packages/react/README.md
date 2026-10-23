@@ -25,20 +25,28 @@ const enMessages = {
     title: 'Hello',
     welcome: 'Welcome, {name}!'
   }
-} as const
+}
 
+type Messages = typeof enMessages
+
+// satisfies checks that ja has the same keys as en
 const jaMessages = {
   common: {
     title: 'こんにちは',
     welcome: 'ようこそ、{name}さん！'
   }
-} as const
+} satisfies Messages
+
+export const locales = ['en', 'ja'] as const
+export type Locale = (typeof locales)[number]
+export const defaultLocale: Locale = 'en'
+export const messages = { en: enMessages, ja: jaMessages }
 
 // define() gives you everything
 export const { Provider, useMessages, useTranslations, useLocale } = define({
-  locales: ['en', 'ja'] as const,
-  defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  locales,
+  defaultLocale,
+  messages
 })
 ```
 
@@ -47,10 +55,10 @@ export const { Provider, useMessages, useTranslations, useLocale } = define({
 ```tsx
 // src/App.tsx
 import { useState } from 'react'
-import { Provider } from './i18n'
+import { defaultLocale, messages, Provider } from './i18n'
 
-function App() {
-  const [locale, setLocale] = useState('en')
+export default function App() {
+  const [locale, setLocale] = useState(defaultLocale)
 
   return (
     <Provider locale={locale} messages={messages[locale]}>
@@ -69,7 +77,7 @@ function App() {
 // src/components/Greeting.tsx
 import { useMessages, useTranslations, useLocale } from '../i18n'
 
-function Greeting() {
+export function Greeting() {
   const messages = useMessages()
   const t = useTranslations()
   const locale = useLocale()
@@ -103,7 +111,9 @@ Returns:
 - `Provider` - React context provider component
 - `useMessages()` - Hook to access raw message object
 - `useTranslations(namespace?)` - Hook to get translation function
-- `useLocale()` - Hook to get current locale
+- `useLocale()` - Hook to get current locale (`string`)
+- `useLocales()` - Hook to get the `locales` array, with its tuple type
+- `useDefaultLocale()` - Hook to get the default locale, typed as one of `locales`
 - `locales` - Array of supported locales
 - `defaultLocale` - Default locale string
 
@@ -120,7 +130,7 @@ Wraps your app to provide i18n context.
 Props:
 
 - `locale: string` - Current locale
-- `messages: MessageType` - Message dictionary for current locale
+- `messages: Messages` - Message dictionary for current locale. `Messages` is the type of the first locale's messages; the other locales must have the same shape
 - `children: ReactNode` - Child components
 
 ### `useMessages()`
@@ -140,17 +150,19 @@ Returns a translation function with interpolation support.
 const t = useTranslations()
 t('common.welcome', { name: 'John' }) // "Welcome, John!"
 
-// With namespace
-const t = useTranslations('common')
-t('welcome', { name: 'John' }) // "Welcome, John!"
+// With namespace: keys are relative to it
+const tCommon = useTranslations('common')
+tCommon('welcome', { name: 'John' }) // "Welcome, John!"
 ```
+
+The namespace must point to a nested object, such as `common`. With a namespace, a full path such as `tCommon('common.welcome')` is a type error.
 
 ### `useLocale()`
 
 Returns the current locale string.
 
 ```tsx
-const locale = useLocale() // "en" | "ja"
+const locale = useLocale() // "en" (typed as string)
 ```
 
 ## TypeScript
@@ -163,9 +175,12 @@ const t = useTranslations()
 // Type error: 'invalid.key' doesn't exist
 t('invalid.key')
 
-// Type error: missing required variable
-t('common.welcome') // Error: expects { name: string }
+// Type error: with a namespace, keys are relative to it
+const tCommon = useTranslations('common')
+tCommon('common.welcome')
 ```
+
+Interpolation variables are not type-checked.
 
 ## License
 

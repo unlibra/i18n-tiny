@@ -53,7 +53,7 @@ export const {
 
 ## 3. Setup Proxy
 
-Create a `proxy.ts` file to handle routing and language detection.
+Create a `proxy.ts` file to handle routing and language detection. Next.js 16 calls this file convention Proxy (formerly Middleware).
 
 ```typescript
 // proxy.ts
@@ -77,9 +77,16 @@ Wrap your application with the `Provider` in your root layout.
 
 ```tsx
 // app/[locale]/layout.tsx
+import type { ReactNode } from 'react'
 import { Provider, server } from '@/i18n'
 
-export default async function RootLayout({ children, params }) {
+export default async function RootLayout({
+  children,
+  params
+}: {
+  children: ReactNode
+  params: Promise<{ locale: string }>
+}) {
   const { locale } = await params
   const messages = await server.getMessages(locale)
 
@@ -102,7 +109,7 @@ export default async function RootLayout({ children, params }) {
 ```tsx
 import { server } from '@/i18n'
 
-export default async function Page({ params }) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   const t = await server.getTranslations(locale)
 
@@ -121,3 +128,5 @@ export default function ClientComponent() {
   return <p>{t('welcome', { name: 'User' })}</p>
 }
 ```
+
+With a namespace, keys are relative to it and still type-checked: `t('welcome')` resolves `common.welcome`, and `t('common.welcome')` is a type error.

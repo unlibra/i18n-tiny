@@ -5,5 +5,5 @@ description: "API reference for @i18n-tiny/next: the core define() function, the
 # API Reference
 
 - [Core](./core): Core i18n functionality.
-- [Proxy](./proxy): Next.js middleware for automatic locale detection and routing.
+- [Proxy](./proxy): Next.js Proxy for automatic locale detection and routing.
 - [Router](./router): Router utilities for localized navigation.

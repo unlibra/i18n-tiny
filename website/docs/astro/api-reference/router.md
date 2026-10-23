@@ -16,7 +16,7 @@ A localized Link component that automatically detects the locale from the curren
 | --- | --- | :---: | --- | --- |
 | `href` | `string` | Required | - | Destination path |
 | `locale` | `string` \| `false` | | - | Explicitly set locale. `false` or `''` disables localization (raw path). |
-| `normalize` | `boolean` | | `false` | If true, removes existing locale prefix from `href` before processing. |
+| `normalize` | `boolean` | | `false` | If true, removes existing locale prefix from `href` before processing. Reads the locales from `Astro.locals.locales`, which only the i18n-tiny [middleware](./middleware) sets. |
 | Others | `HTMLAttributes<'a'>` | | - | Attributes for standard HTML anchor tag |
 
 **Example:**
@@ -36,8 +36,24 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 <Link href="/" locale="">English</Link>
 <Link href="/" locale={false}>English</Link>
 
-<!-- Path normalization -->
+<!-- Path normalization (requires the i18n-tiny middleware) -->
 <Link href="/ja/about" locale="en" normalize>English</Link>
+```
+
+"Maintains current URL pattern" means the link gets a locale prefix only when the current URL has one. With the SSG [integration](./integration), the root pages are copies of the `/[defaultLocale]/` pages, so their links still point to `/[defaultLocale]/...` (e.g., `/en/about`).
+
+Without the middleware, `normalize` does nothing, because `Astro.locals.locales` is not set. Remove the prefix yourself instead:
+
+```astro
+---
+import Link from '@i18n-tiny/astro/router/Link.astro'
+import { removeLocalePrefix } from '@i18n-tiny/astro/router'
+import { locales } from '../i18n'
+---
+
+{locales.map((loc) => (
+  <Link href={removeLocalePrefix(Astro.url.pathname, locales)} locale={loc}>{loc}</Link>
+))}
 ```
 
 ## `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
@@ -88,9 +104,9 @@ import { removeLocalePrefix } from '@i18n-tiny/astro/router'
 removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
 ```
 
-## `hasLocalePrefix(pathname, locales)`
+## `hasLocalePrefix(pathname, locale)`
 
-Checks if a pathname contains a locale prefix.
+Checks if a pathname starts with the given locale prefix.
 Can be imported from `@i18n-tiny/astro/router`.
 
 **Parameters:**
@@ -98,40 +114,16 @@ Can be imported from `@i18n-tiny/astro/router`.
 | Parameter | Type | Required | Description |
 | --- | --- | :---: | --- |
 | `pathname` | `string` | Required | The pathname to check |
-| `locales` | `readonly string[]` | Required | Array of supported locales |
+| `locale` | `string` | Required | The locale to check for |
 
 **Returns:**
-- `boolean`: `true` if prefix exists.
+- `boolean`: `true` if the pathname starts with `/[locale]/` or equals `/[locale]`.
 
 **Example:**
 
 ```typescript
 import { hasLocalePrefix } from '@i18n-tiny/astro/router'
 
-hasLocalePrefix('/ja/about', ['en', 'ja'])  // true
-```
-
-## `getLinkHref(href, currentPathname, currentLocale, options?)`
-
-Utility to generate final URLs for links.
-Can be imported from `@i18n-tiny/astro/router`.
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | :---: | --- |
-| `href` | `string` | Required | Destination path |
-| `currentPathname` | `string` | Required | Current pathname |
-| `currentLocale` | `string` \| `undefined` | Required | Current locale |
-| `options` | `GetLinkHrefOptions` | | Options for explicit locale or normalization |
-
-**Returns:**
-- `string`: The final generated URL.
-
-**Example:**
-
-```typescript
-import { getLinkHref } from '@i18n-tiny/astro/router'
-
-const href = getLinkHref('/about', '/ja', 'ja', { locale: 'en' }) // '/en/about'
+hasLocalePrefix('/ja/about', 'ja')  // true
+hasLocalePrefix('/about', 'ja')     // false
 ```

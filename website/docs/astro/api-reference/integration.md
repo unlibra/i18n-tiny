@@ -15,6 +15,7 @@ Creates an Astro Integration for i18n static file generation.
 | Parameter | Type | Required | Default | Description |
 | --- | --- | :---: | --- | --- |
 | `defaultLocale` | `string` | Required | - | Default locale - content from this locale is copied to root |
+| `prefixDefault` | `boolean` | | `false` | If `true`, the integration does not copy anything (all locales remain prefixed) |
 
 **Returns:**
 - `AstroIntegration`: Astro integration object.

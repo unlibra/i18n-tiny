@@ -51,6 +51,8 @@ Use the `Provider` to wrap your application and pass the current locale and mess
 
 ```tsx
 // main.tsx
+import ReactDOM from 'react-dom/client'
+import App from './App'
 import { Provider } from './i18n'
 import enMessages from './messages/en'
 
@@ -81,4 +83,8 @@ function App() {
     </div>
   )
 }
+
+export default App
 ```
+
+With a namespace, keys are relative to it: `useTranslations('common')` takes `'title'` for `common.title`. A full path such as `t('common.title')` is then a type error. The namespace must point to a nested object, such as `common`. Without a namespace, use full paths: `useTranslations()` takes `'common.title'`.

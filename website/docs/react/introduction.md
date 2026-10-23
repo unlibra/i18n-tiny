@@ -8,11 +8,11 @@ A tiny, type-safe i18n library for **React** with automatic type inference and z
 
 ## Features
 
-- **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for message keys and interpolation variables.
+- **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for message keys.
 - **Zero dependencies**: No external i18n libraries needed.
 - **Simple API**: Single configuration with `define()`, returning everything you need (Provider, hooks, constants).
 - **Small**: Under 1KB minified and gzipped in the browser.
-- **No global state**: Pure function factory pattern.
+- **No global state**: The locale and messages live in React context. Call `define()` once per app.
 
 ## Installation
 
@@ -27,12 +27,16 @@ npm install @i18n-tiny/react
 ```typescript
 // src/i18n.ts
 import { define } from '@i18n-tiny/react'
+import enMessages from './messages/en'
+import jaMessages from './messages/ja'
+
+export const messages = { en: enMessages, ja: jaMessages }
 
 // define() gives you everything
 export const { Provider, useMessages, useTranslations, useLocale } = define({
   locales: ['en', 'ja'] as const,
   defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  messages
 })
 ```
 
@@ -40,9 +44,9 @@ export const { Provider, useMessages, useTranslations, useLocale } = define({
 
 ```tsx
 // src/App.tsx
-import { Provider } from './i18n'
+import { Provider, messages } from './i18n'
 
-function App() {
+export default function App() {
   return (
     <Provider locale="en" messages={messages.en}>
       <YourApp />

@@ -30,11 +30,13 @@ npm install @i18n-tiny/next
 ```typescript
 // i18n.ts - define() gives you everything
 import { define } from '@i18n-tiny/next'
+import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
+import ja from './messages/ja'
 
 const { client, server, Provider } = define({
   locales: ['en', 'ja'] as const,
   defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  messages: { en, ja }
 })
 
 export { Provider }
@@ -43,17 +45,17 @@ export const { getMessages, getTranslations } = server
 ```
 
 ```tsx
-// Server Component
+// Server Component (locale comes from the [locale] route params)
 const messages = await getMessages(locale)
 const t = await getTranslations(locale)
 return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
-return <p>{t('greeting', { name })}</p>  // ← Interpolation
+return <p>{t('common.greeting', { name: 'Alice' })}</p>  // ← Interpolation
 
 // Client Component
 const messages = useMessages()
 const t = useTranslations()
-return <p>{messages.common.welcome}</p>  // ← Typed! Full autocomplete
-return <p>{t('greeting', { name })}</p>  // ← Interpolation
+return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
+return <p>{t('common.greeting', { name: 'Alice' })}</p>  // ← Interpolation
 ```
 
 [Full documentation →](./packages/next/README.md)
@@ -70,21 +72,31 @@ npm install @i18n-tiny/astro
 ```typescript
 // i18n.ts - define() gives you everything
 import { define } from '@i18n-tiny/astro'
+import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
+import ja from './messages/ja'
 
-export const { getMessages, getTranslations } = define({
-  locales: ['en', 'ja'] as const,
+export const { locales, getMessages, getTranslations } = define({
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  messages: { en, ja }
 })
 ```
 
 ```astro
 ---
+// src/pages/[locale]/index.astro
+import { locales, getMessages, getTranslations } from '../../i18n'
+
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }))
+}
+
+const { locale } = Astro.params
 const messages = getMessages(locale)
 const t = getTranslations(locale)
 ---
 <h1>{messages.common.title}</h1>  <!-- ← Typed! Full autocomplete -->
-<p>{t('greeting', { name })}</p>  <!-- ← Interpolation -->
+<p>{t('common.greeting', { name: 'Alice' })}</p>  <!-- ← Interpolation -->
 ```
 
 [Full documentation →](./packages/astro/README.md)
@@ -101,16 +113,20 @@ npm install @i18n-tiny/react
 ```typescript
 // i18n.ts - define() gives you everything
 import { define } from '@i18n-tiny/react'
+import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
+import ja from './messages/ja'
+
+export const messages = { en, ja }
 
 export const { Provider, useMessages, useTranslations } = define({
   locales: ['en', 'ja'] as const,
   defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+  messages
 })
 ```
 
 ```tsx
-// Wrap your app
+// Wrap your app (locale is 'en' or 'ja', for example from useState)
 <Provider locale={locale} messages={messages[locale]}>
   <App />
 </Provider>
@@ -119,7 +135,7 @@ export const { Provider, useMessages, useTranslations } = define({
 const messages = useMessages()
 const t = useTranslations()
 return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
-return <p>{t('greeting', { name })}</p>  // ← Interpolation
+return <p>{t('common.greeting', { name: 'Alice' })}</p>  // ← Interpolation
 ```
 
 [Full documentation →](./packages/react/README.md)
