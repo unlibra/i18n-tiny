@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-10-23
+
+### Fixed
+
+- The alias packages `next-i18n-tiny`, `react-i18n-tiny` and `astro-i18n-tiny`
+  could not be imported: their `exports` pointed into the `@i18n-tiny` packages,
+  which Node rejects with `ERR_INVALID_PACKAGE_TARGET`. They now ship their own
+  files that re-export the matching `@i18n-tiny` entry points. This affected
+  every earlier version of the aliases.
+- CommonJS consumers now get the CommonJS type declarations (`.d.cts`) through
+  the `require` condition of every export.
+- Builds of `@i18n-tiny/next` and `@i18n-tiny/astro` could miss declaration
+  files, because one of their parallel build steps cleaned the output folder.
+- `@i18n-tiny/react` no longer repeats the `"use client"` directive in its
+  output.
+
+### Changed
+
+- Each package's `homepage` now points to its documentation at
+  https://docs.unlibra.com/i18n-tiny/.
+- `@i18n-tiny/astro` has the `astro-integration` keyword, which lists it in the
+  Astro integrations library.
+
+## [1.2.0] - 2026-09-30
+
+### Added
+
+- `@i18n-tiny/astro` and `astro-i18n-tiny` support Astro 6 and 7.
+
+## [1.1.1] - 2025-12-07
+
+### Fixed
+
+- Published packages depend on exact versions of other `@i18n-tiny` packages.
+  In 1.1.0, they depended on `workspace:*`, which cannot be installed.
+
+## [1.1.0] - 2025-12-07
+
+### Added
+
+- `@i18n-tiny/astro/integration`: an Astro integration for static builds that
+  copies the default locale's pages to the site root.
+
 ## [1.0.0] - 2025-12-07
 
 ### Added

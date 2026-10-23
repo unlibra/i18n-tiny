@@ -44,6 +44,11 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # Packs and installs the packages as consumers receive them, and resolves
+      # every export. Catches broken exports that the tests above cannot see.
+      - name: Check packages
+        run: pnpm check:packages
+
   # Job to verify that all tests passed
   # Use this job name in Branch Protection Rules
   status-check:
