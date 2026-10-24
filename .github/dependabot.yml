@@ -1,0 +1,47 @@
+# Version updates. Security updates are on in the repository settings and do
+# not wait for the cooldown.
+#
+# - Weekly, with minor and patch updates of each directory in one pull
+#   request; each major update gets its own pull request.
+# - cooldown: a release is proposed only once it is 7 days old, so a broken or
+#   hijacked release is usually pulled before it reaches here.
+# - Low-risk updates merge by themselves (.github/workflows/dependabot-auto-merge.yml).
+version: 2
+updates:
+  # The packages and the examples (one pnpm workspace)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+
+  # The VitePress site (its own pnpm project)
+  - package-ecosystem: npm
+    directory: /website
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(ci)
