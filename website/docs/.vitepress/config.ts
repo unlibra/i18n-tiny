@@ -177,13 +177,14 @@ export default defineConfig({
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
     // The shared unlibra icons, served from the root of docs.unlibra.com.
     ['link', { rel: 'icon', href: 'https://docs.unlibra.com/favicon.ico', sizes: '32x32' }],
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: 'https://docs.unlibra.com/brand/symbol.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: 'https://docs.unlibra.com/favicon.svg' }],
     ['link', { rel: 'apple-touch-icon', href: 'https://docs.unlibra.com/apple-touch-icon.png' }],
   ],
 
   themeConfig: {
     // A full URL: a site path would get this site's base prepended.
-    logo: 'https://docs.unlibra.com/brand/symbol.svg',
+    // alt: the brand, read before the site title in the link.
+    logo: { src: 'https://docs.unlibra.com/brand/symbol.svg', alt: 'unlibra' },
 
     nav: [
       { text: 'Next.js', link: '/next/introduction', activeMatch: '^/next/' },
