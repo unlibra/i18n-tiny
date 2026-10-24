@@ -29,7 +29,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "publint": "^0.3.25",
     "size-limit": "^14.2.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0"
   },
   "packageManager": "pnpm@12.15.0"
