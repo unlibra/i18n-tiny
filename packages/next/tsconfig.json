@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    // tsup sets baseUrl when it builds the types, which TypeScript 6
+    // deprecates (an error unless ignored).
+    "ignoreDeprecations": "6.0",
     "target": "ES2020",
     "lib": ["ES2020", "DOM"],
     "module": "ESNext",
