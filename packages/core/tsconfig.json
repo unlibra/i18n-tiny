@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    // tsup sets baseUrl when it builds the types, which TypeScript 6
+    // deprecates (an error unless ignored).
+    "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
@@ -14,7 +17,9 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    // TypeScript 6 no longer loads every @types package (process in utils.ts).
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

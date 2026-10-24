@@ -1,6 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    // tsup sets baseUrl when it builds the types, which TypeScript 6
+    // deprecates (an error unless ignored).
+    "ignoreDeprecations": "6.0",
     "rootDir": "src",
     "outDir": "dist",
     "jsx": "react-jsx"
