@@ -191,6 +191,7 @@ export default defineConfig({
       { text: 'Astro', link: '/astro/introduction', activeMatch: '^/astro/' },
       { text: 'React', link: '/react/introduction', activeMatch: '^/react/' },
       { text: 'FAQ', link: '/faq' },
+      { text: 'Donate', link: 'https://unlibra.com/donate' },
       {
         text: 'NPM',
         items: [
