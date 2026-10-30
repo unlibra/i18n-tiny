@@ -241,3 +241,10 @@ describe('long inputs', () => {
     expect(localizedPath('/a' + '/'.repeat(64000), 'en', config)).toBe('/en/a')
   })
 })
+
+describe('the forms of 1.x, called from JavaScript', () => {
+  it('removeLocalePrefix() throws for the locales in place of the config', () => {
+    const untyped = removeLocalePrefix as (...args: unknown[]) => string
+    expect(() => untyped('/en/about', ['ja', 'en'])).toThrow('[i18n] locales must be a non-empty array')
+  })
+})

@@ -6,6 +6,9 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  splitting: false,
+  // The entry points share chunks instead of a copy each of the code they
+  // have in common, such as the check of the config: an app that imports
+  // more than one entry ships it once.
+  splitting: true,
   treeshake: true
 })

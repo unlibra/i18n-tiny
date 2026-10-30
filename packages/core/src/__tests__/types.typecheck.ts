@@ -127,3 +127,22 @@ getLinkHref('/about', '/en/page', 'en', { locale: 'en', config: { locales: ['ja'
 const linkHrefResult: string = getLinkHref('/about', '/en/page', 'en', {})
 
 export { linkHrefResult, localized, sameAsInput, alternate, removed, prefix, prefixAlways, typedLocale }
+
+// The forms of 1.x are gone
+// @ts-expect-error removeLocalePrefix() takes the config, not the locales
+removeLocalePrefix('/en/donate', ['ja', 'en'])
+// @ts-expect-error getLinkHref() takes the options, not a locale string
+getLinkHref('/donate', '/en', 'en', 'ja')
+// @ts-expect-error the options need the config, not the locales
+getLinkHref('/donate', '/en', 'en', { locale: 'ja', locales: ['ja', 'en'] })
+// @ts-expect-error locale "" is gone: use false
+getLinkHref('/donate', '/en', 'en', { locale: '', config })
+// @ts-expect-error use localizedPath()
+import { getLocalizedPath } from '../router'
+// @ts-expect-error use pathLocale()
+import { hasLocalePrefix } from '../router'
+// @ts-expect-error use LinkHrefOptions
+import type { GetLinkHrefOptions } from '../router'
+// @ts-expect-error DefineConfig is replaced by I18nConfig
+import type { DefineConfig } from '../index'
+export type { getLocalizedPath, hasLocalePrefix, GetLinkHrefOptions, DefineConfig }

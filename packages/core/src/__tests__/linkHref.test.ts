@@ -170,6 +170,16 @@ describe('getLinkHref() with the options of the config', () => {
         .toThrow('must not start with "//" or "/\\" after its locale prefix')
     })
 
+    it('should throw for the options of 1.x, called from JavaScript', () => {
+      const untyped = getLinkHref as (...args: unknown[]) => string
+      for (const options of ['ja', '', false, undefined, null]) {
+        expect(() => untyped('/about', '/page', 'ja', options))
+          .toThrow('[i18n] getLinkHref() takes the options object { locale, normalize, config } as its fourth argument')
+      }
+      expect(() => untyped('/about', '/page', 'en', { locale: 'ja', locales: ['ja', 'en'] }))
+        .toThrow('A link with locale "ja" needs the config option.')
+    })
+
     it('should throw for an invalid config', () => {
       const invalid: I18nConfig = { locales: ['ja', 'en'], defaultLocale: 'fr' }
       expect(() => getLinkHref('/about', '/page', 'ja', { config: invalid }))
@@ -177,15 +187,5 @@ describe('getLinkHref() with the options of the config', () => {
       expect(() => getLinkHref('/about', '/page', 'ja', { locale: 'en', config: invalid }))
         .toThrow('defaultLocale "fr" is not one of locales')
     })
-  })
-})
-
-describe('getLinkHref() with the deprecated options', () => {
-  // Link components that pass { locale, locales } keep the behavior of 1.x
-  // until they move to the config
-  it('should keep the old behavior when the options have locales', () => {
-    expect(getLinkHref('/about', '/page', 'en', { locale: 'ja', locales: undefined })).toBe('/ja/about')
-    expect(getLinkHref('/about/', '/page', 'en', { locale: '', locales: undefined })).toBe('/about/')
-    expect(getLinkHref('/ja/about', '/page', 'en', { locale: 'en', locales: ['ja', 'en'] })).toBe('/en/about')
   })
 })

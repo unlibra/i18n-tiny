@@ -26,7 +26,7 @@ export type LinkHrefOptions<C extends I18nConfig = I18nConfig> =
 
 // Hrefs that are not paths on this site: absolute URLs (https:, mailto:, ...),
 // protocol-relative URLs, and in-page '#' or '?' links
-export const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
+const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
 
 function hasPrefix (pathname: string, locale: string): boolean {
   return pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
@@ -38,6 +38,10 @@ export function linkHref (
   currentLocale: string | undefined,
   options: { locale?: string | false, normalize?: boolean, config?: I18nConfig }
 ): string {
+  // Refuses the fourth argument of 1.x, a locale string, from JavaScript
+  if (typeof options !== 'object' || options === null) {
+    throw new Error('[i18n] getLinkHref() takes the options object { locale, normalize, config } as its fourth argument.')
+  }
   if (NON_PATH_HREF.test(href)) {
     return href
   }

@@ -39,22 +39,3 @@ export type ValueAt<T, P extends string> = P extends `${infer K}.${infer Rest}`
 export type TranslationKeys<T, N extends string | undefined = undefined> = N extends string
   ? NestedKeys<ValueAt<T, N>>
   : NestedKeys<T>
-
-/**
- * Configuration for define() function
- *
- * @deprecated Use I18nConfig for the locale settings. This type is removed
- * before the 2.0.0 release.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface DefineConfig<L extends string, M extends Record<string, any>> {
-  // NOTE: `any` is required here for automatic type inference from user's messages object.
-  // Using `unknown` would break type inference as it doesn't allow indexing.
-  // This is a safe use of `any` because:
-  // 1. It's only used as a constraint for generic type parameter M
-  // 2. The actual type is inferred from the messages object passed by users
-  // 3. TypeScript automatically narrows M to the exact structure of user's messages
-  locales: readonly L[]
-  defaultLocale: L
-  messages: Record<L, M>
-}
