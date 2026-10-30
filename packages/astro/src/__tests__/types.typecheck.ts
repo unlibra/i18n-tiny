@@ -181,7 +181,22 @@ create({ locales: ['en', 'en'], defaultLocale: 'en' })
 // @ts-expect-error defaultLocale is required
 create({ locales: ['en', 'ja'] })
 
+// Messages typed with an interface, which has no index signature, are taken too
+interface InterfaceMessages {
+  common: { title: string }
+  top: string
+}
+const interfaceEn: InterfaceMessages = { common: { title: 'Hello' }, top: 'Top' }
+const interfaceJa: InterfaceMessages = { common: { title: 'こんにちは' }, top: 'トップ' }
+const withInterface = define({ ...config, messages: { en: interfaceEn, ja: interfaceJa } })
+const interfaceT = withInterface.getTranslations('en')
+interfaceT('common.title')
+// @ts-expect-error unknown key
+interfaceT('common.missing')
+const interfaceTitle: string = withInterface.getMessages('ja').common.title
+
 export {
+  interfaceTitle,
   keepLocale, withoutLocale, forLocale, normalized, withAttributes, localeWithoutI18n, normalizeWithoutI18n,
   emptyLocale, localesAsI18n,
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,

@@ -59,7 +59,7 @@ export type { I18nConfig } from '@i18n-tiny/core'
  */
 export function define<
   const L extends readonly string[],
-  Msgs extends Record<string, Record<string, unknown>>
+  Msgs extends Record<string, object>
 > (
   config: {
     /** Supported locales */
@@ -100,7 +100,8 @@ export function define<
     return (
       <BaseProvider
         locale={locale}
-        messages={msgs}
+        // Messages typed with an interface have no index signature
+        messages={msgs as Record<string, unknown>}
         defaultLocale={defaultLocale}
         locales={locales}
       >

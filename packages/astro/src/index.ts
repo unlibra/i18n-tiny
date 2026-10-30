@@ -97,7 +97,7 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
  */
 export function define<
   const L extends readonly string[],
-  Msgs extends Record<string, Record<string, unknown>>
+  Msgs extends Record<string, object>
 > (
   config: {
     /** Supported locales. Each one is used as a path segment, such as /en */

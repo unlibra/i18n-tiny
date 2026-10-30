@@ -82,3 +82,21 @@ export function useLocaleTypeChecks () {
   }
   return [locale, defaultLocale, other]
 }
+
+// Messages typed with an interface, which has no index signature, are taken too
+interface InterfaceMessages {
+  common: { title: string }
+  top: string
+}
+const interfaceEn: InterfaceMessages = { common: { title: 'Hello' }, top: 'Top' }
+const interfaceJa: InterfaceMessages = { common: { title: 'こんにちは' }, top: 'トップ' }
+const withInterface = define({ ...config, messages: { en: interfaceEn, ja: interfaceJa } })
+
+export function useInterfaceTypeChecks () {
+  const t = withInterface.useTranslations()
+  t('common.title')
+  // @ts-expect-error unknown key
+  t('common.missing')
+  const title: string = withInterface.useMessages().common.title
+  return title
+}

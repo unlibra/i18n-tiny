@@ -164,3 +164,33 @@ void <Link href="/about" locale={someLocale}>some</Link>
 void <Link href="/about" locale={someLocale === 'ja' && 'ja'}>conditional</Link>
 // @ts-expect-error locale="" is gone: use locale={false}
 void <Link href="/about" locale="">empty</Link>
+
+// Messages typed with an interface, which has no index signature, are taken too
+interface InterfaceMessages {
+  common: { title: string }
+  top: string
+}
+const interfaceEn: InterfaceMessages = { common: { title: 'Hello' }, top: 'Top' }
+const interfaceJa: InterfaceMessages = { common: { title: 'こんにちは' }, top: 'トップ' }
+const clientWithInterface = defineClient({ ...routerConfig, messages: { en: interfaceEn, ja: interfaceJa } })
+const serverWithInterface = defineServer({ ...routerConfig, messages: { en: interfaceEn, ja: interfaceJa } })
+export async function interfaceTypeChecks () {
+  const t = await clientWithInterface.server.getTranslations('en')
+  t('common.title')
+  // @ts-expect-error unknown key
+  t('common.missing')
+  const serverT = await serverWithInterface.server.getTranslations('en')
+  serverT('common.title')
+  // @ts-expect-error unknown key
+  serverT('common.missing')
+  const title: string = (await serverWithInterface.server.getMessages('ja')).common.title
+  return title
+}
+export function useInterfaceTypeChecks () {
+  const t = clientWithInterface.client.useTranslations()
+  t('common.title')
+  // @ts-expect-error unknown key
+  t('common.missing')
+  const title: string = clientWithInterface.client.useMessages().common.title
+  return title
+}

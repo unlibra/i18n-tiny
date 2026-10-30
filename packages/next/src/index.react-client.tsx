@@ -46,7 +46,7 @@ export type { I18nConfig } from '@i18n-tiny/core'
  */
 export function define<
   const L extends readonly string[],
-  Msgs extends Record<string, Record<string, unknown>>
+  Msgs extends Record<string, object>
 > (
   config: DefineOptions<L, Msgs> & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
 ) {

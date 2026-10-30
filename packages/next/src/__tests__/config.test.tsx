@@ -5,6 +5,7 @@ import { define as defineClient } from '../index.react-client'
 import { define as defineServer } from '../index.react-server'
 import { Link } from '../router'
 import * as router from '../router'
+import { I18nProvider as BaseProvider } from '@i18n-tiny/react/internal'
 
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/')
@@ -174,6 +175,47 @@ describe('client.usePaths()', () => {
       }
     })
   }
+
+  // A Provider with other locale settings than define(), such as one from
+  // another define() or the Provider of @i18n-tiny/react/internal: the
+  // settings of the Provider are the ones that count
+  for (const [defined, provided] of [[false, true], [true, false]]) {
+    it(`reads prefixDefault from the Provider, not from define() (define: ${defined}, Provider: ${provided})`, () => {
+      const i18n = defineClient({ ...config, prefixDefault: defined, messages })
+      let paths: ReturnType<typeof i18n.client.usePaths> | undefined
+      function Read () {
+        paths = i18n.client.usePaths()
+        return null
+      }
+      render(
+        <BaseProvider locale="en" messages={enMessages} locales={config.locales} defaultLocale="ja" prefixDefault={provided}>
+          <Read />
+        </BaseProvider>
+      )
+      if (paths === undefined) throw new Error('not rendered')
+      expect(paths.localizedPath('/about', 'ja')).toBe(provided ? '/ja/about' : '/about')
+      expect(paths.alternatePath('/en/about', 'ja')).toBe(provided ? '/ja/about' : '/about')
+      expect(paths.localizedPath('/about', 'en')).toBe('/en/about')
+    })
+  }
+
+  it('reads the locales and the default locale from the Provider', () => {
+    const i18n = defineClient({ ...config, messages })
+    let paths: ReturnType<typeof i18n.client.usePaths> | undefined
+    function Read () {
+      paths = i18n.client.usePaths()
+      return null
+    }
+    render(
+      <BaseProvider locale="en" messages={enMessages} locales={['en', 'fr']} defaultLocale="en">
+        <Read />
+      </BaseProvider>
+    )
+    if (paths === undefined) throw new Error('not rendered')
+    expect(untyped(paths.localizedPath)('/about', 'fr')).toBe('/fr/about')
+    expect(paths.localizedPath('/about', 'en')).toBe('/about')
+    expect(() => paths?.localizedPath('/about', 'ja')).toThrow('[i18n] Unknown locale "ja"')
+  })
 
   it('needs the Provider', () => {
     const i18n = defineClient({ ...config, messages })

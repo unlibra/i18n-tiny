@@ -70,7 +70,7 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
  */
 export function defineBase<
   const L extends readonly string[],
-  Msgs extends Record<string, Record<string, unknown>>
+  Msgs extends Record<string, object>
 > (config: DefineOptions<L, Msgs>) {
   type Locale = L[number]
   type MessageType = MessagesOf<L, Msgs>
@@ -108,7 +108,8 @@ export function defineBase<
     return (
       <BaseProvider
         locale={locale}
-        messages={msgs}
+        // Messages typed with an interface have no index signature
+        messages={msgs as Record<string, unknown>}
         defaultLocale={defaultLocale}
         locales={locales}
         prefixDefault={prefixDefault}

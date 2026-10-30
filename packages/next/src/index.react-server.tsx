@@ -22,7 +22,7 @@ function clientOnlyError (name: string): never {
  */
 export function define<
   const L extends readonly string[],
-  Msgs extends Record<string, Record<string, unknown>>
+  Msgs extends Record<string, object>
 > (
   config: DefineOptions<L, Msgs> & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
 ) {

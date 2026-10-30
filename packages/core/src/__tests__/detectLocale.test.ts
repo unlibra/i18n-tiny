@@ -128,5 +128,29 @@ describe('detectLocale()', () => {
       expect(detectLocale('ja; Q = 0.9 ,en;q=0.5', supportedLocales)).toBe('ja')
     })
   })
+
+  describe('Complex Accept-Language headers', () => {
+    // Real-world Accept-Language header patterns, with the locales ja and en
+    const locales = ['ja', 'en'] as const
+
+    it.each([
+      // [acceptLanguage, expectedLocale, description]
+      ['ja,en-US;q=0.9,en;q=0.8', 'ja', 'Japanese browser with English fallback'],
+      ['en-US,en;q=0.9,ja;q=0.8', 'en', 'US English with Japanese fallback'],
+      ['en-GB,en;q=0.9', 'en', 'British English'],
+      ['zh-CN,zh;q=0.9,en;q=0.8,ja;q=0.7', 'en', 'Chinese browser, falls back to en'],
+      ['ko-KR,ko;q=0.9,ja;q=0.8,en;q=0.7', 'ja', 'Korean browser, falls back to ja'],
+      ['de-DE,de;q=0.9,fr;q=0.8', null, 'German/French, no match'],
+      ['*', null, 'Wildcard (not supported)'],
+      ['ja-JP', 'ja', 'Japanese (Japan) matches ja'],
+      ['en-AU,en;q=0.9', 'en', 'Australian English matches en']
+    ])(
+      'detectLocale("%s") → %s (%s)',
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      (acceptLanguage, expectedLocale, _description) => {
+        expect(detectLocale(acceptLanguage, locales)).toBe(expectedLocale)
+      }
+    )
+  })
 })
 
