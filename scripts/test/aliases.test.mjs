@@ -192,3 +192,26 @@ test('writing an alias removes stale generated files and keeps the README', () =
   assert.deepEqual(readdirSync(dir).sort(), ['README.md', 'index.d.ts', 'index.js', 'package.json'])
   assert.equal(readFileSync(join(dir, 'README.md'), 'utf-8'), 'readme')
 })
+
+test('conditions keep the order the package gives them', () => {
+  const { pkg } = plan({
+    exports: {
+      '.': {
+        types: './dist/client.d.ts',
+        'react-server': { types: './dist/server.d.ts', default: './dist/server.js' },
+        default: './dist/client.js'
+      }
+    }
+  })
+  assert.deepEqual(Object.keys(pkg.exports['.']), ['types', 'react-server', 'default'])
+})
+
+test('a package field the generator does not handle is refused rather than ignored', () => {
+  for (const field of ['peerDependenciesMeta', 'sideEffects', 'bin', 'imports', 'typesVersions', 'browser']) {
+    assert.throws(
+      () => plan({ exports: { '.': { types: './a.d.ts', default: './a.js' } }, [field]: {} }),
+      new RegExp(`"${field}"`),
+      field
+    )
+  }
+})

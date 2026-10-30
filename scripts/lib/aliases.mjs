@@ -22,6 +22,16 @@ export const ALIASES = {
 // the generator refuses such a package.json instead.
 const HAND_WRITTEN_FIELDS = ['name', 'description', 'keywords', 'author', 'license', 'repository', 'homepage']
 
+// The fields of a package's package.json that the generator knows: the ones
+// it copies to the alias, and the ones that do not concern the alias. Any
+// other field (peerDependenciesMeta, sideEffects, bin...) is refused until
+// the generator decides what the alias does with it.
+const KNOWN_PACKAGE_FIELDS = [
+  'name', 'version', 'type', 'exports', 'engines', 'peerDependencies',
+  'description', 'keywords', 'author', 'license', 'homepage', 'repository',
+  'main', 'types', 'files', 'scripts', 'dependencies', 'devDependencies'
+]
+
 // Files of an alias directory that the generator never touches.
 export const HAND_WRITTEN_FILES = ['README.md', 'package.json']
 
@@ -39,6 +49,11 @@ export function planAlias ({ body, alias, inspect }) {
   for (const field of Object.keys(alias)) {
     if (!HAND_WRITTEN_FIELDS.includes(field) && !GENERATED_FIELDS.includes(field)) {
       throw new Error(`${alias.name}: unknown field "${field}" in package.json. Add it to the hand-written fields of the alias generator first.`)
+    }
+  }
+  for (const field of Object.keys(body)) {
+    if (!KNOWN_PACKAGE_FIELDS.includes(field)) {
+      throw new Error(`${body.name}: the alias generator does not handle the field "${field}" of package.json. Decide what the alias does with it first.`)
     }
   }
   if (!body.exports || typeof body.exports !== 'object') {
@@ -93,10 +108,13 @@ function planEntry (body, specifier, base, target, inspect, files) {
   if (typeof target !== 'object' || target === null || Array.isArray(target)) {
     throw new Error(`${specifier}: unsupported export target ${JSON.stringify(target)}`)
   }
+  // The alias keeps the order of the conditions, which decides which one a
+  // resolver picks.
   const result = {}
   for (const [condition, value] of Object.entries(target)) {
-    if (condition === 'types' || condition === 'default') continue
-    result[condition] = planEntry(body, specifier, `${base}.${condition}`, value, inspect, files)
+    result[condition] = condition === 'types' || condition === 'default'
+      ? null
+      : planEntry(body, specifier, `${base}.${condition}`, value, inspect, files)
   }
 
   if (target.default !== undefined) {

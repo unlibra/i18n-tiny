@@ -12,7 +12,8 @@
 //      - every Astro component of a wildcard export resolves,
 //      - TypeScript type-checks every entry point, types-only ones included,
 //        with moduleResolution bundler and nodenext (and require() from a
-//        CommonJS file under nodenext),
+//        CommonJS file under nodenext), and the entries with an extra
+//        condition with that condition too,
 //      - each alias has the same entry points as its package, with the same
 //        export names at runtime and the same types.
 //
@@ -191,17 +192,19 @@ for (const [alias, body] of pairs) {
   }
 }
 
-// TypeScript: one consumer project per moduleResolution. Every entry is
-// imported; each alias entry must have the same type as its package's.
+// TypeScript: one consumer project per moduleResolution, and one more (with
+// moduleResolution bundler) per extra condition, such as react-server, for
+// the entries that declare it. Every entry is imported; each alias entry must
+// have the same type as its package's.
 const typed = entries.filter((entry) => entry.kind === 'js' || entry.kind === 'types')
 const aliasOf = Object.fromEntries(pairs.map(([alias, body]) => [alias, body]))
-const esmSource = [
-  ...entries.filter((entry) => entry.kind === 'global-types').map((entry) => `/// <reference types="${entry.specifier}" />`),
-  ...typed.map((entry, i) => `import ${entry.kind === 'types' ? 'type ' : ''}* as m${i} from '${entry.specifier}'`),
-  ...typed.flatMap((entry, i) => {
+const esmSource = (list, globals = []) => [
+  ...globals.map((entry) => `/// <reference types="${entry.specifier}" />`),
+  ...list.map((entry, i) => `import ${entry.kind === 'types' ? 'type ' : ''}* as m${i} from '${entry.specifier}'`),
+  ...list.flatMap((entry, i) => {
     const body = aliasOf[entry.name]
     if (!body) return []
-    const j = typed.findIndex((other) => other.name === body && other.subpath === entry.subpath)
+    const j = list.findIndex((other) => other.name === body && other.subpath === entry.subpath)
     if (j < 0) return []
     // Assignable both ways: the alias has the same exports, with the same types.
     return entry.kind === 'types'
@@ -222,17 +225,23 @@ const compilerOptions = {
   jsx: 'react-jsx',
   types: ['node']
 }
-writeFileSync(join(project, 'bundler.ts'), esmSource)
-writeFileSync(join(project, 'nodenext.mts'), esmSource)
-writeFileSync(join(project, 'nodenext-require.cts'), requireSource)
-writeFileSync(join(project, 'tsconfig.bundler.json'), JSON.stringify({
-  compilerOptions: { ...compilerOptions, module: 'ESNext', moduleResolution: 'bundler' },
-  files: ['bundler.ts']
-}, null, 2))
-writeFileSync(join(project, 'tsconfig.nodenext.json'), JSON.stringify({
-  compilerOptions: { ...compilerOptions, module: 'NodeNext', moduleResolution: 'NodeNext' },
-  files: ['nodenext.mts', 'nodenext-require.cts']
-}, null, 2))
+const globals = entries.filter((entry) => entry.kind === 'global-types')
+const projects = {
+  bundler: {
+    files: { 'bundler.ts': esmSource(typed, globals) },
+    options: { module: 'ESNext', moduleResolution: 'bundler' }
+  },
+  nodenext: {
+    files: { 'nodenext.mts': esmSource(typed, globals), 'nodenext-require.cts': requireSource },
+    options: { module: 'NodeNext', moduleResolution: 'NodeNext' }
+  }
+}
+for (const condition of new Set(jsEntries.flatMap((entry) => entry.conditions))) {
+  projects[`bundler ${condition}`] = {
+    files: { [`bundler-${condition}.ts`]: esmSource(jsEntries.filter((entry) => entry.conditions.includes(condition))) },
+    options: { module: 'ESNext', moduleResolution: 'bundler', customConditions: [condition] }
+  }
+}
 const tscVersion = execFileSync(join(project, 'node_modules/.bin/tsc'), ['--version'], { encoding: 'utf-8' }).trim()
 // Declaration files are checked (skipLibCheck: false), so that an error in
 // the packages' own .d.ts is caught, but only errors in the packages and in
@@ -240,13 +249,16 @@ const tscVersion = execFileSync(join(project, 'node_modules/.bin/tsc'), ['--vers
 // own that consumers hide with skipLibCheck.
 const ours = [...bodies, ...aliases].map((dir) => `node_modules/${manifest(dir).name}/`)
 const tsc = {}
-for (const resolution of ['bundler', 'nodenext']) {
-  const result = spawnSync(join(project, 'node_modules/.bin/tsc'), ['-p', `tsconfig.${resolution}.json`, '--pretty', 'false'], { cwd: project, encoding: 'utf-8' })
+for (const [label, { files, options }] of Object.entries(projects)) {
+  for (const [file, source] of Object.entries(files)) writeFileSync(join(project, file), source)
+  const config = `tsconfig.${label.replace(' ', '-')}.json`
+  writeFileSync(join(project, config), JSON.stringify({ compilerOptions: { ...compilerOptions, ...options }, files: Object.keys(files) }, null, 2))
+  const result = spawnSync(join(project, 'node_modules/.bin/tsc'), ['-p', config, '--pretty', 'false'], { cwd: project, encoding: 'utf-8' })
   const errors = result.stdout.split('\n').filter((line) => /error TS\d+/.test(line))
   const counted = errors.filter((line) => !line.startsWith('node_modules/') || ours.some((prefix) => line.startsWith(prefix)))
-  tsc[resolution] = counted.length === 0 ? 'ok' : 'FAIL'
-  if (result.status !== 0 && errors.length === 0) fail(`tsc (${resolution}) failed without a diagnostic:\n${result.stdout}${result.stderr}`)
-  if (counted.length > 0) fail(`tsc (${resolution}, ${tscVersion}):\n  ${counted.join('\n  ')}`)
+  tsc[label] = counted.length === 0 ? 'ok' : 'FAIL'
+  if (result.status !== 0 && errors.length === 0) fail(`tsc (${label}) failed without a diagnostic:\n${result.stdout}${result.stderr}`)
+  if (counted.length > 0) fail(`tsc (${label}, ${tscVersion}):\n  ${counted.join('\n  ')}`)
 }
 
 // Report: one row per entry point, the alias next to its package.
@@ -271,7 +283,7 @@ for (const name of bodies.map((dir) => manifest(dir).name)) {
 }
 const widths = rows[0].map((_, i) => Math.max(...rows.map((row) => row[i].length)))
 console.log('\n' + rows.map((row) => row.map((value, i) => value.padEnd(widths[i])).join('  ').trimEnd()).join('\n'))
-console.log(`\nTypeScript ${tscVersion}: bundler ${tsc.bundler}, nodenext ${tsc.nodenext}`)
+console.log(`\nTypeScript ${tscVersion}: ${Object.entries(tsc).map(([label, status]) => `${label} ${status}`).join(', ')}`)
 
 if (failures.length > 0) {
   console.error(`\n${failures.length} problem(s):\n` + failures.map((f) => `- ${f}`).join('\n'))
