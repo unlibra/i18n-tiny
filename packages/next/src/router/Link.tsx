@@ -35,6 +35,26 @@ export interface LinkProps<T extends string = string> extends Omit<NextLinkCompo
   normalize?: boolean
 }
 
+// Whether the page of a link is shown in another locale than the current
+// one, or in a locale that only the server knows. Links that are not paths
+// on this site, such as '#top' or 'https://…', are not.
+function leadsToAnotherLocale (href: string | null | undefined, currentLocale: string, config: I18nConfig): boolean {
+  if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//')) {
+    return false
+  }
+  const suffixStart = href.search(/[?#]/)
+  const path = suffixStart === -1 ? href : href.slice(0, suffixStart)
+  const locale = pathLocale(path, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
+  return locale !== currentLocale
+}
+
+// A click that the browser handles itself: a new tab or window, a download
+function isBrowserClick (event: MouseEvent<HTMLAnchorElement>): boolean {
+  const target = event.currentTarget.getAttribute('target')
+  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+    (target !== null && target !== '_self') || event.currentTarget.hasAttribute('download')
+}
+
 /**
  * Next.js Link component with automatic locale prefix
  *
@@ -75,26 +95,6 @@ export interface LinkProps<T extends string = string> extends Omit<NextLinkCompo
  * <Link href={pathname} locale="en" normalize>English</Link>  // → /en/about
  * ```
  */
-// Whether the page of a link is shown in another locale than the current
-// one, or in a locale that only the server knows. Links that are not paths
-// on this site, such as '#top' or 'https://…', are not.
-function leadsToAnotherLocale (href: string | null | undefined, currentLocale: string, config: I18nConfig): boolean {
-  if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//')) {
-    return false
-  }
-  const suffixStart = href.search(/[?#]/)
-  const path = suffixStart === -1 ? href : href.slice(0, suffixStart)
-  const locale = pathLocale(path, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
-  return locale !== currentLocale
-}
-
-// A click that the browser handles itself: a new tab or window, a download
-function isBrowserClick (event: MouseEvent<HTMLAnchorElement>): boolean {
-  const target = event.currentTarget.getAttribute('target')
-  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
-    (target !== null && target !== '_self') || event.currentTarget.hasAttribute('download')
-}
-
 export function Link<const T extends string = string>({ href, locale, normalize = false, ...props }: LinkProps<T>) {
   let currentLocale: string
   let config: I18nConfig
