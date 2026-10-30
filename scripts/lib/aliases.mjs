@@ -2,9 +2,9 @@
 // package.json of the package each one stands for. An alias depends on the
 // exact version of its package and re-exports every entry point, so the
 // generated part covers the re-export files, exports, files, version,
-// engines, the pinned dependency and the peer dependencies. Only the README
-// and the alias's own fields (name, description, keywords...) are written by
-// hand.
+// engines, the pinned dependency, the peer dependencies and the LICENSE,
+// copied from the root of the repository. Only the README and the alias's own
+// fields (name, description, keywords...) are written by hand.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
@@ -42,10 +42,14 @@ export const HAND_WRITTEN_FILES = ['README.md', 'package.json']
  *   - hasDefault(path): whether the module (JS or .d.ts) has a default export
  *   - isModule(path): whether the .d.ts is a module, not a global script
  *   - list(dir): the names of the entries of a directory
+ * `license` is the text of the LICENSE file of the alias.
  * Returns the files to write (path relative to the alias directory ->
- * contents), the package.json included.
+ * contents), the package.json and the LICENSE included.
  */
-export function planAlias ({ body, alias, inspect }) {
+export function planAlias ({ body, alias, inspect, license }) {
+  if (typeof license !== 'string' || license === '') {
+    throw new Error(`${alias.name}: the alias needs the text of its license`)
+  }
   for (const field of Object.keys(alias)) {
     if (!HAND_WRITTEN_FIELDS.includes(field) && !GENERATED_FIELDS.includes(field)) {
       throw new Error(`${alias.name}: unknown field "${field}" in package.json. Add it to the hand-written fields of the alias generator first.`)
@@ -94,6 +98,9 @@ export function planAlias ({ body, alias, inspect }) {
   if (body.peerDependencies) pkg.peerDependencies = body.peerDependencies
 
   files.set('package.json', JSON.stringify(pkg, null, 2) + '\n')
+  // npm packs LICENSE whatever files lists. The packages in the workspace get
+  // the LICENSE of the root from pnpm, but the aliases are outside it.
+  files.set('LICENSE', license)
   return files
 }
 
@@ -229,6 +236,7 @@ export function inspectDirectory (dir) {
 /** Plans every alias of the repository. Returns alias directory -> files. */
 export function planAliases (root) {
   const plans = new Map()
+  const license = readFileSync(join(root, 'LICENSE'), 'utf-8')
   const found = readdirSync(join(root, 'packages/aliases')).sort()
   for (const name of found) {
     if (!ALIASES[name]) throw new Error(`packages/aliases/${name} is not listed in the alias generator`)
@@ -240,7 +248,8 @@ export function planAliases (root) {
     plans.set(aliasDir, planAlias({
       body: readJson(join(root, bodyDir, 'package.json')),
       alias: readJson(join(aliasDir, 'package.json')),
-      inspect: inspectDirectory(join(root, bodyDir))
+      inspect: inspectDirectory(join(root, bodyDir)),
+      license
     }))
   }
   return plans

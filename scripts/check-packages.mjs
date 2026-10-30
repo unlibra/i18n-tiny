@@ -2,7 +2,7 @@
 // tests cannot see. Run after `pnpm build`.
 //
 //   1. The alias packages are up to date with the packages they stand for.
-//   2. publint passes for every package.
+//   2. publint passes for every package, and every tarball has the LICENSE.
 //   3. The tarballs, installed with their peers into a scratch project:
 //      - every JS entry point loads in Node with both import and require(),
 //      - entries with an extra condition (react-server) resolve to the file
@@ -58,6 +58,10 @@ for (const dir of [...bodies, ...aliases]) {
   execFileSync('pnpm', ['exec', 'publint', '--strict', dir], { cwd: root, stdio: 'inherit' })
   execFileSync('pnpm', ['pack', '--pack-destination', tarballDir], { cwd: join(root, dir), stdio: 'ignore' })
 }
+const withoutLicense = readdirSync(tarballDir).filter((file) => {
+  const listed = execFileSync('tar', ['-tzf', join(tarballDir, file)], { encoding: 'utf-8' }).split('\n')
+  return !listed.includes('package/LICENSE')
+})
 
 // 3. Scratch project with the tarballs and the peers, at the versions the
 // workspace develops against.
@@ -109,6 +113,7 @@ for (const dir of [...bodies, ...aliases]) {
 
 const failures = []
 const fail = (message) => failures.push(message)
+for (const file of withoutLicense) fail(`${file} has no LICENSE`)
 
 // Runtime: import and require() each JS entry with the default conditions.
 copyFileSync(join(root, 'scripts/lib/check-runtime.mjs'), join(project, 'check-runtime.mjs'))

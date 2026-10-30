@@ -26,11 +26,14 @@ function inspect ({ defaults = [], scripts = [], dirs = {} } = {}) {
   }
 }
 
+const license = 'MIT License\n\nCopyright (c) someone\n'
+
 function plan (body, options, aliasPkg = alias) {
   const files = planAlias({
     body: { name: '@scope/pkg', version: '2.0.0-beta.1', ...body },
     alias: aliasPkg,
-    inspect: inspect(options)
+    inspect: inspect(options),
+    license
   })
   return { files, pkg: JSON.parse(files.get('package.json')) }
 }
@@ -106,7 +109,7 @@ test('a wildcard of Astro components gets one wrapper per component', () => {
     exports: { './router/*': './src/router/*' }
   }, { dirs: { 'src/router': ['A.astro', 'Link.astro'] } })
   assert.deepEqual(pkg.exports, { './router/*': './router/*' })
-  assert.deepEqual([...files.keys()].filter((f) => f !== 'package.json'), ['router/A.astro', 'router/Link.astro'])
+  assert.deepEqual([...files.keys()].filter((f) => f !== 'package.json' && f !== 'LICENSE'), ['router/A.astro', 'router/Link.astro'])
   const wrapper = files.get('router/Link.astro')
   assert.match(wrapper, /^import Component from '@scope\/pkg\/router\/Link\.astro'$/m)
   assert.match(wrapper, /^type Props = ComponentProps<typeof Component>$/m)
@@ -144,6 +147,26 @@ test('package.json pins the package and copies its versions, engines and peers',
   assert.deepEqual(pkg.engines, { node: '>=22.12' })
   assert.deepEqual(pkg.peerDependencies, { react: '^18.0.0 || ^19.0.0' })
   assert.deepEqual(pkg.files, ['index.d.ts', 'index.js'])
+})
+
+test('the alias has the license text of the repository', () => {
+  const { files, pkg } = plan({
+    exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } }
+  })
+  assert.equal(files.get('LICENSE'), license)
+  // npm packs LICENSE whatever files lists
+  assert.deepEqual(pkg.files, ['index.d.ts', 'index.js'])
+})
+
+test('an alias without a license text is refused', () => {
+  for (const missing of [undefined, '']) {
+    assert.throws(() => planAlias({
+      body: { name: '@scope/pkg', version: '2.0.0-beta.1', exports: { '.': { types: './a.d.ts', default: './a.js' } } },
+      alias,
+      inspect: inspect(),
+      license: missing
+    }), /license/)
+  }
 })
 
 test('package.json keeps the hand-written fields and replaces the generated ones', () => {
@@ -186,10 +209,10 @@ test('writing an alias removes stale generated files and keeps the README', () =
   writeFileSync(join(dir, 'old/Link.astro'), 'stale')
   const { files } = plan({ exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } } })
 
-  assert.deepEqual(diffAlias(dir, files).map((line) => line.split(/\s+/)[0]).sort(), ['extra', 'extra', 'missing', 'missing', 'outdated'])
+  assert.deepEqual(diffAlias(dir, files).map((line) => line.split(/\s+/)[0]).sort(), ['extra', 'extra', 'missing', 'missing', 'missing', 'outdated'])
   writeAlias(dir, files)
   assert.deepEqual(diffAlias(dir, files), [])
-  assert.deepEqual(readdirSync(dir).sort(), ['README.md', 'index.d.ts', 'index.js', 'package.json'])
+  assert.deepEqual(readdirSync(dir).sort(), ['LICENSE', 'README.md', 'index.d.ts', 'index.js', 'package.json'])
   assert.equal(readFileSync(join(dir, 'README.md'), 'utf-8'), 'readme')
 })
 
