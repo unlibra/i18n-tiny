@@ -179,13 +179,16 @@ Defines an i18n instance with automatic type inference.
 
 **Parameters:**
 
-| Parameter       | Type                       | Description                                                   |
-| --------------- | -------------------------- | ------------------------------------------------------------- |
-| `locales`       | `readonly string[]`        | Array of supported locales (optional, inferred from messages) |
-| `defaultLocale` | `string`                   | Default locale (optional, uses first locale)                  |
-| `messages`      | `Record<Locale, Messages>` | Messages object keyed by locale                               |
+| Parameter       | Type                       | Description                                                                     |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `locales`       | `readonly string[]`        | Supported locales (required). Each one is a path segment, such as `/en`         |
+| `defaultLocale` | `string`                   | The locale of URLs without a locale prefix (required). One of `locales`         |
+| `prefixDefault` | `boolean`                  | Whether URLs of the default locale also have the prefix. Default: `false`       |
+| `messages`      | `Record<Locale, Messages>` | The messages of each locale. It must have exactly the locales of `locales`      |
 
-Types are taken from `messages`, so keys are typed even when `locales` is left out, and `locales` needs no `as const`. `getMessages` and `getTranslations` fall back to `defaultLocale` when the locale is `undefined` or has no messages.
+The config is checked when `define()` runs: an empty `locales`, a locale listed twice, a locale that cannot be a path segment (empty, `.`, `..`, or containing `/`, `\`, `?`, `#` or whitespace), a `defaultLocale` that is not one of `locales`, and `messages` with a missing or extra locale throw an error. With `as const` or an inline config, they are type errors too.
+
+Types are taken from `messages`, and `locales` needs no `as const`. The `locale` argument of `getMessages` and `getTranslations` is one of `locales`: any other value, `undefined` included, is a type error and throws. To use a `string` from elsewhere, narrow it with `isLocale()` first.
 
 With a namespace, keys are relative to it: `getTranslations(locale, 'common')` takes `'title'` for `common.title`, and a full path is a type error. The namespace must point to a nested object. Interpolation variables (`vars`) are `Record<string, string | number>` and are not type-checked.
 
@@ -193,23 +196,98 @@ With a namespace, keys are relative to it: `getTranslations(locale, 'common')` t
 
 ```typescript
 {
-  locales: readonly string[]
-  defaultLocale: string
-  getMessages: (locale: string | undefined) => Messages
-  getTranslations: (locale: string | undefined, namespace?: string) => TranslationFunction
+  locales: readonly Locale[]
+  defaultLocale: Locale
+  prefixDefault: boolean
+  isLocale: (value: unknown) => value is Locale
+  getMessages: (locale: Locale) => Messages
+  getTranslations: (locale: Locale, namespace?: string) => TranslationFunction
+  getStaticPaths: (options?: { locales?: Locale[], paths?: StaticPath[] }) => LocalizedStaticPath[]
+  localizedPath: (path: string, locale: Locale) => string
+  alternatePath: (pathname: string, locale: Locale) => string
+  removeLocalePrefix: (pathname: string) => string
+  pathLocale: (pathname: string) => Locale | undefined
 }
 ```
 
-#### `DefineConfig<L, M>` (type)
+#### `isLocale(value)`
 
-A config type with two type arguments, `L` for the locale strings and `M` for the message type. Unlike the argument of `define()`, `locales` and `defaultLocale` are required in it:
+Whether `value` is one of `locales`. In TypeScript, it narrows `value` to the locale type:
 
 ```typescript
-interface DefineConfig<L extends string, M extends Record<string, any>> {
-  locales: readonly L[]
-  defaultLocale: L
-  messages: Record<L, M>
+const locale = Astro.currentLocale // string | undefined
+if (!i18n.isLocale(locale)) {
+  throw new Error(`Unknown locale: ${locale}`)
 }
+const messages = i18n.getMessages(locale)
+```
+
+#### `getStaticPaths(options?)`
+
+The paths of a page under `src/pages/[...locale]/`, one for each locale, to return from the page's `getStaticPaths()`:
+
+```astro
+---
+// src/pages/[...locale]/about.astro
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../i18n'
+
+export const getStaticPaths = () => i18n.getStaticPaths()
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { locale } = Astro.props // 'ja' | 'en'
+const messages = i18n.getMessages(locale)
+---
+```
+
+- `params.locale` is `undefined` for the default locale, so its page has no prefix (`/about`), and the locale for the others (`/en/about`). With `prefixDefault: true`, the default locale gets its prefix too.
+- `props.locale` is the locale of the page, typed as one of `locales`. Use it rather than `Astro.params.locale`, which is `undefined` for the default locale.
+- `props.pageLocales` is the locales the page is built in.
+
+| Option    | Type                                              | Description                                                                        |
+| --------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `locales` | `Locale[]`                                        | The locales the page is built in, such as `['ja']` for a page in Japanese only. Default: all `locales` |
+| `paths`   | `{ params: Record<string, string>, props?: object }[]` | The other dynamic parameters of the route. Each one is built in each locale, keeping its params and props |
+
+```astro
+---
+// src/pages/[...locale]/lab/[tool].astro
+export const getStaticPaths = () => i18n.getStaticPaths({
+  paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
+})
+---
+```
+
+An empty `locales`, a locale listed twice or not one of `locales`, and a path that sets `locale` or `pageLocales` itself throw an error.
+
+#### URL functions
+
+`localizedPath`, `alternatePath`, `removeLocalePrefix` and `pathLocale` are the functions of [`@i18n-tiny/astro/router`](#i18n-tinyastrorouter) with the config of `define()`, and return the same results:
+
+```typescript
+i18n.localizedPath('/about', 'en')    // '/en/about'
+i18n.localizedPath('/about', 'ja')    // '/about' (the default locale has no prefix)
+i18n.alternatePath('/en/about', 'ja') // '/about'
+i18n.removeLocalePrefix('/en/about')  // '/about'
+i18n.pathLocale('/en/about')          // 'en'
+```
+
+#### `I18nConfig` (type)
+
+The type of the locale settings, `{ locales, defaultLocale, prefixDefault? }`, which `define()`, the middleware and the URL functions take. Write them once in a file of their own and spread them where they are needed:
+
+```typescript
+// src/i18n.config.ts
+export const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
+
+// src/i18n.ts
+export const i18n = define({ ...config, messages: { ja, en } })
+```
+
+```typescript
+import type { I18nConfig } from '@i18n-tiny/astro'
+
+export const config: I18nConfig<'ja' | 'en'> = { locales: ['ja', 'en'], defaultLocale: 'ja' }
 ```
 
 ### `@i18n-tiny/astro/middleware` (SSR only)
@@ -399,29 +477,28 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 
 `normalize` reads the locales from `Astro.locals.locales`, which only the i18n-tiny middleware sets. Without the middleware, remove the prefix yourself: `href={removeLocalePrefix(Astro.url.pathname, locales)} locale={loc}`.
 
-#### `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
+#### URL functions
 
-Generate a localized path with locale prefix.
-
-```typescript
-import { getLocalizedPath } from '@i18n-tiny/astro/router'
-
-getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
-getLocalizedPath('/about', 'en', 'en')        // '/about'
-getLocalizedPath('/about', 'en', 'en', true)  // '/en/about'
-```
-
-#### `removeLocalePrefix(pathname, locales)`
-
-Remove locale prefix from pathname.
+The functions of [`@i18n-tiny/core/router`](https://www.npmjs.com/package/@i18n-tiny/core), for places where the messages are not loaded, such as `astro.config` or build scripts. They take the config object `{ locales, defaultLocale, prefixDefault? }`. In pages, the same functions of `define()` need no config.
 
 ```typescript
-import { removeLocalePrefix } from '@i18n-tiny/astro/router'
+import { localizedPath, alternatePath, removeLocalePrefix, pathLocale } from '@i18n-tiny/astro/router'
 
-removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
-removeLocalePrefix('/ja', ['en', 'ja'])        // '/'
-removeLocalePrefix('/about', ['en', 'ja'])     // '/about'
+const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
+
+localizedPath('/about', 'en', config)    // '/en/about': the path of a page in a locale
+localizedPath('/about', 'ja', config)    // '/about'
+localizedPath('/', 'en', config)         // '/en'
+alternatePath('/en/about', 'ja', config) // '/about': the current page in another locale
+removeLocalePrefix('/en/about', config)  // '/about'
+pathLocale('/en/about', config)          // 'en'
+pathLocale('/about', config)             // undefined
 ```
+
+- The results have no trailing slash, except for the top page `/`.
+- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`. Add the query and the hash after building the path.
+- A locale that is not one of `locales` throws. With `as const`, it is a type error too.
+- `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
 
 ## Advanced Usage
 

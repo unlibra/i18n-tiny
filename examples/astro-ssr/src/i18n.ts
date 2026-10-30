@@ -1,5 +1,4 @@
 import { define } from '@i18n-tiny/astro'
-import { getLocalizedPath } from '@i18n-tiny/astro/router'
 import enMessages from './messages/en'
 import jaMessages from './messages/ja'
 
@@ -22,5 +21,3 @@ export const {
     ja: jaMessages
   }
 })
-
-export { getLocalizedPath }
