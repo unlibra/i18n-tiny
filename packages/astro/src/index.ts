@@ -46,7 +46,9 @@ export type LocalizedStaticPath<L extends string, P extends StaticPathInput = { 
           /** The locale of the URL: undefined for the default locale without a prefix */
           locale: L | undefined
         }
-        props: NonNullable<P['props']> & {
+        // A path without props, also when an array literal gives it
+        // `props?: undefined`, gets only the props below
+        props: ([NonNullable<P['props']>] extends [never] ? unknown : NonNullable<P['props']>) & {
           /** The locale of the page */
           locale: L
           /** The locales the page is built in */

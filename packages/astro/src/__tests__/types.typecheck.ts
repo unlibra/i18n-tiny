@@ -105,6 +105,16 @@ const toolLocale: 'en' | 'ja' = toolProps.locale
 const label: string = toolProps.label
 const tool: 'color' | 'hex' = toolParams.tool
 const toolUrlLocale: 'en' | 'ja' | undefined = toolParams.locale
+// Paths with and without props: the props of each path stay as they are
+const getMixedPaths = () => i18n.getStaticPaths({
+  paths: [{ params: { tool: 'a' }, props: { label: 'A' } }, { params: { tool: 'b' } }]
+})
+type MixedProps = InferGetStaticPropsType<typeof getMixedPaths>
+declare const mixedProps: MixedProps
+const mixedLocale: 'en' | 'ja' = mixedProps.locale
+// @ts-expect-error the path without props has no label
+const mixedLabel: string = mixedProps.label
+const maybeLabel: string | undefined = 'label' in mixedProps ? mixedProps.label : undefined
 // @ts-expect-error getStaticPaths() sets params.locale
 i18n.getStaticPaths({ paths: [{ params: { locale: 'en' } }] })
 // @ts-expect-error getStaticPaths() sets props.locale
@@ -139,6 +149,6 @@ removeLocalePrefix('/ja/about', { locales: ['en', 'ja'], defaultLocale: 'fr' })
 export {
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,
   toolLocale, label, tool, toolUrlLocale, localized, alternate, removed, prefix, sameAsInput, routed,
-  routedLocale, routedRemoved, getStaticPaths, getToolPaths
+  routedLocale, routedRemoved, getStaticPaths, getToolPaths, getMixedPaths, mixedLocale, mixedLabel, maybeLabel
 }
 export type { DefineConfig, getLocalizedPath, hasLocalePrefix }
