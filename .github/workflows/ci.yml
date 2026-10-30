@@ -58,10 +58,13 @@ jobs:
 
   # Builds the examples as consumers would: out of the workspace, installed
   # from the packed packages, with the lowest and the highest supported
-  # majors of Astro, Next.js and React, and React 18 and 19 with both
+  # majors of Astro, Next.js and React, and React 18 and 19 each with both
   # Next.js majors. Covers what only a framework can check: the Astro
   # components, the react-server entries and the React context shared by the
-  # entry points.
+  # entry points. The React example renders with the installed React. The
+  # Next.js examples use the App Router, which renders with the React that
+  # Next.js bundles, so for them the React major changes the types
+  # (@types/react) that the build checks, not the React they render with.
   examples:
     name: Examples (Node ${{ matrix.node }}, Astro ${{ matrix.astro }}, Next.js ${{ matrix.next }}, React ${{ matrix.react }})
     runs-on: ubuntu-latest
@@ -74,7 +77,8 @@ jobs:
           - { node: '22.12.0', astro: 6, next: 15, react: 18 }
           # The highest
           - { node: '26', astro: 7, next: 16, react: 19 }
-          # React 18 with Next.js 16, and React 19 with Next.js 15
+          # React 18 with Next.js 16, and React 19 with Next.js 15 (for the
+          # Next.js examples, the types of that React)
           - { node: '24', astro: 7, next: 16, react: 18 }
           - { node: '24', astro: 6, next: 15, react: 19 }
     steps:
