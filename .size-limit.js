@@ -1,7 +1,7 @@
-// Keeps the browser bundle small: CI fails when the browser bundle of a
-// package grows past 2KB, minified and gzipped. The aim is to stay under 1KB,
-// as the README and the docs say; if a bundle passes 1KB, update them to the
-// measured size. Framework packages are left out, as apps already ship them.
+// Keeps the browser bundle small: CI fails when the browser bundle of define()
+// grows past 2KB, minified and gzipped, the size the READMEs give. Only the
+// entry of define() is measured, not the Link of @i18n-tiny/next/router.
+// Framework packages are left out, as apps already ship them.
 export default [
   {
     name: '@i18n-tiny/react',

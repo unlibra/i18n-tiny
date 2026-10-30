@@ -52,7 +52,7 @@ jobs:
       - name: Check packages
         run: pnpm check:packages
 
-      # Fails when a browser bundle grows past 2KB (the aim is under 1KB).
+      # Fails when the browser bundle of define() grows past 2KB.
       - name: Check bundle size
         run: pnpm size
 

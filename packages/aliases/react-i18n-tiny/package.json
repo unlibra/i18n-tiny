@@ -2,7 +2,7 @@
   "name": "react-i18n-tiny",
   "version": "2.0.0-beta.1",
   "type": "module",
-  "description": "Alias package for @i18n-tiny/react - Type-safe i18n for React in under 1KB",
+  "description": "Alias package for @i18n-tiny/react - Type-safe i18n for React in under 2KB",
   "keywords": [
     "react",
     "i18n",

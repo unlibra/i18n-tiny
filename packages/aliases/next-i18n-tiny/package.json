@@ -2,7 +2,7 @@
   "name": "next-i18n-tiny",
   "version": "2.0.0-beta.1",
   "type": "module",
-  "description": "Alias package for @i18n-tiny/next - Type-safe i18n for Next.js in under 1KB",
+  "description": "Alias package for @i18n-tiny/next - Type-safe i18n for Next.js, with a define() under 2KB in the browser",
   "keywords": [
     "nextjs",
     "next",

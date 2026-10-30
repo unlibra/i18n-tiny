@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/)
 
-The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup, and under 1KB.
+The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup, and under 2KB in the browser.
 
 One function for fully-typed translations.
 `define()` gives you complete autocomplete for every translation key.
@@ -151,7 +151,7 @@ return <p>{t('common.greeting', { name: 'Alice' })}</p>  // ← Interpolation
 - **Type-safe**: Full TypeScript support with automatic type inference
 - **Zero dependencies**: No external i18n libraries needed
 - **Framework support**: Next.js, Astro, React
-- **Minimal bundle**: under 2KB minified and gzipped in the browser (`@i18n-tiny/react`, `@i18n-tiny/next`); `@i18n-tiny/astro` adds no JavaScript to the browser
+- **Minimal bundle**: under 2KB minified and gzipped in the browser (`define()` of `@i18n-tiny/react` and `@i18n-tiny/next`, without the Next.js `Link`); `@i18n-tiny/astro` adds no JavaScript to the browser
 
 ## Security
 
