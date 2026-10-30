@@ -85,7 +85,9 @@ for how to update from 1.x.
 - `@i18n-tiny/astro/integration` (and `astro-i18n-tiny/integration`).
 - `getLocalizedPath()` and `hasLocalePrefix()`.
 - `Astro.locals.locales`.
-- `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`.
+- `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`, the
+  same props of the internal provider (not those of the `Provider` of
+  `define()`).
 - The CommonJS builds (`.cjs`, `.d.cts`).
 
 ### Fixed

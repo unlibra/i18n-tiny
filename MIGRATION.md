@@ -765,7 +765,7 @@ See [examples/next-ssr](./examples/next-ssr) for the whole app.
 
 - `define()` checks the config: see [The config](#the-config).
 - The `locale` of the `Provider` is one of `locales`; any other value is a type error and throws. `useLocale()` returns one of `locales`.
-- `I18nProviderProps` is removed from `@i18n-tiny/react/internal`. Use `ProviderProps`.
+- `I18nProviderProps` is removed from `@i18n-tiny/react/internal`. Use `ProviderProps`, the same type: the props of the internal `I18nProvider`, with `locales` and `defaultLocale`. It is also exported from `@i18n-tiny/react`. It is not the type of the props of the `Provider` that `define()` returns: for those, use `ComponentProps<typeof i18n.Provider>`.
 - `DefineConfig` is removed: see [Config types](#config-types).
 - `define()` returns `isLocale()`, to narrow a value such as a saved setting:
 
