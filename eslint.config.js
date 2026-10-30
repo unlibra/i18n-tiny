@@ -28,5 +28,29 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off'
     }
+  },
+  {
+    // The packages ship only ES modules, which CommonJS consumers load with
+    // require(). Node cannot require() a module graph that contains a
+    // top-level await, so the published code must not use one.
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'AwaitExpression:not(:function AwaitExpression)',
+          message: 'Top-level await breaks require() of the published ES modules.'
+        },
+        {
+          selector: 'ForOfStatement[await=true]:not(:function ForOfStatement)',
+          message: 'Top-level for await breaks require() of the published ES modules.'
+        },
+        {
+          selector: 'VariableDeclaration[kind="await using"]:not(:function VariableDeclaration)',
+          message: 'Top-level await using breaks require() of the published ES modules.'
+        }
+      ]
+    }
   }
 )

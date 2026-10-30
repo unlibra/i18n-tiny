@@ -2,17 +2,12 @@ import { defineConfig, type Options } from 'tsup'
 import { readFileSync, writeFileSync } from 'fs'
 
 const sharedConfig: Options = {
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   sourcemap: true,
   external: ['react', 'next', '@i18n-tiny/core'],
   splitting: false,
-  treeshake: true,
-  outExtension ({ format }) {
-    return {
-      js: format === 'esm' ? '.js' : '.cjs'
-    }
-  }
+  treeshake: true
 }
 
 async function addUseClientDirective(files: string[]) {
@@ -40,10 +35,7 @@ export default defineConfig([
     },
     clean: false,
     async onSuccess () {
-      await addUseClientDirective([
-        'dist/router/index.js',
-        'dist/router/index.cjs'
-      ])
+      await addUseClientDirective(['dist/router/index.js'])
     }
   },
   // React Client build
@@ -54,10 +46,7 @@ export default defineConfig([
     },
     clean: false,
     async onSuccess () {
-      await addUseClientDirective([
-        'dist/index.react-client.js',
-        'dist/index.react-client.cjs'
-      ])
+      await addUseClientDirective(['dist/index.react-client.js'])
     }
   },
   // React Server build

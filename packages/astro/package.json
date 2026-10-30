@@ -20,49 +20,24 @@
     "url": "https://github.com/unlibra/i18n-tiny.git",
     "directory": "packages/astro"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./middleware": {
-      "import": {
-        "types": "./dist/middleware.d.ts",
-        "default": "./dist/middleware.js"
-      },
-      "require": {
-        "types": "./dist/middleware.d.cts",
-        "default": "./dist/middleware.cjs"
-      }
+      "types": "./dist/middleware.d.ts",
+      "default": "./dist/middleware.js"
     },
     "./router": {
-      "import": {
-        "types": "./dist/router.d.ts",
-        "default": "./dist/router.js"
-      },
-      "require": {
-        "types": "./dist/router.d.cts",
-        "default": "./dist/router.cjs"
-      }
+      "types": "./dist/router.d.ts",
+      "default": "./dist/router.js"
     },
     "./integration": {
-      "import": {
-        "types": "./dist/integration.d.ts",
-        "default": "./dist/integration.js"
-      },
-      "require": {
-        "types": "./dist/integration.d.cts",
-        "default": "./dist/integration.cjs"
-      }
+      "types": "./dist/integration.d.ts",
+      "default": "./dist/integration.js"
     },
     "./router/*": "./src/router/*",
     "./locals": {
@@ -74,6 +49,9 @@
     "src/router",
     "src/locals.d.ts"
   ],
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsup",
     "type-check": "tsc --noEmit",
@@ -84,7 +62,7 @@
     "@i18n-tiny/core": "workspace:*"
   },
   "peerDependencies": {
-    "astro": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+    "astro": "^6.0.0 || ^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

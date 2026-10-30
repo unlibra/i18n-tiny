@@ -49,7 +49,7 @@ jobs:
       - name: Check packages
         run: pnpm check:packages
 
-      # Fails when a browser bundle grows past the 1KB the docs promise.
+      # Fails when a browser bundle grows past 2KB (the aim is under 1KB).
       - name: Check bundle size
         run: pnpm size
 

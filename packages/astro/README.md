@@ -34,7 +34,9 @@ pnpm add @i18n-tiny/astro
 yarn add @i18n-tiny/astro
 ```
 
-Requires Astro 4, 5, 6 or 7. The middleware uses `context.rewrite`, which became stable in Astro 4.13, so use 4.13 or later with Astro 4.
+Requires Astro 6 or 7. The package itself runs on Node.js 22.12 or later, but Astro may need a newer one: Astro 7.4.4, for example, requires Node.js 22.23.4 or later. Use the Node.js version your Astro version requires.
+
+The package ships ES modules only.
 
 ## Usage
 

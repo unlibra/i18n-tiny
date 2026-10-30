@@ -33,6 +33,8 @@ pnpm add @i18n-tiny/next
 yarn add @i18n-tiny/next
 ```
 
+Requires Next.js 15 or 16, React 18 or 19, and Node.js 22.12 or later. The package ships ES modules only.
+
 ## Usage
 
 ### Project Structure
