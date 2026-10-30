@@ -4,7 +4,12 @@
  * Core routing utilities for i18n - framework agnostic
  */
 
+import type { I18nConfig } from '../config'
+import { stripLocalePrefix } from './paths'
+import type { CheckedConfig, Path } from './paths'
+
 export type { I18nConfig } from '../config'
+export { localizedPath, alternatePath, pathLocale } from './paths'
 
 /**
  * Generate a localized path with locale prefix
@@ -14,6 +19,9 @@ export type { I18nConfig } from '../config'
  * @param defaultLocale - The default locale (e.g., 'en')
  * @param prefixDefault - Whether to add prefix for default locale (default: false)
  * @returns The localized path (e.g., '/ja/about' or '/about' for default locale)
+ *
+ * @deprecated Use localizedPath(path, locale, config) with the config object.
+ * This form is removed before the 2.0.0 release.
  *
  * @example
  * ```typescript
@@ -47,6 +55,29 @@ export function getLocalizedPath(
 }
 
 /**
+ * Remove the locale prefix from a pathname
+ *
+ * The result has no trailing slash, except for the top page "/". Only whole
+ * path segments match: '/english' keeps its path.
+ *
+ * Throws when the pathname does not start with "/", starts with "//" or "/\",
+ * contains "?" or "#", or when the config is invalid.
+ *
+ * @example
+ * ```typescript
+ * import { removeLocalePrefix } from '@i18n-tiny/core/router'
+ *
+ * const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
+ * removeLocalePrefix('/en/about', config) // '/about'
+ * removeLocalePrefix('/en', config)       // '/'
+ * removeLocalePrefix('/about', config)    // '/about'
+ * ```
+ */
+export function removeLocalePrefix<const C extends I18nConfig>(
+  pathname: string,
+  config: CheckedConfig<C>
+): Path
+/**
  * Remove locale prefix from pathname
  *
  * @param pathname - The pathname to process (e.g., "/ja/about")
@@ -61,11 +92,23 @@ export function getLocalizedPath(
  * removeLocalePrefix('/ja', ['en', 'ja'])       // '/'
  * removeLocalePrefix('/about', ['en', 'ja'])    // '/about'
  * ```
+ *
+ * @deprecated Pass the config object instead of the locales:
+ * removeLocalePrefix(pathname, config). This form is removed before the 2.0.0
+ * release.
  */
 export function removeLocalePrefix(
   pathname: string,
   locales: readonly string[]
+): string
+export function removeLocalePrefix(
+  pathname: string,
+  localesOrConfig: readonly string[] | I18nConfig
 ): string {
+  if (!Array.isArray(localesOrConfig)) {
+    return stripLocalePrefix(pathname, localesOrConfig as I18nConfig)
+  }
+  const locales: readonly string[] = localesOrConfig
   for (const locale of locales) {
     if (pathname.startsWith(`/${locale}/`)) {
       return pathname.slice(locale.length + 1)
@@ -92,6 +135,9 @@ export function removeLocalePrefix(
  * hasLocalePrefix('/ja', 'ja')        // true
  * hasLocalePrefix('/about', 'ja')     // false
  * ```
+ *
+ * @deprecated Use pathLocale(pathname, config), which returns the locale of
+ * the prefix. This form is removed before the 2.0.0 release.
  */
 export function hasLocalePrefix(pathname: string, locale: string): boolean {
   return pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`

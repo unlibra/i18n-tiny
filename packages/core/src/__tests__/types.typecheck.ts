@@ -1,6 +1,8 @@
 // Type-level checks, run by `pnpm type-check` and never executed.
 // Each @ts-expect-error fails the type check if its line stops being an error.
 import type { ConfigCheck, ValidatableConfig } from '../internal'
+import { alternatePath, localizedPath, pathLocale, removeLocalePrefix } from '../router'
+import type { I18nConfig } from '../router'
 
 // The parameter type that define(), create() and the URL functions use
 declare function check<const C extends ValidatableConfig> (config: C & ConfigCheck<C>): void
@@ -58,3 +60,51 @@ check({ ...config, fallbackLocale: 'fr' })
 check({ ...config, messages: { ja: {} } })
 // @ts-expect-error messages has a locale that is not in locales
 check({ ...config, messages: { ja: {}, en: {}, fr: {} } })
+
+// URL functions
+
+// The result is a path, not the literal type of the input
+const localized: `/${string}` = localizedPath('/donate', 'en', config)
+// @ts-expect-error the result is not the input's literal type
+const sameAsInput: '/donate' = localizedPath('/donate', 'ja', config)
+const alternate: `/${string}` = alternatePath('/en/donate', 'ja', config)
+const removed: `/${string}` = removeLocalePrefix('/en/donate', config)
+// pathLocale() returns a locale of the config
+const prefix: 'ja' | 'en' | undefined = pathLocale('/en/donate', config)
+// @ts-expect-error pathLocale() may find no prefix
+const prefixAlways: 'ja' | 'en' = pathLocale('/en/donate', config)
+
+// The locale must be one of locales
+// @ts-expect-error unknown locale
+localizedPath('/donate', 'fr', config)
+// @ts-expect-error unknown locale
+alternatePath('/donate', 'fr', config)
+// @ts-expect-error unknown locale, inline config
+localizedPath('/donate', 'fr', { locales: ['ja', 'en'], defaultLocale: 'ja' })
+// The pathname can be any string, such as Astro.url.pathname
+const pathname: string = '/en/donate'
+alternatePath(pathname, 'ja', config)
+
+// Invalid configs are type errors where the locales are literal types
+// @ts-expect-error defaultLocale is not one of locales
+localizedPath('/donate', 'en', { locales: ['ja', 'en'], defaultLocale: 'fr' })
+// @ts-expect-error a locale is listed twice
+alternatePath('/donate', 'en', { locales: ['ja', 'en', 'en'], defaultLocale: 'ja' })
+// @ts-expect-error defaultLocale is not one of locales
+removeLocalePrefix('/en/donate', badDefault)
+// @ts-expect-error defaultLocale is not one of locales
+pathLocale('/en/donate', badDefault)
+// @ts-expect-error prefixDefault is a boolean
+localizedPath('/donate', 'en', { ...config, prefixDefault: 'yes' })
+
+// A config typed as I18nConfig takes any locale, checked at runtime
+const typed: I18nConfig = { locales: ['ja', 'en'], defaultLocale: 'ja' }
+localizedPath('/donate', 'fr', typed)
+const typedLocale: string | undefined = pathLocale('/en/donate', typed)
+// I18nConfig<L> keeps the locales
+const narrow: I18nConfig<'ja' | 'en'> = config
+localizedPath('/donate', 'en', narrow)
+// @ts-expect-error unknown locale
+localizedPath('/donate', 'fr', narrow)
+
+export { localized, sameAsInput, alternate, removed, prefix, prefixAlways, typedLocale }
