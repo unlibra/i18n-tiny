@@ -17,6 +17,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | Node.js | Not specified | 22.12 or later | [Requirements](#requirements) |
 | Module format | ES modules and CommonJS | ES modules only | [Requirements](#requirements) |
 | Astro | 4 to 7 | 6 or 7 | [Requirements](#requirements) |
+| TypeScript | Not specified | 5.9 or later | [Requirements](#requirements) |
 | `define()` config | `locales` and `defaultLocale` optional in Astro, nothing checked | Both required, the config is checked | [The config](#the-config) |
 | `messages` | A locale without messages fell back to the default locale | `messages` must have exactly the locales of `locales` | [The config](#the-config) |
 | Config type | `DefineConfig` | `I18nConfig`, the locale settings only | [Config types](#config-types) |
@@ -40,7 +41,8 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | `Astro.locals.locales` | Set in every routing mode | Removed | [Astro: server rendering](#astro-server-rendering) |
 | Rewrite mode with detection | `prefixDefault` not accepted | `prefixDefault: true` required | [Astro: rewrite mode](#astro-rewrite-mode), [Next.js: rewrite mode](#nextjs-rewrite-mode) |
 | Next.js `x-locale` | Set on the response | Passed as a request header | [Next.js: rewrite mode](#nextjs-rewrite-mode) |
-| Next.js `Link` without `locale` | Copied the pattern of the current URL | Built from the `Provider` settings | [Next.js: Link](#nextjs-link) |
+| Next.js `Link` without `locale` | Copied the pattern of the current URL | The link for the current locale, from the `Provider` | [Next.js: Link](#nextjs-link) |
+| Next.js `Link` to a page of another locale | Navigated on the client | Loaded in full, not prefetched | [Next.js: Link](#nextjs-link) |
 | Next.js `Link` with `typedRoutes` | `href` checked against the routes | `href` typed as any URL | [Next.js: Link](#nextjs-link) |
 | React `I18nProviderProps` | Deprecated alias of `ProviderProps` | Removed | [React](#react) |
 
@@ -49,6 +51,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 - **Node.js 22.12 or later.** Each package has `"engines": { "node": ">=22.12" }`. Astro may need a newer Node.js than this: use the version your Astro version requires.
 - **ES modules only.** The `.cjs` and `.d.cts` files are gone, and `exports` has only the `types` and `default` conditions. On Node.js 22.12 or later, `require()` can still load the packages, since Node.js loads ES modules from `require()`.
 - **Astro 6 or 7.** Astro 4 and 5 are no longer supported.
+- **TypeScript 5.9 or later** for the types.
 - Next.js 15 or 16 and React 18 or 19, as in 1.x.
 
 ## The config
@@ -393,7 +396,9 @@ Other changes of the middleware:
 
 ### Astro: rewrite mode
 
-With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Detection (`detectLanguage: true`, the default) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, the config is a type error and throws. Put `prefixDefault: true` in the shared config, or turn detection off with `detectLanguage: false`.
+With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Detection (`detectLanguage: true`, the default) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, the config is a type error and throws. Put `prefixDefault: true` in the shared config, or turn detection off with `detectLanguage: false`, where `prefixDefault` may be `false`.
+
+In the rewrite mode, `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected.
 
 ```typescript
 // 1.x: src/i18n.ts (examples/astro-ssr)
@@ -624,8 +629,13 @@ export default async function Layout({
 
 Besides the [changes to both Link components](#link):
 
-- **Without `locale`, the link is built from the settings of the `Provider`**, in the standard routing: a link for the current locale, where the default locale gets no prefix unless `prefixDefault` is true. In 1.x, it copied the pattern of the current URL, so a page of the default locale that Next.js served from `/en`, after the proxy rewrote `/` to `/en`, linked to `/en/about`.
+- **Without `locale`, the link is for the current locale**, built from the locale of the `Provider` and its settings as `localizedPath()` builds it, whatever the current URL is. With `defaultLocale: 'en'`, `href="/about"` is `/about` on an English page and `/ja/about` on a Japanese page. In 1.x, it copied the pattern of the current URL:
+  - In the standard routing, a page of the default locale that Next.js served from `/en`, after the proxy rewrote `/` to `/en`, linked to `/en/about`. On a URL with the prefix of the default locale, such as `/en/about`, the links now have no prefix.
+  - In the rewrite mode with detection, which now needs `prefixDefault: true`, the links of a page at `/` that was detected as Japanese are `/ja/about` instead of `/about`.
+- **A link to a page of another locale is loaded in full** by the browser, not by the router of Next.js, and is not prefetched. This applies in every routing mode, also to links with `locale={false}`: the locale of the page is read from the path, as the locale of its prefix, or for a path without a prefix, the default locale. With `prefixDefault: true`, a path without a prefix is the detected locale, which only the server knows, so it is loaded in full too. State in Client Components, such as the value of an input, is not kept across such a link. Clicks with a modifier key, `target="_blank"` and `download` are left to the browser.
 - **`typedRoutes`.** With `typedRoutes` on, the `href` of this `Link` is typed as any URL, not as one of the generated routes, since it has no locale prefix. In 1.x, it was checked against the routes.
+
+The Astro `Link` without `locale` still keeps the pattern of the current URL.
 
 Language buttons in [examples/next](./examples/next/app/[locale]/client-component.tsx) link to the current page in each locale:
 
@@ -663,7 +673,7 @@ const { alternatePath } = usePaths()
 
 The proxy now passes the locale to the pages as the `x-locale` **request** header, so Server Components read it with `headers()`. In 1.x, it was set on the response, which Server Components did not see. An `x-locale` header sent by the client is replaced.
 
-As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`, and detection (the default) needs `prefixDefault: true`. Put it in the shared config:
+As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`, and detection (the default) needs `prefixDefault: true`: without it, the config is a type error and throws. Put it in the shared config. `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected. With `detectLanguage: false`, `prefixDefault` may be `false`.
 
 ```typescript
 // 1.x: proxy.ts (rewrite mode)
@@ -706,7 +716,20 @@ export async function getLocale () {
 }
 ```
 
-In the rewrite mode, a `Link` to another locale than the current one loads the page in full instead of navigating on the client, so that the page shows the new locale.
+With `prefixDefault: true`, the language buttons link to `/en` and `/ja`:
+
+```tsx
+// 2.0: app/client-component.tsx (examples/next-ssr)
+<Link href="/" locale={false} style={buttonStyle(false)}>
+  Auto
+</Link>
+<Link href="/" locale="en" style={buttonStyle(locale === 'en')}>
+  English
+</Link>
+<Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
+  日本語
+</Link>
+```
 
 See [examples/next-ssr](./examples/next-ssr) for the whole app.
 

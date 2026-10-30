@@ -12,8 +12,9 @@ for how to update from 1.x.
 
 ### Changed
 
-- The packages ship ES modules only and require Node.js 22.12 or later.
-  `@i18n-tiny/astro` supports Astro 6 and 7.
+- The packages ship ES modules only and require Node.js 22.12 or later, and
+  their types TypeScript 5.9 or later. `@i18n-tiny/astro` supports Astro 6
+  and 7.
 - `define()` takes `locales` and `defaultLocale` in every package, and checks
   the config: an empty or duplicated locale, a locale that cannot be a path
   segment, a `defaultLocale` that is not one of `locales`, and `messages`
@@ -46,11 +47,14 @@ for how to update from 1.x.
 - `excludePaths` of the Astro middleware matches whole path segments, and an
   entry that does not start with `/` throws.
 - In the rewrite mode, the Astro middleware and the Next.js proxy accept
-  `detectLanguage` and `prefixDefault`. With detection, `prefixDefault: true`
-  is required.
-- The Next.js `Link` without `locale` builds the link for the current locale
-  from the settings of the `Provider` in the standard routing. In the rewrite
-  mode, a `Link` to another locale loads the page in full.
+  `detectLanguage` and `prefixDefault`, so they take the same config as
+  `define()`. With detection, `prefixDefault: true` is required: without it,
+  the config is a type error and throws. In this mode `prefixDefault` changes
+  the links only, and a URL without a locale prefix is not redirected.
+- The Next.js `Link` without `locale` builds the link for the locale of the
+  `Provider`, as `localizedPath()` does, instead of following the current URL.
+- The Next.js `Link` loads a page of another locale in full, in every routing
+  mode and also with `locale={false}`, and does not prefetch it.
 - With `typedRoutes`, the `href` of the Next.js `Link` is typed as any URL
   instead of one of the generated routes.
 - `DefineConfig` is replaced by `I18nConfig`, the locale settings

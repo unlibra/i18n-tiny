@@ -35,7 +35,7 @@ yarn add @i18n-tiny/astro
 
 Requires Astro 6 or 7. The package itself runs on Node.js 22.12 or later, but Astro may need a newer one: Astro 7.4.4, for example, requires Node.js 22.23.4 or later. Use the Node.js version your Astro version requires.
 
-The package ships ES modules only.
+The package ships ES modules only. The types need TypeScript 5.9 or later.
 
 ## Usage
 

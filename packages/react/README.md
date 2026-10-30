@@ -12,7 +12,7 @@ Type-safe i18n library for React in under 2KB, with automatic type inference and
 npm install @i18n-tiny/react
 ```
 
-Requires React 18 or 19, and Node.js 22.12 or later when it runs on Node.js (for example in server rendering or tests). The package ships ES modules only.
+Requires React 18 or 19, and Node.js 22.12 or later when it runs on Node.js (for example in server rendering or tests). The package ships ES modules only. The types need TypeScript 5.9 or later.
 
 ## Quick Start
 
