@@ -29,28 +29,29 @@ See the full documentation at [docs.unlibra.com](https://docs.unlibra.com/i18n-t
 ```typescript
 // src/i18n.ts
 import { define } from 'astro-i18n-tiny'
-import enMessages from './messages/en'
 import jaMessages from './messages/ja'
+import enMessages from './messages/en'
 
-export const { locales, getMessages, getTranslations } = define({
-  locales: ['en', 'ja'],
-  defaultLocale: 'en',
-  messages: { en: enMessages, ja: jaMessages }
+export const i18n = define({
+  locales: ['ja', 'en'],
+  defaultLocale: 'ja',
+  messages: { ja: jaMessages, en: enMessages }
 })
 ```
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getMessages } from '../../i18n'
+// src/pages/[...locale]/index.astro → / (ja) and /en (en)
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../i18n'
 
-// Static output: build one page per locale (leave this out with output: 'server')
 export function getStaticPaths() {
-  return locales.map((locale) => ({ params: { locale } }))
+  return i18n.getStaticPaths()
 }
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
-const { locale } = Astro.params
-const messages = getMessages(locale)
+const { locale } = Astro.props
+const messages = i18n.getMessages(locale)
 ---
 
 <h1>{messages.common.title}</h1>
