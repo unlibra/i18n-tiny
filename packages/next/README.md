@@ -598,6 +598,8 @@ export function LanguageSwitcher() {
 }
 ```
 
+With a language switcher, pass `detectLanguage: false` to the proxy. With detection, the default, and `prefixDefault: false`, the link to the default locale has no prefix, and the proxy detects its language again: a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`, so it cannot reach the pages of the default locale.
+
 ## Examples
 
 See the [examples](../../examples) directory for complete working examples.

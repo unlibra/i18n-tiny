@@ -525,6 +525,8 @@ const names = { ja: '日本語', en: 'English' }
 
 Pass it `Astro.props.pageLocales` from the page, so that it only links to the locales the page is built in.
 
+With the [middleware](#i18n-tinyastromiddleware-ssr-only) and a language switcher, pass `detectLanguage: false` to the middleware. With detection, the default, and `prefixDefault: false`, the link to the default locale has no prefix, and the middleware detects its language again: a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`, so it cannot reach the pages of the default locale. A static build has no middleware and no detection.
+
 ### With Astro's Built-in i18n
 
 You can also use Astro's built-in i18n routing with @i18n-tiny/astro for translations only. Astro's routing then builds the pages of each locale, and `Astro.currentLocale` is a `string | undefined`, so narrow it with `isLocale()`:
