@@ -59,7 +59,8 @@ interface BaseConfig {
 interface StandardRoutingConfig extends BaseConfig {
   readonly routing?: never
   /**
-   * Whether URLs of the default locale also carry the locale prefix
+   * Whether URLs of the default locale also carry the locale prefix. Put it
+   * in the config shared with define(): the links read it from there
    * @default false
    */
   readonly prefixDefault?: boolean
@@ -160,8 +161,10 @@ function varyOnAcceptLanguage (response: NextResponse): NextResponse {
  * // No detection: URLs without a locale prefix are the default locale
  * export const proxy = create({ ...i18nConfig, detectLanguage: false })
  *
- * // Always prefix the default locale
- * export const proxy = create({ ...i18nConfig, prefixDefault: true })
+ * // Always prefix the default locale: prefixDefault: true goes in the
+ * // config shared with define(), whose Link and URL functions read it
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * export const proxy = create({ ...i18nConfig })
  *
  * // SSR with rewrite (clean URLs, locale in the x-locale request header).
  * // With the language detection, the config has prefixDefault: true:

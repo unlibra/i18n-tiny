@@ -57,7 +57,8 @@ interface BaseConfig {
 interface StandardRoutingConfig extends BaseConfig {
   readonly routing?: never
   /**
-   * Whether URLs of the default locale also carry the locale prefix
+   * Whether URLs of the default locale also carry the locale prefix. Put it
+   * in the config shared with define(): the links read it from there
    * @default false
    */
   readonly prefixDefault?: boolean
@@ -130,8 +131,10 @@ function currentBase (): string {
  * // No detection: URLs without a locale prefix are the default locale
  * export const onRequest = defineMiddleware(create({ ...config, detectLanguage: false }))
  *
- * // Always prefix the default locale
- * export const onRequest = defineMiddleware(create({ ...config, prefixDefault: true }))
+ * // Always prefix the default locale: prefixDefault: true goes in the
+ * // config shared with define(), whose Link and URL functions read it
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * export const onRequest = defineMiddleware(create({ ...config }))
  *
  * // SSR with rewrite (clean URLs, locale in Astro.locals). With the
  * // language detection, the config has prefixDefault: true:

@@ -395,7 +395,7 @@ Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequ
 | `locales`        | `readonly string[]` | -               | Array of supported locales                                                 |
 | `defaultLocale`  | one of `locales`    | -               | The locale of URLs without a locale prefix                                 |
 | `fallbackLocale` | one of `locales`    | `defaultLocale` | Used when the detection finds no match                                     |
-| `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs. `true` for `routing: 'rewrite'` with detection |
+| `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs. Put it in the config shared with `define()`. `true` for `routing: 'rewrite'` with detection |
 | `detectLanguage` | `boolean`           | `true`          | Whether to detect the language of URLs without a prefix from Accept-Language |
 | `routing`        | `'rewrite'`         | -               | SSR rewrite mode                                                           |
 
@@ -420,15 +420,25 @@ import { config as i18nConfig } from '@/i18n.config'
 // Default: detect language, redirect non-default, rewrite default
 export const proxy = create({ ...i18nConfig })
 
-// Always prefix all locales (including default)
-export const proxy = create({ ...i18nConfig, prefixDefault: true })
-
 // No detection: URLs without a prefix are the default locale
 export const proxy = create({ ...i18nConfig, detectLanguage: false })
 
 // SSR rewrite mode (locale in the x-locale request header). With detection,
 // the config has prefixDefault: true, see below
 export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
+```
+
+To prefix all locales, including the default one, set `prefixDefault: true`. `Link` and the URL functions read it from `define()` and its `Provider`, not from the proxy, so put it in the config that `define()` and the proxy share, not in `create()` only: with `prefixDefault: true` in the proxy only, a link to the default locale has no prefix, so the proxy redirects it, and with detection to the detected locale, which may not be the default one.
+
+```typescript
+// i18n.config.ts
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefault: true } as const
+
+// i18n.ts
+export const i18n = define({ ...config, messages: { en, ja } })
+
+// proxy.ts
+export const proxy = create({ ...config })
 ```
 
 #### Rewrite Mode

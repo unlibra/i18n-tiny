@@ -46,6 +46,11 @@ for how to update from 1.x.
   match.
 - `excludePaths` of the Astro middleware matches whole path segments, and an
   entry that does not start with `/` throws.
+- `Link` and the URL functions read `prefixDefault` from `define()` (in
+  Next.js, through its `Provider`). A `prefixDefault` that 1.x passed to the
+  Astro middleware, the Next.js proxy or the Astro integration goes in the
+  config shared with `define()`: in `create()` only, links to the default
+  locale have no prefix and are redirected.
 - In the rewrite mode, the Astro middleware and the Next.js proxy accept
   `detectLanguage` and `prefixDefault`, so they take the same config as
   `define()`. With detection, `prefixDefault: true` is required: without it,

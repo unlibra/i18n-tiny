@@ -20,6 +20,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | TypeScript | Not specified | 5.9 or later | [Requirements](#requirements) |
 | `define()` config | `locales` and `defaultLocale` optional in Astro, nothing checked | Both required, the config is checked | [The config](#the-config) |
 | `messages` | A locale without messages fell back to the default locale | `messages` must have exactly the locales of `locales` | [The config](#the-config) |
+| `prefixDefault` of the middleware, the proxy and the integration | Set in `create()` only | In the shared config, passed to `define()` too | [One config for everything](#one-config-for-everything) |
 | Config type | `DefineConfig` | `I18nConfig`, the locale settings only | [Config types](#config-types) |
 | `@i18n-tiny/astro` `I18nConfig` | A config with `messages` | The locale settings, as in the core | [Config types](#config-types) |
 | `getMessages()`, `getTranslations()`, `Provider` | Any `string`, unknown locales fell back to the default locale | One of `locales`, anything else throws | [Locales are typed](#locales-are-typed) |
@@ -101,6 +102,22 @@ export const i18n = define({
 ```
 
 The 1.x way, with `locales` and `defaultLocale` as constants of their own, still works, as in [examples/react](./examples/react).
+
+**Move `prefixDefault` to the shared config.** In 1.x, `prefixDefault` was an option of the Astro middleware, the Next.js proxy and `@i18n-tiny/astro/integration`, and the links did not read it. In 2.0, `Link` and the URL functions read it from `define()` (in Next.js, through its `Provider`). If your 1.x code passed `prefixDefault` to `create()`, move it to the shared config, so that `define()` gets it too. With `prefixDefault: true` in `create()` only, a link to the default locale has no prefix, so the middleware or the proxy redirects it, and with detection to the detected locale, which may not be the default one.
+
+```typescript
+// 1.x
+export const proxy = create({ locales: ['en', 'ja'], defaultLocale: 'en', prefixDefault: true })
+
+// 2.0: i18n.config.ts
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefault: true } as const
+
+// 2.0: i18n.ts
+export const i18n = define({ ...config, messages: { en: enMessages, ja: jaMessages } })
+
+// 2.0: proxy.ts
+export const proxy = create({ ...config })
+```
 
 ### Config types
 
@@ -205,6 +222,8 @@ export default defineConfig({
   ]
 })
 ```
+
+If the integration had `prefixDefault: true`, put `prefixDefault: true` in the shared config instead (see [One config for everything](#one-config-for-everything)): `i18n.getStaticPaths()` then builds the default locale with its prefix too, and the links have it.
 
 The 1.x example used English as the default locale; the 2.0 example uses Japanese.
 
@@ -391,6 +410,7 @@ Other changes of the middleware:
 - **Without detection, the default locale.** With `detectLanguage: false`, a URL without a locale prefix is the default locale, and `prefixDefault: true` redirects to `/[defaultLocale]`. In 1.x, both used `fallbackLocale`. `fallbackLocale` is now used only when detection finds no match. If you set `fallbackLocale` to another locale than `defaultLocale` with `detectLanguage: false`, the locale of those URLs and the redirect target change.
 - **`excludePaths` matches whole path segments.** `'/api'` matches `/api` and `/api/users`, but no longer `/apis` or `/api-docs`. An entry that does not start with `/` throws when `create()` runs. Write the entries without the `base`.
 - **`Astro.locals.locales` is removed.** Read the locales from `i18n.locales`.
+- **`prefixDefault` goes in the shared config**, which `define()` takes too: see [One config for everything](#one-config-for-everything).
 - **The config is checked** as `define()` checks it: see [The config](#the-config).
 - With a `base`, the middleware removes it from the URL before routing and adds it to the redirect and rewrite targets.
 
@@ -667,6 +687,7 @@ const { alternatePath } = usePaths()
 ### Next.js: proxy
 
 - **Without detection, the default locale.** With `detectLanguage: false`, a URL without a locale prefix is rewritten to `/[defaultLocale]`, and `prefixDefault: true` redirects to it. In 1.x, both used `fallbackLocale`. `fallbackLocale` is now used only when detection finds no match.
+- **`prefixDefault` goes in the shared config**, which `define()` takes too: see [One config for everything](#one-config-for-everything).
 - **The config is checked** as `define()` checks it: see [The config](#the-config).
 
 ### Next.js: rewrite mode
