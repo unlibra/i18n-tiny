@@ -16,6 +16,8 @@ Currently supports: **Next.js** | **Astro** | **React**
 
 **[Documentation](https://docs.unlibra.com/i18n-tiny/)** · **[npm](https://www.npmjs.com/org/i18n-tiny)**
 
+Updating from 1.x? See the [migration guide](./MIGRATION.md).
+
 ## Quick Start
 
 ### Next.js
