@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { PACKAGES, asPublished, checkVersions, distTagFor, packumentUrl, tarballName } from '../lib/release.mjs'
+import { PACKAGES, asPublished, checkCiRuns, checkReleaseBranch, checkVersions, distTagFor, packumentUrl, releaseBranchesFor, tarballName } from '../lib/release.mjs'
 
 test('a prerelease is published with the tag next', () => {
   for (const version of ['2.0.0-beta.1', '2.0.0-rc.0', '2.1.0-alpha', '3.0.0-0']) {
@@ -85,4 +85,28 @@ test('other workspace: ranges are left as they are, so the check refuses them', 
     { name: '@i18n-tiny/react', version: '2.0.0', dependencies: { '@i18n-tiny/core': 'workspace:^' } }
   ])
   assert.equal(react.dependencies['@i18n-tiny/core'], 'workspace:^')
+})
+
+test('a release is published only from main, a prerelease from main or v2', () => {
+  assert.deepEqual(releaseBranchesFor('latest'), ['main'])
+  assert.deepEqual(releaseBranchesFor('next'), ['main', 'v2'])
+  assert.throws(() => releaseBranchesFor('beta'))
+})
+
+test('the commit must be on a branch the dist-tag allows', () => {
+  assert.deepEqual(checkReleaseBranch('next', 'abc', ['v2']), [])
+  assert.deepEqual(checkReleaseBranch('next', 'abc', ['main', 'v2']), [])
+  assert.deepEqual(checkReleaseBranch('latest', 'abc', ['main']), [])
+  assert.match(checkReleaseBranch('next', 'abc', [])[0], /abc is not on origin\/main or origin\/v2/)
+  assert.match(checkReleaseBranch('latest', 'abc', ['v2'])[0], /abc is not on origin\/main,/)
+})
+
+test('the CI workflow must have succeeded on the commit itself', () => {
+  const run = (headSha, status, conclusion) => ({ headSha, status, conclusion, url: `https://example.com/${headSha}` })
+  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'success')], 'abc'), [])
+  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'failure'), run('abc', 'completed', 'success')], 'abc'), [])
+  assert.match(checkCiRuns([], 'abc')[0], /has not run on the commit abc/)
+  assert.match(checkCiRuns([run('def', 'completed', 'success')], 'abc')[0], /has not run on the commit abc/)
+  assert.match(checkCiRuns([run('abc', 'completed', 'failure')], 'abc')[0], /has not succeeded .* completed\/failure/)
+  assert.match(checkCiRuns([run('abc', 'in_progress', '')], 'abc')[0], /has not succeeded .* in_progress\/-/)
 })

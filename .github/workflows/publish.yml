@@ -8,6 +8,8 @@ on:
 permissions:
   id-token: write
   contents: read
+  # Lets the publish script read the CI runs of the tagged commit.
+  actions: read
 
 jobs:
   publish:
@@ -15,6 +17,10 @@ jobs:
     environment: npm
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # The whole history and the branches, so the publish script can
+          # check that the tagged commit is on origin/main (or origin/v2).
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
@@ -42,11 +48,13 @@ jobs:
         run: pnpm test
 
       # Checks that the tag, the versions and the pinned dependencies agree,
-      # runs check:packages and size, and publishes the checked tarballs with
+      # that the tagged commit is on a release branch and passed CI, runs
+      # check:packages and size, and publishes the checked tarballs with
       # the dist-tag "next" for a prerelease and "latest" for a release.
       # Versions already on npm are skipped, so a failed run can be re-run.
       # Try it locally with --dry-run instead of --publish.
       - name: Publish
         env:
           GIT_TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
         run: node scripts/publish.mjs --git-tag "$GIT_TAG" --publish

@@ -74,3 +74,36 @@ export function asPublished (manifests) {
     [name, range === 'workspace:*' && versions.has(name) ? versions.get(name) : range]))
   return manifests.map((pkg) => ({ ...pkg, dependencies: pin(pkg.dependencies), peerDependencies: pin(pkg.peerDependencies) }))
 }
+
+/**
+ * The branches a release may be published from: a release only from main, a
+ * prerelease from main or v2, where the 2.0 prereleases are made.
+ */
+export function releaseBranchesFor (distTag) {
+  if (distTag === 'latest') return ['main']
+  if (distTag === 'next') return ['main', 'v2']
+  throw new Error(`unknown dist-tag "${distTag}"`)
+}
+
+/**
+ * Checks that the commit to publish is on one of the branches its dist-tag
+ * allows. `containing` lists the branches whose remote-tracking ref contains
+ * the commit.
+ */
+export function checkReleaseBranch (distTag, commit, containing) {
+  const allowed = releaseBranchesFor(distTag)
+  if (allowed.some((branch) => containing.includes(branch))) return []
+  return [`the commit ${commit} is not on ${allowed.map((b) => `origin/${b}`).join(' or ')}, where a version with the tag ${distTag} is published from`]
+}
+
+/**
+ * Checks the runs of the CI workflow (as `gh run list --json
+ * databaseId,headSha,status,conclusion,url` gives them) for a successful one
+ * of the commit. Returns the problems, empty when one succeeded.
+ */
+export function checkCiRuns (runs, commit) {
+  const own = runs.filter((run) => run.headSha === commit)
+  if (own.some((run) => run.status === 'completed' && run.conclusion === 'success')) return []
+  if (own.length === 0) return [`the CI workflow has not run on the commit ${commit}`]
+  return [`the CI workflow has not succeeded on the commit ${commit}: ${own.map((run) => `${run.status}/${run.conclusion || '-'} ${run.url}`).join(', ')}`]
+}
