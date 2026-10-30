@@ -1,0 +1,40 @@
+---
+import type { InferGetStaticPropsType } from 'astro'
+import Link from '@i18n-tiny/astro/router/Link.astro'
+import LanguageSwitcher from '../../../components/LanguageSwitcher.astro'
+import Nav from '../../../components/Nav.astro'
+import { i18n } from '../../../i18n'
+import { tools } from '../../../tools'
+
+// Each tool in each locale: /lab/color, /en/lab/color, ...
+export function getStaticPaths() {
+  return i18n.getStaticPaths({
+    paths: tools.map((tool) => ({ params: { tool }, props: { tool } }))
+  })
+}
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { locale, pageLocales, tool } = Astro.props
+const t = i18n.getTranslations(locale, 'lab')
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{t(tool)} | {t('title')}</title>
+  </head>
+  <body style="padding: 2rem; font-family: system-ui;">
+    <Nav locale={locale} />
+
+    <h1>{t(tool)}</h1>
+    <ul>
+      {tools.map((other) => (
+        <li><Link href={`/lab/${other}`}>{t(other)}</Link></li>
+      ))}
+    </ul>
+
+    <hr style="margin: 2rem 0;" />
+
+    <LanguageSwitcher locale={locale} pageLocales={pageLocales} />
+  </body>
+</html>

@@ -2,63 +2,56 @@
 /**
  * Localized Link component for Astro
  *
- * Automatically detects whether locale prefix is needed based on current URL.
+ * Without `locale`, the link keeps the locale of the current URL: it gets
+ * the prefix of the current locale only when the current URL has one.
+ * `locale` and `normalize` need the define() result as the `i18n` prop.
+ * The base of the site is removed from the current URL and added to the
+ * link, so href is a path without the base.
  *
  * @example
  * ```astro
  * import Link from '@i18n-tiny/astro/router/Link.astro'
+ * import { i18n } from '../i18n'
  *
- * // Auto-localized (maintains current URL pattern)
+ * // Keeps the locale of the current URL
  * <Link href="/about">About</Link>
  *
- * // Language switch with explicit locale
- * <Link href="/" locale="ja">日本語</Link>
+ * // A link for a locale: the default locale gets no prefix
+ * <Link href="/" locale="en" i18n={i18n}>English</Link>
  *
- * // Raw path (no localization)
- * <Link href="/" locale="">English</Link>
- * <Link href="/" locale={false}>English</Link>
+ * // The current page in another locale
+ * <Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
  *
- * // With href normalization (removes existing locale prefix before processing)
- * // Useful when href is the current path, such as Astro.url.pathname
- * <Link href="/ja/about" locale="en" normalize>English</Link>  // → /en/about
+ * // The path without a locale
+ * <Link href="/" locale={false}>Top</Link>
  * ```
  */
-import type { HTMLAttributes } from 'astro/types'
-import { getLinkHref } from '@i18n-tiny/core/router'
+import type { LinkProps } from '@i18n-tiny/astro/internal'
+import { linkHref } from '@i18n-tiny/astro/internal'
 
-interface Props extends HTMLAttributes<'a'> {
-  /** The path to navigate to */
-  href: string
-  /**
-   * Override the locale for this link
-   * - undefined: auto-localize based on current URL (default)
-   * - string (e.g., 'ja'): generate path with specified locale prefix
-   * - '' (empty string) or false: use href as-is without any localization
-   */
-  locale?: string | false
-  /**
-   * Normalize href by removing any existing locale prefix before processing.
-   * When true, locales are read from Astro.locals (set by middleware).
-   * @default false
-   */
-  normalize?: boolean
-}
+type Props = LinkProps
 
-const { href, locale, normalize = false, ...attrs } = Astro.props
+const { href, locale, normalize, i18n, ...attrs } = Astro.props
 
 const locals = Astro.locals as Record<string, unknown>
 
-// Get current locale from route params or locals (for SSR rewrite mode)
-const currentLocale = (Astro.params.locale as string | undefined)
-  || locals.locale as string | undefined
+// The locale of the current page: from the route params, or from the locals
+// in the SSR rewrite mode
+const currentLocale = (Astro.params.locale as string | undefined) ||
+  (locals.locale as string | undefined)
 
-// Use original pathname if available (for SSR rewrite mode where URL is rewritten)
+// The URL before the rewrite in the SSR rewrite mode
 const currentPathname = (locals.originalPathname as string | undefined) ?? Astro.url.pathname
 
-// Get locales from middleware for normalization
-const locales = normalize ? (locals.locales as readonly string[] | undefined) : undefined
-
-const localizedHref = getLinkHref(href, currentPathname, currentLocale, { locale, locales })
+const localizedHref = linkHref({
+  href,
+  currentPathname,
+  currentLocale,
+  locale,
+  normalize,
+  i18n,
+  base: import.meta.env.BASE_URL
+})
 ---
 
 <a href={localizedHref} {...attrs}>

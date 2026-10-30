@@ -35,9 +35,9 @@
       "types": "./dist/router.d.ts",
       "default": "./dist/router.js"
     },
-    "./integration": {
-      "types": "./dist/integration.d.ts",
-      "default": "./dist/integration.js"
+    "./internal": {
+      "types": "./dist/internal.d.ts",
+      "default": "./dist/internal.js"
     },
     "./router/*": "./src/router/*",
     "./locals": {

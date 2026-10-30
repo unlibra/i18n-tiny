@@ -8,7 +8,8 @@ export default {
   },
   nav: {
     home: 'ホーム',
-    about: 'このサイトについて'
+    about: 'このサイトについて',
+    lab: 'ラボ'
   },
   home: {
     welcome: 'Astro へようこそ',
@@ -17,5 +18,10 @@ export default {
   about: {
     title: 'このサイトについて',
     description: 'これはアバウトページです。'
+  },
+  lab: {
+    title: 'ラボ',
+    color: 'カラーピッカー',
+    counter: 'カウンター'
   }
 } satisfies Messages

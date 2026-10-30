@@ -34,9 +34,9 @@
       "types": "./router.d.ts",
       "default": "./router.js"
     },
-    "./integration": {
-      "types": "./integration.d.ts",
-      "default": "./integration.js"
+    "./internal": {
+      "types": "./internal.d.ts",
+      "default": "./internal.js"
     },
     "./router/*": "./router/*",
     "./locals": {
@@ -46,8 +46,8 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "integration.d.ts",
-    "integration.js",
+    "internal.d.ts",
+    "internal.js",
     "locals.d.ts",
     "middleware.d.ts",
     "middleware.js",

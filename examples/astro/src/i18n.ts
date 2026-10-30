@@ -1,23 +1,14 @@
 import { define } from '@i18n-tiny/astro'
+import { config } from './i18n.config'
 import enMessages from './messages/en'
 import jaMessages from './messages/ja'
 
-export const locales = ['en', 'ja'] as const
-export type Locale = (typeof locales)[number]
-export const defaultLocale: Locale = 'en'
-export const messages = {
-  en: enMessages,
-  ja: jaMessages
-}
-
-export const {
-  getMessages,
-  getTranslations
-} = define({
-  locales,
-  defaultLocale,
+export const i18n = define({
+  ...config,
   messages: {
-    en: enMessages,
-    ja: jaMessages
+    ja: jaMessages,
+    en: enMessages
   }
 })
+
+export type Locale = (typeof i18n.locales)[number]

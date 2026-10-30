@@ -6,7 +6,8 @@ const messages = {
   },
   nav: {
     home: 'Home',
-    about: 'About'
+    about: 'About',
+    lab: 'Lab'
   },
   home: {
     welcome: 'Welcome to Astro',
@@ -15,6 +16,11 @@ const messages = {
   about: {
     title: 'About',
     description: 'This is the about page.'
+  },
+  lab: {
+    title: 'Lab',
+    color: 'Color picker',
+    counter: 'Counter'
   }
 }
 

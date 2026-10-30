@@ -1,0 +1,44 @@
+---
+import Link from '@i18n-tiny/astro/router/Link.astro'
+import { i18n } from '../i18n'
+import type { Locale } from '../i18n'
+
+interface Props {
+  locale: Locale
+  pageLocales: readonly Locale[]
+}
+
+const { locale, pageLocales } = Astro.props
+
+const names: Record<Locale, string> = { ja: '日本語', en: 'English' }
+
+const buttonStyle = (isActive: boolean) => `
+  height: 2rem;
+  padding: 0 1rem;
+  font-size: 1rem;
+  line-height: 2rem;
+  background-color: ${isActive ? '#007bff' : '#6c757d'};
+  color: white;
+  border: none;
+  border-radius: 4px;
+  margin: 0.5rem;
+  text-decoration: none;
+  display: inline-block;
+`
+---
+
+<!-- The current page in each locale it is built in -->
+<div>
+  {pageLocales.map((pageLocale) => (
+    <Link
+      href={Astro.url.pathname}
+      locale={pageLocale}
+      normalize
+      i18n={i18n}
+      hreflang={pageLocale}
+      style={buttonStyle(pageLocale === locale)}
+    >
+      {names[pageLocale]}
+    </Link>
+  ))}
+</div>

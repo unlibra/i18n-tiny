@@ -88,7 +88,9 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
  * })
  *
  * // In .astro files under src/pages/[...locale]/
- * export const getStaticPaths = () => i18n.getStaticPaths()
+ * export function getStaticPaths() {
+ *   return i18n.getStaticPaths()
+ * }
  * const { locale } = Astro.props
  * const t = i18n.getTranslations(locale)
  * ```

@@ -1,0 +1,32 @@
+---
+import type { InferGetStaticPropsType } from 'astro'
+import LanguageSwitcher from '../../components/LanguageSwitcher.astro'
+import Nav from '../../components/Nav.astro'
+import { i18n } from '../../i18n'
+
+// /about in Japanese (the default locale) and /en/about in English
+export function getStaticPaths() {
+  return i18n.getStaticPaths()
+}
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { locale, pageLocales } = Astro.props
+const messages = i18n.getMessages(locale)
+---
+
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{messages.about.title} | {messages.common.title}</title>
+  </head>
+  <body style="padding: 2rem; font-family: system-ui;">
+    <Nav locale={locale} />
+
+    <h1>{messages.about.title}</h1>
+    <p>{messages.about.description}</p>
+
+    <hr style="margin: 2rem 0;" />
+
+    <LanguageSwitcher locale={locale} pageLocales={pageLocales} />
+  </body>
+</html>

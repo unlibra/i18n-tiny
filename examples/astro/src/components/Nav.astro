@@ -1,0 +1,18 @@
+---
+import Link from '@i18n-tiny/astro/router/Link.astro'
+import { i18n } from '../i18n'
+import type { Locale } from '../i18n'
+
+interface Props {
+  locale: Locale
+}
+
+const t = i18n.getTranslations(Astro.props.locale, 'nav')
+---
+
+<!-- Links keep the locale of the current page -->
+<nav style="margin-bottom: 2rem;">
+  <Link href="/" style="margin-right: 1rem;">{t('home')}</Link>
+  <Link href="/about" style="margin-right: 1rem;">{t('about')}</Link>
+  <Link href="/lab/color">{t('lab')}</Link>
+</nav>

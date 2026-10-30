@@ -36,11 +36,11 @@ export default defineConfig([
     },
     clean: false
   },
-  // Integration for static file generation
+  // Shared by the components and the middleware
   {
     ...sharedConfig,
     entry: {
-      integration: 'src/integration.ts'
+      internal: 'src/internal.ts'
     },
     clean: false
   }

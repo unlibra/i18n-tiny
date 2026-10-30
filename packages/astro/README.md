@@ -9,10 +9,9 @@
 
 A zero-dependency, type-safe, minimal internationalization library for Astro that ships no client JavaScript.
 Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
-For static builds, each `[locale]` page lists its locales in a short `getStaticPaths` that maps over your `locales` array.
 
-**SSR**: Use `middleware.create()` for routing with automatic language detection.
-**SSG**: Use `integration.create()` to copy default locale content to root at build time.
+**SSG**: Put the pages under `src/pages/[...locale]/` and return `i18n.getStaticPaths()` from their `getStaticPaths`. The default locale is served without a prefix (`/about`), the others with one (`/en/about`).
+**SSR**: Use `middleware.create()` for routing with language detection.
 
 ## Features
 
@@ -45,35 +44,19 @@ The package ships ES modules only.
 ```text
 src/
 ├── pages/
-│   └── [locale]/
-│       ├── index.astro
-│       └── about.astro
+│   └── [...locale]/
+│       ├── index.astro    → /, /en
+│       └── about.astro    → /about, /en/about
 ├── messages/
 │   ├── en.ts
 │   └── ja.ts
-├── i18n.ts
-└── middleware.ts
+├── i18n.config.ts
+└── i18n.ts
 ```
 
 ### Minimal Setup
 
-Place this file anywhere in your project.
-
 #### **1. Create message files**
-
-```typescript
-// src/messages/en.ts
-export default {
-  common: {
-    title: "My Site",
-    description: "Welcome to my site"
-  },
-  nav: {
-    home: "Home",
-    about: "About"
-  }
-}
-```
 
 ```typescript
 // src/messages/ja.ts
@@ -89,6 +72,20 @@ export default {
 }
 ```
 
+```typescript
+// src/messages/en.ts
+export default {
+  common: {
+    title: "My Site",
+    description: "Welcome to my site"
+  },
+  nav: {
+    home: "Home",
+    about: "About"
+  }
+}
+```
+
 #### **2. Define i18n instance**
 
 Place this file anywhere in your project (`i18n.ts`, `lib/i18n/index.ts`, etc.)
@@ -96,60 +93,35 @@ Place this file anywhere in your project (`i18n.ts`, `lib/i18n/index.ts`, etc.)
 ```typescript
 // src/i18n.ts
 import { define } from '@i18n-tiny/astro'
-import enMessages from './messages/en'
 import jaMessages from './messages/ja'
+import enMessages from './messages/en'
 
-// Keys are typed from the messages. `as const` only keeps the Locale type narrow ('en' | 'ja')
-export const locales = ['en', 'ja'] as const
-export type Locale = (typeof locales)[number]
-export const defaultLocale: Locale = 'en'
-
-export const { getMessages, getTranslations } = define({
-  locales,
-  defaultLocale,
-  messages: { en: enMessages, ja: jaMessages }
+export const i18n = define({
+  locales: ['ja', 'en'],
+  defaultLocale: 'ja',
+  messages: { ja: jaMessages, en: enMessages }
 })
 ```
 
-#### **3. Setup middleware**
+To use the locale settings where the messages are not loaded too, such as in the middleware or `astro.config`, write them once in a file of their own and spread them: see [`I18nConfig`](#i18nconfig-type).
 
-The middleware runs on each request, so it needs `output: 'server'` and an adapter:
-
-```typescript
-// astro.config.mjs
-import { defineConfig } from 'astro/config'
-import node from '@astrojs/node'
-
-export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' })
-})
-```
-
-```typescript
-// src/middleware.ts
-import { defineMiddleware } from 'astro/middleware'
-import { create } from '@i18n-tiny/astro/middleware'
-import { locales, defaultLocale } from './i18n'
-
-const middleware = create({
-  locales,
-  defaultLocale
-})
-
-export const onRequest = defineMiddleware(middleware)
-```
-
-#### **4. Use in pages**
+#### **3. Use in pages**
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { getMessages, getTranslations } from '../../i18n'
-const { locale } = Astro.params
+// src/pages/[...locale]/index.astro
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../i18n'
 
-const messages = getMessages(locale)
-const t = getTranslations(locale)
+// / in Japanese (the default locale) and /en in English
+export function getStaticPaths() {
+  return i18n.getStaticPaths()
+}
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { locale } = Astro.props // 'ja' | 'en'
+const messages = i18n.getMessages(locale)
+const t = i18n.getTranslations(locale)
 ---
 
 <html lang={locale}>
@@ -167,7 +139,9 @@ const t = getTranslations(locale)
 
 That's it! **Types are automatically inferred** - no manual type annotations needed.
 
-For static output (no middleware), each `[locale]` page also needs `getStaticPaths`. See [Static Site Generation (SSG)](#static-site-generation-ssg).
+The build output has `/` and `/about` in Japanese and `/en` and `/en/about` in English, with no `/ja`. Use `Astro.props.locale`, typed as one of the locales, rather than `Astro.params.locale`, which is `undefined` for the default locale.
+
+For server rendering with language detection, add the [middleware](#i18n-tinyastromiddleware-ssr-only).
 
 ## API Reference
 
@@ -215,11 +189,8 @@ With a namespace, keys are relative to it: `getTranslations(locale, 'common')` t
 Whether `value` is one of `locales`. In TypeScript, it narrows `value` to the locale type:
 
 ```typescript
-const locale = Astro.currentLocale // string | undefined
-if (!i18n.isLocale(locale)) {
-  throw new Error(`Unknown locale: ${locale}`)
-}
-const messages = i18n.getMessages(locale)
+const lang = Astro.url.searchParams.get('lang') // string | null
+const messages = i18n.getMessages(i18n.isLocale(lang) ? lang : i18n.defaultLocale)
 ```
 
 #### `getStaticPaths(options?)`
@@ -232,7 +203,9 @@ The paths of a page under `src/pages/[...locale]/`, one for each locale, to retu
 import type { InferGetStaticPropsType } from 'astro'
 import { i18n } from '../../i18n'
 
-export const getStaticPaths = () => i18n.getStaticPaths()
+export function getStaticPaths() {
+  return i18n.getStaticPaths()
+}
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
 const { locale } = Astro.props // 'ja' | 'en'
@@ -252,9 +225,11 @@ const messages = i18n.getMessages(locale)
 ```astro
 ---
 // src/pages/[...locale]/lab/[tool].astro
-export const getStaticPaths = () => i18n.getStaticPaths({
-  paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
-})
+export function getStaticPaths() {
+  return i18n.getStaticPaths({
+    paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
+  })
+}
 ---
 ```
 
@@ -296,7 +271,7 @@ export const config: I18nConfig<'ja' | 'en'> = { locales: ['ja', 'en'], defaultL
 
 Creates an Astro middleware handler for i18n routing.
 
-> **Note**: Middleware only works in SSR mode (`output: 'server'` with an adapter). For SSG, use the integration instead.
+> **Note**: Middleware only works in SSR mode (`output: 'server'` with an adapter). Static builds need no middleware.
 
 **Parameters:**
 
@@ -398,84 +373,45 @@ const locale = detectLocale(acceptLanguage, ['en', 'ja'])
 // Returns: 'en' | 'ja' | null
 ```
 
-### `@i18n-tiny/astro/integration` (SSG only)
-
-#### `create(config)`
-
-Creates an Astro integration for i18n static file generation.
-
-> **Note**: This integration is for SSG mode only. It copies the default locale's content to the root directory after build, enabling `/` to serve the default locale without a prefix.
-
-**Parameters:**
-
-| Parameter       | Type      | Default | Description                                                 |
-| --------------- | --------- | ------- | ----------------------------------------------------------- |
-| `defaultLocale` | `string`  | -       | Default locale - content from this locale is copied to root |
-| `prefixDefault` | `boolean` | `false` | If true, skips copying (all locales remain prefixed)        |
-
-**Example:**
-
-```typescript
-// astro.config.mjs
-import { defineConfig } from 'astro/config'
-import { create } from '@i18n-tiny/astro/integration'
-
-export default defineConfig({
-  integrations: [
-    create({
-      defaultLocale: 'en'
-    })
-  ]
-})
-```
-
-**Build Output:**
-
-```
-dist/
-├── index.html        ← copied from /en/index.html
-├── about/index.html  ← copied from /en/about/index.html
-├── en/
-│   ├── index.html
-│   └── about/index.html
-└── ja/
-    ├── index.html
-    └── about/index.html
-```
-
-> **Important**: In SSG mode, automatic language detection (`detectLanguage`) does not work because there is no server to read the `Accept-Language` header. Users will always see the default locale first when visiting `/`.
-
-#### `I18nIntegrationConfig` (type)
-
-Type for the configuration object passed to `create()`.
-
 ### `@i18n-tiny/astro/router`
 
 #### `Link` Component
 
-Localized Link component that auto-detects locale from current URL.
+A link that keeps the locale of the current page, or points to another locale.
 
 ```astro
 ---
 import Link from '@i18n-tiny/astro/router/Link.astro'
+import { i18n } from '../i18n'
 ---
 
-<!-- Auto-localized (maintains current URL pattern) -->
+<!-- Keeps the locale of the current URL: /about on /, /en/about on /en -->
 <Link href="/about">About</Link>
 
-<!-- Explicit locale override -->
-<Link href="/" locale="ja">日本語</Link>
+<!-- A link for a locale: /en, and / for the default locale -->
+<Link href="/" locale="en" i18n={i18n}>English</Link>
+<Link href="/" locale="ja" i18n={i18n}>日本語</Link>
 
-<!-- Raw path (no localization) -->
-<Link href="/" locale="">English</Link>
+<!-- The current page in another locale -->
+<Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
 
-<!-- Path normalization (requires the i18n-tiny middleware) -->
-<Link href="/ja/about" locale="en" normalize>English</Link>
+<!-- The path without a locale -->
+<Link href="/" locale={false}>Top</Link>
 ```
 
-"Maintains current URL pattern" means the link gets a locale prefix only when the current URL has one. The root pages copied by the SSG integration are copies of the `/[defaultLocale]/` pages, so their links still point to `/[defaultLocale]/...`.
+| Prop        | Type              | Description                                                                                                   |
+| ----------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `href`      | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
+| `locale`    | `string \| false` | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
+| `normalize` | `boolean`         | Removes the base and a locale prefix from `href` first, for `href={Astro.url.pathname}`                       |
+| `i18n`      | `define()` result | Required with `locale` (other than `false`) and `normalize`, from which the link reads `locales`, `defaultLocale` and `prefixDefault` |
 
-`normalize` reads the locales from `Astro.locals.locales`, which only the i18n-tiny middleware sets. Without the middleware, remove the prefix yourself: `href={removeLocalePrefix(Astro.url.pathname, locales)} locale={loc}`.
+- Without `locale`, the link gets the prefix of the current locale only when the current URL has one.
+- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
+- `locale` or `normalize` without `i18n` is a type error, and throws.
+- An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
+- The links have no trailing slash, except for the top page `/`.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
 
 #### URL functions
 
@@ -502,48 +438,40 @@ pathLocale('/about', config)             // undefined
 
 ## Advanced Usage
 
-### Static Site Generation (SSG)
+### Pages in Some Locales Only
 
-For static sites, use `getStaticPaths` and the integration:
-
-**1. Add the integration to `astro.config.mjs`:**
-
-```typescript
-import { defineConfig } from 'astro/config'
-import { create } from '@i18n-tiny/astro/integration'
-
-export default defineConfig({
-  integrations: [
-    create({ defaultLocale: 'en' })
-  ]
-})
-```
-
-**2. Use `getStaticPaths` in your pages:**
+Pass the locales of the page to `getStaticPaths()`. `Astro.props.pageLocales` has them, for a language switcher:
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getMessages } from '../../i18n'
-
+// src/pages/[...locale]/privacy.astro: /privacy in Japanese only
 export function getStaticPaths() {
-  return locales.map((locale) => ({
-    params: { locale }
-  }))
+  return i18n.getStaticPaths({ locales: ['ja'] })
 }
-
-const { locale } = Astro.params
-const messages = getMessages(locale)
 ---
-
-<html lang={locale}>
-  <body>
-    <h1>{messages.common.title}</h1>
-  </body>
-</html>
 ```
 
-> **Note**: The integration copies `/en/*` to `/*` after build, so users can access the site at `/` without a locale prefix. The pages are copied as they are, so links inside them still point to `/en/...`. Middleware is not needed for SSG.
+### Other Dynamic Parameters
+
+Pass the other parameters of the route as `paths`. Each one is built in each locale:
+
+```astro
+---
+// src/pages/[...locale]/lab/[tool].astro: /lab/color, /en/lab/color, ...
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../../i18n'
+import { tools } from '../../../tools'
+
+export function getStaticPaths() {
+  return i18n.getStaticPaths({
+    paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
+  })
+}
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
+
+const { locale, tool } = Astro.props
+---
+```
 
 ### Language Switcher
 
@@ -551,31 +479,29 @@ const messages = getMessages(locale)
 ---
 // src/components/LanguageSwitcher.astro
 import Link from '@i18n-tiny/astro/router/Link.astro'
-import { locales } from '../i18n'
+import { i18n } from '../i18n'
 
-const locale = Astro.params.locale ?? Astro.locals.locale
-
-const localeNames: Record<string, string> = {
-  en: 'English',
-  ja: '日本語'
+interface Props {
+  pageLocales: readonly (typeof i18n.locales)[number][]
 }
+
+const names = { ja: '日本語', en: 'English' }
 ---
 
 <nav>
-  {locales.map((loc) => (
-    <Link
-      href="/"
-      locale={loc}
-    >
-      {localeNames[loc]}
+  {Astro.props.pageLocales.map((locale) => (
+    <Link href={Astro.url.pathname} locale={locale} normalize i18n={i18n}>
+      {names[locale]}
     </Link>
   ))}
 </nav>
 ```
 
+Pass it `Astro.props.pageLocales` from the page, so that it only links to the locales the page is built in.
+
 ### With Astro's Built-in i18n
 
-You can also use Astro's built-in i18n routing with @i18n-tiny/astro for translations only:
+You can also use Astro's built-in i18n routing with @i18n-tiny/astro for translations only. Astro's routing then builds the pages of each locale, and `Astro.currentLocale` is a `string | undefined`, so narrow it with `isLocale()`:
 
 ```javascript
 // astro.config.mjs
@@ -583,8 +509,8 @@ import { defineConfig } from 'astro/config'
 
 export default defineConfig({
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'ja'],
+    defaultLocale: 'ja',
+    locales: ['ja', 'en'],
     routing: {
       prefixDefaultLocale: false
     }
@@ -594,17 +520,13 @@ export default defineConfig({
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getMessages } from '../../i18n'
+import { i18n } from '../i18n'
 
-// Static output: build one page per locale (leave this out with output: 'server')
-export function getStaticPaths() {
-  return locales.map((locale) => ({ params: { locale } }))
-}
-
-// Astro.currentLocale is set by Astro's built-in i18n (Astro 4.0+)
 const locale = Astro.currentLocale
-const messages = getMessages(locale)
+if (!i18n.isLocale(locale)) {
+  throw new Error(`Unknown locale: ${locale}`)
+}
+const messages = i18n.getMessages(locale)
 ---
 
 <html lang={locale}>

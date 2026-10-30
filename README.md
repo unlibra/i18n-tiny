@@ -72,28 +72,30 @@ npm install @i18n-tiny/astro
 ```typescript
 // i18n.ts - define() gives you everything
 import { define } from '@i18n-tiny/astro'
-import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
-import ja from './messages/ja'
+import ja from './messages/ja' // { common: { title: 'こんにちは', greeting: 'こんにちは、{name}さん' } }
+import en from './messages/en'
 
-export const { locales, getMessages, getTranslations } = define({
-  locales: ['en', 'ja'],
-  defaultLocale: 'en',
-  messages: { en, ja }
+export const i18n = define({
+  locales: ['ja', 'en'],
+  defaultLocale: 'ja',
+  messages: { ja, en }
 })
 ```
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getMessages, getTranslations } from '../../i18n'
+// src/pages/[...locale]/index.astro → / (ja) and /en (en)
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../i18n'
 
 export function getStaticPaths() {
-  return locales.map((locale) => ({ params: { locale } }))
+  return i18n.getStaticPaths()
 }
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
-const { locale } = Astro.params
-const messages = getMessages(locale)
-const t = getTranslations(locale)
+const { locale } = Astro.props // 'ja' | 'en'
+const messages = i18n.getMessages(locale)
+const t = i18n.getTranslations(locale)
 ---
 <h1>{messages.common.title}</h1>  <!-- ← Typed! Full autocomplete -->
 <p>{t('common.greeting', { name: 'Alice' })}</p>  <!-- ← Interpolation -->

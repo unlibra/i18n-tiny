@@ -5,6 +5,7 @@ import { define } from '../index'
 import type { I18nConfig } from '../index'
 // @ts-expect-error DefineConfig is replaced by I18nConfig
 import type { DefineConfig } from '../index'
+import type { LinkProps } from '../internal'
 import { alternatePath, localizedPath, pathLocale, removeLocalePrefix } from '../router'
 // @ts-expect-error the positional form is gone: use localizedPath()
 import { getLocalizedPath } from '../router'
@@ -146,7 +147,24 @@ localizedPath('/about', 'fr', config)
 // @ts-expect-error defaultLocale is not one of locales
 removeLocalePrefix('/ja/about', { locales: ['en', 'ja'], defaultLocale: 'fr' })
 
+// Props of the Link component: locale and normalize need the define() result
+const keepLocale: LinkProps = { href: '/about' }
+const withoutLocale: LinkProps = { href: '/about', locale: false }
+const forLocale: LinkProps = { href: '/about', locale: 'en', i18n }
+const normalized: LinkProps = { href: '/en/about', locale: 'ja', normalize: true, i18n }
+const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current': 'page', i18n }
+// @ts-expect-error a locale needs i18n
+const localeWithoutI18n: LinkProps = { href: '/about', locale: 'en' }
+// @ts-expect-error normalize needs i18n
+const normalizeWithoutI18n: LinkProps = { href: '/about', normalize: true }
+// @ts-expect-error locale="" no longer means the path without a locale: use locale={false}
+const emptyLocale: LinkProps = { href: '/about', locale: '' }
+// @ts-expect-error i18n is the define() result, not the locales
+const localesAsI18n: LinkProps = { href: '/about', locale: 'en', i18n: ['ja', 'en'] }
+
 export {
+  keepLocale, withoutLocale, forLocale, normalized, withAttributes, localeWithoutI18n, normalizeWithoutI18n,
+  emptyLocale, localesAsI18n,
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,
   toolLocale, label, tool, toolUrlLocale, localized, alternate, removed, prefix, sameAsInput, routed,
   routedLocale, routedRemoved, getStaticPaths, getToolPaths, getMixedPaths, mixedLocale, mixedLabel, maybeLabel
