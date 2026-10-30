@@ -15,7 +15,11 @@ import type { LinkHrefOptions } from '@i18n-tiny/core/router'
 type NextLinkComponentProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof NextLinkProps> &
   NextLinkProps & { children?: ReactNode } & RefAttributes<HTMLAnchorElement>
 
-export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
+// The empty string is not a locale: locale="" was the 1.x way to write
+// locale={false}, and is a type error
+type LocaleProp<T extends string> = (T extends '' ? never : T) | false
+
+export interface LinkProps<T extends string = string> extends Omit<NextLinkComponentProps, 'locale'> {
   /**
    * The locale of the link
    * - undefined: keep the locale of the current URL (default)
@@ -23,7 +27,7 @@ export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
    *   gets no prefix unless prefixDefault is true. Any other value throws
    * - false: the path without a locale
    */
-  locale?: string | false
+  locale?: LocaleProp<T>
   /**
    * Remove a locale prefix from href first, such as when href comes from
    * usePathname()
@@ -62,7 +66,7 @@ export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
  * <Link href={pathname} locale="en" normalize>English</Link>  // → /en/about
  * ```
  */
-export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
+export function Link<const T extends string = string>({ href, locale, normalize = false, ...props }: LinkProps<T>) {
   let currentLocale: string
   let config: LinkHrefOptions['config']
   let pathname: string | null

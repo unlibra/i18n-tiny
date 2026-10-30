@@ -490,7 +490,7 @@ import { Link } from '@i18n-tiny/next/router'
 ```
 
 - Without `locale`, the current URL decides whether to add a locale prefix: on `/ja/page`, `href="/about"` becomes `/ja/about`; on a URL without a prefix, it stays `/about`.
-- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales`, an empty string included, throws.
+- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws. `locale=""` is a type error and throws: use `locale={false}`.
 - With `normalize`, a locale prefix is removed from `href` first, such as when `href` is the current pathname.
 - With `typedRoutes`, the `href` of this `Link` is typed as any URL, not as one of the generated routes, since it has no locale prefix.
 

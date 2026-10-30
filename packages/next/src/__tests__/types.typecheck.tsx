@@ -154,3 +154,13 @@ create({ locales: ['en', 'ja'], defaultLocale: 'fr' })
 create({ ...routerConfig, fallbackLocale: 'fr' })
 // @ts-expect-error a locale is listed twice
 create({ locales: ['en', 'ja', 'en'], defaultLocale: 'en' })
+
+// Link: locale="" is gone, locale={false} leaves the path without a locale
+import { Link } from '../router'
+void <Link href="/about" locale="ja">ja</Link>
+void <Link href="/about" locale={false}>raw</Link>
+const someLocale: string = 'ja'
+void <Link href="/about" locale={someLocale}>some</Link>
+void <Link href="/about" locale={someLocale === 'ja' && 'ja'}>conditional</Link>
+// @ts-expect-error locale="" is gone: use locale={false}
+void <Link href="/about" locale="">empty</Link>

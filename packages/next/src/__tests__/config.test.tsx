@@ -227,7 +227,9 @@ describe('Link with the config of the Provider', () => {
   })
 
   it('throws for locale="" and for a locale that is not one of locales', async () => {
-    await expect(renderLink('/en', <Link href="/about" locale="">empty</Link>))
+    // locale="" is a type error too: written here as JavaScript would pass it
+    const UntypedLink = untyped(Link)
+    await expect(renderLink('/en', <UntypedLink href="/about" locale="">empty</UntypedLink>))
       .rejects.toThrow('[i18n] Unknown locale "". Expected one of "ja", "en".')
     await expect(renderLink('/en', <Link href="/about" locale="fr">fr</Link>))
       .rejects.toThrow('[i18n] Unknown locale "fr". Expected one of "ja", "en".')
