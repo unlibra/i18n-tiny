@@ -103,7 +103,7 @@ describe('Edge Cases & Bug Fixes', () => {
       expect(link.closest('a')).toHaveAttribute('href', '/ja')
     })
 
-    it('should not add prefix when URL has no prefix', async () => {
+    it('should add the prefix of a non-default locale to the root path when URL has no prefix', async () => {
       const { usePathname } = await import('next/navigation')
       vi.mocked(usePathname).mockReturnValue('/home')
 
@@ -114,7 +114,7 @@ describe('Edge Cases & Bug Fixes', () => {
         </i18n.Provider>
       )
       const link = screen.getByText('Home')
-      expect(link.closest('a')).toHaveAttribute('href', '/')
+      expect(link.closest('a')).toHaveAttribute('href', '/ja')
     })
   })
 })

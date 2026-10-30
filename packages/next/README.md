@@ -492,7 +492,7 @@ Localized Link component, a Client Component. It reads the current locale and th
 ```typescript
 import { Link } from '@i18n-tiny/next/router'
 
-// Auto-localized (maintains current URL pattern)
+// The link for the current locale
 <Link href="/about">About</Link>
 
 // A link for another locale
@@ -505,9 +505,10 @@ import { Link } from '@i18n-tiny/next/router'
 <Link href="/" locale={condition && 'ja'}>Conditional</Link>
 ```
 
-- Without `locale`, the current URL decides whether to add a locale prefix: on `/ja/page`, `href="/about"` becomes `/ja/about`; on a URL without a prefix, it stays `/about`.
+- Without `locale`, the link is for the current locale, as `localizedPath()` builds it: with `defaultLocale: 'en'`, `href="/about"` is `/about` on an English page and `/ja/about` on a Japanese page, whatever the current URL is.
 - With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws. `locale=""` is a type error and throws: use `locale={false}`.
 - With `normalize`, a locale prefix is removed from `href` first, such as when `href` is the current pathname.
+- A link to a page of another locale is loaded in full by the browser, not by the router of Next.js, and is not prefetched. In the rewrite mode the pages of all locales are the same route, and the router would show the page of the current locale from its cache. The locale of the page is read from the path, also with `locale={false}`: the locale of its prefix, or for a path without a prefix, the default locale. With `prefixDefault`, a path without a prefix is the detected locale, which only the server knows, and is loaded in full too. Clicks with a modifier key, `target="_blank"` and `download` are left to the browser.
 - With `typedRoutes`, the `href` of this `Link` is typed as any URL, not as one of the generated routes, since it has no locale prefix.
 
 #### URL functions
