@@ -1,13 +1,20 @@
 'use client'
 
 import NextLink from 'next/link.js'
+import type { LinkProps as NextLinkProps } from 'next/link.js'
 import { usePathname } from 'next/navigation.js'
-import type { ComponentProps } from 'react'
+import type { AnchorHTMLAttributes, ReactNode, RefAttributes } from 'react'
 
 import { useLocale, useLocales } from '@i18n-tiny/react/internal'
 import { getLinkHref } from '@i18n-tiny/core/router'
 
-export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale'> {
+// The props of next/link's Link, built from its named LinkProps type rather
+// than from the type of its default export: next/link is CommonJS, so under
+// moduleResolution nodenext the default import is typed as the whole module.
+type NextLinkComponentProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof NextLinkProps> &
+  NextLinkProps & { children?: ReactNode } & RefAttributes<HTMLAnchorElement>
+
+export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
   /**
    * Override the locale for this link
    * - undefined: auto-localize based on current locale (default)
