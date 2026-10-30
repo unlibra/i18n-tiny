@@ -74,6 +74,12 @@ describe('detectLocale()', () => {
     expect(result).toBe('en')
   })
 
+  it('should detect the right locale among more than two locales', () => {
+    const multiLocales = ['en', 'ja', 'zh', 'ko'] as const
+    expect(detectLocale('zh-CN,zh;q=0.9,ja;q=0.8', multiLocales)).toBe('zh')
+    expect(detectLocale('ko-KR,ko;q=0.9,en;q=0.8', multiLocales)).toBe('ko')
+  })
+
   describe('q=0 (not acceptable)', () => {
     it('should not return a locale whose quality is 0', () => {
       expect(detectLocale('ja;q=0', supportedLocales)).toBe(null)
