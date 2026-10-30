@@ -373,6 +373,8 @@ If your 1.x site was published with `/ja/...` URLs for the default locale, those
 
 With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link removes the base from the current URL to find the locale, and adds it to the result. With `normalize`, the base is also removed from `href`, so `href={Astro.url.pathname}` works.
 
+The `Link` currently removes the trailing slash of every link except `/`, also when `astro.config` has `trailingSlash: 'always'`: on such a site, the links point to URLs without the slash, which Astro or your host may redirect or not serve.
+
 ### Astro: server rendering
 
 In the standard routing (without `routing: 'rewrite'`), the pages are under `src/pages/[...locale]/`, as for a static build. In 1.x, they were under `src/pages/[locale]/`, and the middleware rewrote a URL of the default locale without a prefix to `/[defaultLocale]/...`. In 2.0, the middleware passes it on, and `[...locale]` serves it with `Astro.params.locale` set to `undefined`:
