@@ -139,3 +139,18 @@ export function usePathsTypeChecks () {
   paths.localizedPath('/about', 'fr')
   return [path, prefixLocale]
 }
+
+// The proxy config is checked as define() checks it
+import { create } from '../proxy'
+create({ ...routerConfig })
+create({ ...routerConfig, prefixDefault: true, detectLanguage: false, fallbackLocale: 'ja' })
+// The rewrite mode takes detectLanguage too
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: false })
+// @ts-expect-error prefixDefault does not go with the rewrite mode
+create({ ...routerConfig, routing: 'rewrite', prefixDefault: true })
+// @ts-expect-error defaultLocale is not one of locales
+create({ locales: ['en', 'ja'], defaultLocale: 'fr' })
+// @ts-expect-error fallbackLocale is not one of locales
+create({ ...routerConfig, fallbackLocale: 'fr' })
+// @ts-expect-error a locale is listed twice
+create({ locales: ['en', 'ja', 'en'], defaultLocale: 'en' })

@@ -1,372 +1,208 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+// @vitest-environment node
+import { describe, it, expect } from 'vitest'
+import { NextRequest } from 'next/server'
+import type { NextResponse } from 'next/server'
 import { create } from '../proxy'
 
-// Mock NextResponse with headers support
-const createMockResponse = (type: string, url?: { pathname: string }) => {
-  const headers = new Map<string, string>()
-  return {
-    type,
-    url,
-    headers: {
-      set: (key: string, value: string) => headers.set(key, value),
-      get: (key: string) => headers.get(key)
-    }
-  }
+// Calls a function from JavaScript, without the type checks
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const untyped = (fn: unknown) => fn as (...args: any[]) => any
+
+function request (path: string, headers: Record<string, string> = {}): NextRequest {
+  // Joined as a string: a path such as //evil.com is a pathname here, as in a
+  // request, not the host of a protocol-relative URL
+  return new NextRequest(new URL(`http://localhost${path}`), { headers })
 }
 
-vi.mock('next/server', () => ({
-  NextResponse: {
-    next: vi.fn(() => createMockResponse('next')),
-    redirect: vi.fn((url) => createMockResponse('redirect', url)),
-    rewrite: vi.fn((url) => createMockResponse('rewrite', url))
+// What Next.js does with the response of the proxy: the redirect, the
+// rewrite target or "next", read from the headers Next.js reads
+function routing (response: NextResponse): string {
+  const location = response.headers.get('location')
+  if (location !== null) {
+    const url = new URL(location)
+    return `redirect ${response.status} ${url.pathname}${url.search}`
   }
-}))
-
-import { NextResponse } from 'next/server'
-
-const createMockRequest = (pathname: string, acceptLanguage?: string) => ({
-  nextUrl: {
-    pathname,
-    clone: () => ({
-      pathname
-    })
-  },
-  headers: {
-    get: (name: string) => name === 'accept-language' ? acceptLanguage ?? null : null
+  const rewrite = response.headers.get('x-middleware-rewrite')
+  if (rewrite !== null) {
+    const url = new URL(rewrite)
+    return `rewrite ${url.pathname}${url.search}`
   }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-}) as any
+  return response.headers.get('x-middleware-next') === '1' ? 'next' : 'unknown'
+}
+
+// The request headers the pages get, or undefined when the proxy leaves
+// them as the client sent them
+function forwardedHeaders (response: NextResponse): Record<string, string> | undefined {
+  const names = response.headers.get('x-middleware-override-headers')
+  if (names === null) return undefined
+  return Object.fromEntries(names.split(',').filter(Boolean).map(name => [name, response.headers.get(`x-middleware-request-${name}`) ?? '']))
+}
+
+const vary = (response: NextResponse) => response.headers.get('vary')
+
+const config = { locales: ['en', 'ja', 'fr'], defaultLocale: 'en' } as const
 
 describe('create (proxy)', () => {
-  const baseConfig = {
-    locales: ['en', 'ja', 'fr'] as const,
-    defaultLocale: 'en'
-  }
-
-  beforeEach(() => {
-    vi.clearAllMocks()
+  describe('config', () => {
+    it('throws for an invalid config', () => {
+      expect(() => untyped(create)({ locales: ['en', 'ja'] })).toThrow('defaultLocale undefined is not one of locales')
+      expect(() => untyped(create)({ locales: ['en', 'ja'], defaultLocale: 'fr' }))
+        .toThrow('[i18n] defaultLocale "fr" is not one of locales ("en", "ja").')
+      expect(() => untyped(create)({ locales: [], defaultLocale: 'en' })).toThrow('[i18n] locales must be a non-empty array')
+      expect(() => untyped(create)({ locales: ['en', 'en'], defaultLocale: 'en' }))
+        .toThrow('[i18n] Locale "en" is listed more than once in locales.')
+      expect(() => untyped(create)({ locales: ['en', 'en/us'], defaultLocale: 'en' })).toThrow('cannot be used as a path segment')
+      expect(() => untyped(create)({ ...config, fallbackLocale: 'de' }))
+        .toThrow('[i18n] fallbackLocale "de" is not one of locales ("en", "ja", "fr").')
+      expect(() => untyped(create)({ ...config, routing: 'rewrite', fallbackLocale: 'de' }))
+        .toThrow('[i18n] fallbackLocale "de" is not one of locales')
+    })
   })
 
   describe('default behavior (prefixDefault: false, detectLanguage: true)', () => {
-    it('should pass through for /en path', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/en')
+    const proxy = create({ ...config })
 
-      proxy(request)
-
-      expect(NextResponse.next).toHaveBeenCalled()
-      expect(NextResponse.redirect).not.toHaveBeenCalled()
-      expect(NextResponse.rewrite).not.toHaveBeenCalled()
+    it('passes a URL with a locale prefix through', () => {
+      for (const path of ['/en', '/en/about', '/ja', '/ja/about/team']) {
+        const response = proxy(request(path, { 'accept-language': 'fr' }))
+        expect(routing(response)).toBe('next')
+        expect(vary(response)).toBe(null)
+      }
     })
 
-    it('should pass through for /ja/about path', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/ja/about')
-
-      proxy(request)
-
-      expect(NextResponse.next).toHaveBeenCalled()
+    it('rewrites to the default locale when the detected locale is the default one or nothing matches', () => {
+      expect(routing(proxy(request('/about')))).toBe('rewrite /en/about')
+      expect(routing(proxy(request('/', { 'accept-language': 'en-US,en;q=0.9' })))).toBe('rewrite /en')
+      expect(routing(proxy(request('/about', { 'accept-language': 'de' })))).toBe('rewrite /en/about')
     })
 
-    it('should rewrite to default locale when no Accept-Language', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/about')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
+    it('redirects to the detected locale when it is not the default one', () => {
+      expect(routing(proxy(request('/about', { 'accept-language': 'ja,en;q=0.8' })))).toBe('redirect 307 /ja/about')
+      expect(routing(proxy(request('/', { 'accept-language': 'ja' })))).toBe('redirect 307 /ja')
     })
 
-    it('should rewrite root to default locale', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en')
+    it('keeps the query string', () => {
+      expect(routing(proxy(request('/about?page=2', { 'accept-language': 'ja' })))).toBe('redirect 307 /ja/about?page=2')
+      expect(routing(proxy(request('/about?page=2')))).toBe('rewrite /en/about?page=2')
     })
 
-    it('should redirect to detected locale when not default', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/about', 'ja,en;q=0.8')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/ja/about')
+    it('only matches whole path segments as a locale prefix', () => {
+      expect(routing(proxy(request('/english', { 'accept-language': 'ja' })))).toBe('redirect 307 /ja/english')
     })
 
-    it('should redirect root to detected locale', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/', 'fr')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/fr')
+    it('does not pick a language that Accept-Language marks with q=0', () => {
+      expect(routing(proxy(request('/about', { 'accept-language': 'ja;q=0, fr;q=0.5' })))).toBe('redirect 307 /fr/about')
+      expect(routing(proxy(request('/about', { 'accept-language': 'ja;q=0' })))).toBe('rewrite /en/about')
     })
 
-    it('should rewrite to default locale when Accept-Language matches default', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/about', 'en-US,en;q=0.9')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      expect(NextResponse.redirect).not.toHaveBeenCalled()
+    it('adds Vary: Accept-Language to the responses that depend on the detection', () => {
+      expect(vary(proxy(request('/about', { 'accept-language': 'ja' })))).toBe('Accept-Language')
+      expect(vary(proxy(request('/about', { 'accept-language': 'en' })))).toBe('Accept-Language')
+      expect(vary(proxy(request('/about')))).toBe('Accept-Language')
     })
 
-    it('should rewrite to default locale when Accept-Language has no match', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/about', 'de,ko;q=0.8')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
+    it('uses fallbackLocale when the detection finds no match', () => {
+      const withFallback = create({ ...config, fallbackLocale: 'ja' })
+      expect(routing(withFallback(request('/about', { 'accept-language': 'de' })))).toBe('redirect 307 /ja/about')
+      expect(routing(withFallback(request('/about')))).toBe('redirect 307 /ja/about')
+      expect(routing(withFallback(request('/about', { 'accept-language': 'en' })))).toBe('rewrite /en/about')
     })
   })
 
   describe('prefixDefault: true, detectLanguage: true', () => {
-    const config = {
-      ...baseConfig,
-      prefixDefault: true,
-      detectLanguage: true
-    }
+    const proxy = create({ ...config, prefixDefault: true })
 
-    it('should redirect to /en when locale is default', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'en-US')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en')
+    it('redirects to the detected locale, the default one included', () => {
+      expect(routing(proxy(request('/')))).toBe('redirect 307 /en')
+      expect(routing(proxy(request('/about', { 'accept-language': 'en' })))).toBe('redirect 307 /en/about')
+      expect(routing(proxy(request('/about', { 'accept-language': 'ja' })))).toBe('redirect 307 /ja/about')
+      expect(vary(proxy(request('/about', { 'accept-language': 'ja' })))).toBe('Accept-Language')
     })
 
-    it('should redirect to /en/about when locale is default', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/about', 'en')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
-    })
-
-    it('should redirect to /ja when detected locale is ja', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'ja')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/ja')
+    it('passes a URL with a locale prefix through', () => {
+      expect(routing(proxy(request('/en/about', { 'accept-language': 'ja' })))).toBe('next')
     })
   })
 
   describe('prefixDefault: false, detectLanguage: false', () => {
-    const config = {
-      ...baseConfig,
-      prefixDefault: false,
-      detectLanguage: false
-    }
-
-    it('should ignore Accept-Language and rewrite to fallback', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/about', 'ja,en;q=0.8')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      expect(NextResponse.redirect).not.toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
-    })
-
-    it('should rewrite root to fallback locale', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'ja')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en')
-    })
-
-    it('should use custom fallbackLocale when specified', () => {
-      const proxy = create({
-        ...config,
-        fallbackLocale: 'fr'
-      })
-      const request = createMockRequest('/', 'ja')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/fr')
+    it('rewrites to the default locale, ignoring Accept-Language and fallbackLocale', () => {
+      const proxy = create({ ...config, detectLanguage: false, fallbackLocale: 'ja' })
+      const response = proxy(request('/about', { 'accept-language': 'ja' }))
+      expect(routing(response)).toBe('rewrite /en/about')
+      expect(vary(response)).toBe(null)
+      expect(routing(proxy(request('/')))).toBe('rewrite /en')
     })
   })
 
   describe('prefixDefault: true, detectLanguage: false', () => {
-    const config = {
-      ...baseConfig,
-      prefixDefault: true,
-      detectLanguage: false
-    }
-
-    it('should redirect to /[defaultLocale] ignoring Accept-Language', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'ja')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en')
-    })
-
-    it('should redirect /about to /[defaultLocale]/about', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/about', 'fr')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
-    })
-
-    it('should use fallbackLocale when specified', () => {
-      const proxy = create({
-        ...config,
-        fallbackLocale: 'ja'
-      })
-      const request = createMockRequest('/')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/ja')
+    it('redirects to the default locale, ignoring Accept-Language and fallbackLocale', () => {
+      const proxy = create({ ...config, prefixDefault: true, detectLanguage: false, fallbackLocale: 'ja' })
+      const response = proxy(request('/about', { 'accept-language': 'ja' }))
+      expect(routing(response)).toBe('redirect 307 /en/about')
+      expect(vary(response)).toBe(null)
+      expect(routing(proxy(request('/')))).toBe('redirect 307 /en')
     })
   })
 
   describe('routing: "rewrite" (SSR mode)', () => {
-    const config = {
-      ...baseConfig,
-      routing: 'rewrite' as const
-    }
+    const proxy = create({ ...config, routing: 'rewrite' })
 
-    it('should rewrite /ja/about to /about with x-locale header', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/ja/about')
-
-      const response = proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/about')
-      expect(response.headers.get('x-locale')).toBe('ja')
+    it('rewrites a URL with a locale prefix to the URL without it, with the locale in the x-locale request header', () => {
+      const response = proxy(request('/ja/about?page=2', { 'accept-language': 'fr' }))
+      expect(routing(response)).toBe('rewrite /about?page=2')
+      expect(forwardedHeaders(response)?.['x-locale']).toBe('ja')
+      expect(vary(response)).toBe(null)
+      expect(routing(proxy(request('/ja')))).toBe('rewrite /')
+      expect(forwardedHeaders(proxy(request('/en/about')))?.['x-locale']).toBe('en')
     })
 
-    it('should rewrite /ja to / with x-locale header', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/ja')
-
-      const response = proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/')
-      expect(response.headers.get('x-locale')).toBe('ja')
+    it('detects the locale of a URL without a locale prefix, with Vary: Accept-Language', () => {
+      const response = proxy(request('/about', { 'accept-language': 'ja,en;q=0.8' }))
+      expect(routing(response)).toBe('next')
+      expect(forwardedHeaders(response)?.['x-locale']).toBe('ja')
+      expect(vary(response)).toBe('Accept-Language')
+      expect(forwardedHeaders(proxy(request('/', { 'accept-language': 'de' })))?.['x-locale']).toBe('en')
+      expect(forwardedHeaders(proxy(request('/', { 'accept-language': 'ja;q=0' })))?.['x-locale']).toBe('en')
     })
 
-    it('should detect locale from Accept-Language for root and set x-locale header', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'ja,en;q=0.8')
-
-      const response = proxy(request)
-
-      expect(NextResponse.next).toHaveBeenCalled()
-      expect(NextResponse.redirect).not.toHaveBeenCalled()
-      expect(response.headers.get('x-locale')).toBe('ja')
+    it('uses fallbackLocale when the detection finds no match', () => {
+      const withFallback = create({ ...config, routing: 'rewrite', fallbackLocale: 'fr' })
+      expect(forwardedHeaders(withFallback(request('/about', { 'accept-language': 'de' })))?.['x-locale']).toBe('fr')
+      expect(forwardedHeaders(withFallback(request('/about')))?.['x-locale']).toBe('fr')
     })
 
-    it('should use fallbackLocale when no Accept-Language match', () => {
-      const proxy = create(config)
-      const request = createMockRequest('/', 'de,ko')
-
-      const response = proxy(request)
-
-      expect(NextResponse.next).toHaveBeenCalled()
-      expect(response.headers.get('x-locale')).toBe('en')
+    it('uses the default locale with detectLanguage: false', () => {
+      const noDetection = create({ ...config, routing: 'rewrite', detectLanguage: false, fallbackLocale: 'fr' })
+      const response = noDetection(request('/about', { 'accept-language': 'ja' }))
+      expect(routing(response)).toBe('next')
+      expect(forwardedHeaders(response)?.['x-locale']).toBe('en')
+      expect(vary(response)).toBe(null)
+      expect(forwardedHeaders(noDetection(request('/ja/about')))?.['x-locale']).toBe('ja')
     })
 
-    it('should use custom fallbackLocale in rewrite mode', () => {
-      const proxy = create({
-        ...baseConfig,
-        routing: 'rewrite' as const,
-        fallbackLocale: 'fr'
-      })
-      const request = createMockRequest('/', 'de')
-
-      const response = proxy(request)
-
-      expect(response.headers.get('x-locale')).toBe('fr')
+    it('passes the other request headers on and replaces an x-locale header sent by the client', () => {
+      const headers = { cookie: 'session=1', authorization: 'Bearer t', 'x-locale': 'fr' }
+      for (const path of ['/ja/about', '/about']) {
+        const forwarded = forwardedHeaders(proxy(request(path, { ...headers, 'accept-language': 'ja' })))
+        expect(forwarded).toMatchObject({ cookie: 'session=1', authorization: 'Bearer t', 'x-locale': 'ja', 'accept-language': 'ja' })
+      }
     })
   })
 
-  describe('fallbackLocale option', () => {
-    it('should use fallbackLocale when no match found', () => {
-      const proxy = create({
-        ...baseConfig,
-        fallbackLocale: 'ja'
+  describe('pathnames that lead to another host', () => {
+    for (const path of ['//evil.com', '/\\evil.com', '/ja//evil.com', '/ja/\\evil.com']) {
+      it(`passes ${path} through without i18n handling`, () => {
+        for (const options of [{}, { prefixDefault: true }, { detectLanguage: false }]) {
+          const response = create({ ...config, ...options })(request(path, { 'accept-language': 'ja' }))
+          expect(routing(response)).toBe('next')
+          expect(vary(response)).toBe(null)
+        }
+        // The rewrite mode passes no x-locale, not even one the client sent
+        const response = create({ ...config, routing: 'rewrite' })(request(path, { 'accept-language': 'ja', 'x-locale': 'fr', cookie: 'a=1' }))
+        expect(routing(response)).toBe('next')
+        expect(forwardedHeaders(response)?.['x-locale']).toBe(undefined)
+        expect(forwardedHeaders(response)?.cookie).toBe('a=1')
       })
-      const request = createMockRequest('/about', 'de,ko;q=0.8')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/ja/about')
-    })
-
-    it('should use fallbackLocale when no Accept-Language header', () => {
-      const proxy = create({
-        ...baseConfig,
-        fallbackLocale: 'fr'
-      })
-      const request = createMockRequest('/')
-
-      proxy(request)
-
-      expect(NextResponse.redirect).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.redirect).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/fr')
-    })
-
-    it('should default to defaultLocale when fallbackLocale not specified', () => {
-      const proxy = create(baseConfig)
-      const request = createMockRequest('/about', 'de,ko;q=0.8')
-
-      proxy(request)
-
-      expect(NextResponse.rewrite).toHaveBeenCalled()
-      const call = vi.mocked(NextResponse.rewrite).mock.calls[0][0] as { pathname: string }
-      expect(call.pathname).toBe('/en/about')
-    })
+    }
   })
 })

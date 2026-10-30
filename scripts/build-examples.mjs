@@ -3,7 +3,7 @@
 // framework majors, and built. This checks what only a framework can: the
 // Astro components, the react-server entries, and one React context shared
 // by the entry points. The static Astro example also renders the Link
-// component of the astro-i18n-tiny alias, and the Next.js example must
+// component of the astro-i18n-tiny alias, and the Next.js examples must
 // include the proxy (as middleware.ts on Next.js 15).
 //
 //   node scripts/pack.mjs <tarballs>        (with pnpm, after pnpm build)
@@ -60,7 +60,7 @@ const findInBuild = (dir, needle) => readdirSync(dir).some((name) => {
   return name.endsWith('.html') && readFileSync(full, 'utf-8').includes(needle)
 })
 
-for (const example of ['astro', 'astro-ssr', 'next', 'react']) {
+for (const example of ['astro', 'astro-ssr', 'next', 'next-ssr', 'react']) {
   const source = join(root, 'examples', example)
   const dir = join(work, example)
   const files = execFileSync('git', ['ls-files', '-z', '--', '.'], { cwd: source, encoding: 'utf-8' }).split('\0').filter(Boolean)
@@ -72,7 +72,7 @@ for (const example of ['astro', 'astro-ssr', 'next', 'react']) {
   const extra = example === 'astro' ? ['astro-i18n-tiny'] : []
   writeFileSync(join(dir, 'package.json'), JSON.stringify(rewriteManifest(manifest, { packages, versions, extra }), null, 2) + '\n')
   if (example === 'astro') writeFileSync(join(dir, 'src/pages/alias-link.astro'), aliasPage)
-  if (example === 'next' && majors.next === 15) {
+  if (example.startsWith('next') && majors.next === 15) {
     writeFileSync(join(dir, 'middleware.ts'), middlewareFromProxy(readFileSync(join(dir, 'proxy.ts'), 'utf-8')))
     rmSync(join(dir, 'proxy.ts'))
   }
@@ -97,7 +97,7 @@ for (const example of ['astro', 'astro-ssr', 'next', 'react']) {
   }
   // A Next.js build succeeds without a middleware too, so check that the
   // proxy (middleware.ts on Next.js 15) made it into the build.
-  if (example === 'next' && result.build === 'ok') {
+  if (example.startsWith('next') && result.build === 'ok') {
     const manifest = (file) => {
       const full = join(dir, '.next/server', file)
       return existsSync(full) ? JSON.parse(readFileSync(full, 'utf-8')) : undefined
