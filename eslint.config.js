@@ -76,5 +76,26 @@ export default tseslint.config(
         }
       ]
     }
+  },
+  {
+    // The router and the middleware entries, and the files they import, run
+    // outside Node, so they must not use the globals that only Node has.
+    files: [
+      'packages/core/src/router/**/*.ts',
+      'packages/core/src/middleware/**/*.ts',
+      'packages/core/src/config.ts',
+      'packages/core/src/detectLocale.ts'
+    ],
+    ignores: ['**/__tests__/**'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        ...['process', 'Buffer', 'global', 'require', 'module', 'exports', '__dirname', '__filename', 'setImmediate', 'clearImmediate']
+          .map(name => ({
+            name,
+            message: 'The router and the middleware must run outside Node: do not use Node globals.'
+          }))
+      ]
+    }
   }
 )
