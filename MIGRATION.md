@@ -130,8 +130,10 @@ import type { DefineConfig } from '@i18n-tiny/next/types'
 // 2.0
 import type { I18nConfig } from '@i18n-tiny/next/types'
 
-export const config: I18nConfig<'en' | 'ja'> = { locales: ['en', 'ja'], defaultLocale: 'en' }
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en' } as const satisfies I18nConfig
 ```
+
+Use `satisfies` rather than a type annotation: `const config: I18nConfig<'en' | 'ja'>` widens `prefixDefault: true` to `boolean`, which the rewrite mode with detection rejects.
 
 `@i18n-tiny/astro` exported its own `I18nConfig<L, M, Msgs>` in 1.x, a config with `messages` and optional `locales` and `defaultLocale`. In 2.0, `I18nConfig` from `@i18n-tiny/astro` is the locale settings above. Let `define()` infer the type of the messages, and use `typeof i18n` for the type of the instance.
 

@@ -263,8 +263,10 @@ export const i18n = define({ ...config, messages: { ja, en } })
 ```typescript
 import type { I18nConfig } from '@i18n-tiny/astro'
 
-export const config: I18nConfig<'ja' | 'en'> = { locales: ['ja', 'en'], defaultLocale: 'ja' }
+export const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const satisfies I18nConfig
 ```
+
+Check the config with `satisfies` rather than with a type annotation: `const config: I18nConfig<'ja' | 'en'>` widens `prefixDefault: true` to `boolean`, which the rewrite mode with detection rejects.
 
 ### `@i18n-tiny/astro/middleware` (SSR only)
 
