@@ -7,9 +7,12 @@
 import type { I18nConfig } from '../config'
 import { stripLocalePrefix } from './paths'
 import type { CheckedConfig, Path } from './paths'
+import { linkHref, NON_PATH_HREF } from './linkHref'
+import type { LinkHrefOptions } from './linkHref'
 
 export type { I18nConfig } from '../config'
 export { localizedPath, alternatePath, pathLocale } from './paths'
+export type { LinkHrefOptions } from './linkHref'
 
 /**
  * Generate a localized path with locale prefix
@@ -145,6 +148,9 @@ export function hasLocalePrefix(pathname: string, locale: string): boolean {
 
 /**
  * Options for getLinkHref
+ *
+ * @deprecated Use LinkHrefOptions, with the config object instead of the
+ * locales. This type is removed before the 2.0.0 release.
  */
 export interface GetLinkHrefOptions {
   /**
@@ -162,10 +168,58 @@ export interface GetLinkHrefOptions {
   locales?: readonly string[]
 }
 
-// Hrefs that are not paths on this site: absolute URLs (https:, mailto:, ...),
-// protocol-relative URLs, and in-page '#' or '?' links
-const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
-
+/**
+ * Build the href of a Link component
+ *
+ * Hrefs that are not paths on this site, such as 'https://…', 'mailto:…',
+ * '//cdn…', '#top' or '?page=2', are returned unchanged. For a path, the query
+ * and the hash are kept as they are and the path is built as follows:
+ *
+ * - `normalize: true` first removes a locale prefix from the path
+ * - `locale: 'en'` builds the path for that locale, as localizedPath() does:
+ *   the default locale gets no prefix unless `prefixDefault` is true
+ * - `locale: false` leaves the path without a locale
+ * - without `locale`, the link keeps the pattern of the current URL: it gets
+ *   the prefix of the current locale when the current pathname has one
+ *
+ * The path has no trailing slash, except for the top page "/".
+ *
+ * Throws when the path does not start with "/" or starts with "/\", when the
+ * locale is not one of `locales`, when `config` is missing with a locale or
+ * `normalize`, or when the config is invalid.
+ *
+ * @param href - The href of the link, such as '/about' or '/about#team'
+ * @param currentPathname - The pathname of the current URL
+ * @param currentLocale - The locale of the current page
+ * @param options - The locale of the link, `normalize` and the config
+ *
+ * @example
+ * ```typescript
+ * import { getLinkHref } from '@i18n-tiny/core/router'
+ *
+ * const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
+ *
+ * // Keep the pattern of the current URL
+ * getLinkHref('/about', '/en/page', 'en', {})  // '/en/about'
+ * getLinkHref('/about', '/page', 'ja', {})     // '/about'
+ *
+ * // A link for another locale
+ * getLinkHref('/about', '/page', 'ja', { locale: 'en', config })  // '/en/about'
+ * getLinkHref('/about', '/en/page', 'en', { locale: 'ja', config })  // '/about'
+ *
+ * // The current page in another locale
+ * getLinkHref('/en/about', '/en/about', 'en', { locale: 'ja', normalize: true, config })  // '/about'
+ *
+ * // Without a locale
+ * getLinkHref('/about', '/en/page', 'en', { locale: false })  // '/about'
+ * ```
+ */
+export function getLinkHref<const C extends I18nConfig>(
+  href: string,
+  currentPathname: string,
+  currentLocale: string | undefined,
+  options: LinkHrefOptions<C>
+): string
 /**
  * Generate a link href based on current URL pattern
  *
@@ -199,17 +253,31 @@ const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
  * // With normalization (removes existing locale prefix from href)
  * getLinkHref('/ja/about', '/en/page', 'en', { locale: 'en', locales: ['en', 'ja'] })  // '/en/about'
  * ```
+ *
+ * @deprecated Pass the options with the config object instead:
+ * getLinkHref(href, currentPathname, currentLocale, { locale, normalize, config }).
+ * This form is removed before the 2.0.0 release.
  */
 export function getLinkHref(
   href: string,
   currentPathname: string,
   currentLocale: string | undefined,
-  options?: string | false | GetLinkHrefOptions
+  options?: string | false | (GetLinkHrefOptions & { locales: readonly string[] | undefined })
+): string
+export function getLinkHref(
+  href: string,
+  currentPathname: string,
+  currentLocale: string | undefined,
+  options?: string | false | GetLinkHrefOptions | LinkHrefOptions
 ): string {
+  if (typeof options === 'object' && options !== null && !Object.hasOwn(options, 'locales')) {
+    return linkHref(href, currentPathname, currentLocale, options as LinkHrefOptions)
+  }
+
   // Handle legacy signature: getLinkHref(href, pathname, locale, 'ja')
   const opts: GetLinkHrefOptions = typeof options === 'object' && options !== null
-    ? options
-    : { locale: options }
+    ? options as GetLinkHrefOptions
+    : { locale: options as string | false | undefined }
 
   const { locale: overrideLocale, locales } = opts
 

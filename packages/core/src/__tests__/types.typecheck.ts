@@ -1,7 +1,7 @@
 // Type-level checks, run by `pnpm type-check` and never executed.
 // Each @ts-expect-error fails the type check if its line stops being an error.
 import type { ConfigCheck, ValidatableConfig } from '../internal'
-import { alternatePath, localizedPath, pathLocale, removeLocalePrefix } from '../router'
+import { alternatePath, getLinkHref, localizedPath, pathLocale, removeLocalePrefix } from '../router'
 import type { I18nConfig } from '../router'
 
 // The parameter type that define(), create() and the URL functions use
@@ -107,4 +107,23 @@ localizedPath('/donate', 'en', narrow)
 // @ts-expect-error unknown locale
 localizedPath('/donate', 'fr', narrow)
 
-export { localized, sameAsInput, alternate, removed, prefix, prefixAlways, typedLocale }
+// getLinkHref(): the config is required with a locale or normalize
+getLinkHref('/about', '/en/page', 'en', {})
+getLinkHref('/about', '/en/page', 'en', { locale: false })
+getLinkHref('/about', '/en/page', 'en', { locale: 'ja', config })
+getLinkHref('/en/about', '/en/page', 'en', { locale: 'ja', normalize: true, config })
+getLinkHref('/en/about', '/en/page', 'en', { normalize: true, config })
+getLinkHref('/about', '/en/page', 'en', { locale: 'fr', config: typed })
+// @ts-expect-error a locale needs the config
+getLinkHref('/about', '/en/page', 'en', { locale: 'ja' })
+// @ts-expect-error normalize needs the config
+getLinkHref('/en/about', '/en/page', 'en', { normalize: true })
+// @ts-expect-error unknown locale
+getLinkHref('/about', '/en/page', 'en', { locale: 'fr', config })
+// @ts-expect-error the empty locale is not a way to leave the path without a locale
+getLinkHref('/about', '/en/page', 'en', { locale: '', config })
+// @ts-expect-error defaultLocale is not one of locales
+getLinkHref('/about', '/en/page', 'en', { locale: 'en', config: { locales: ['ja', 'en'], defaultLocale: 'fr' } })
+const linkHrefResult: string = getLinkHref('/about', '/en/page', 'en', {})
+
+export { linkHrefResult, localized, sameAsInput, alternate, removed, prefix, prefixAlways, typedLocale }

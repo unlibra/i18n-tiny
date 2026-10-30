@@ -13,7 +13,7 @@ export type Path = `/${string}`
 // Throws unless the input is a pathname of this site: it must start with a
 // single "/" and carry no query or hash. "//" and "/\" are refused, since
 // browsers read them as the start of another host.
-function assertPathname (pathname: string, name: string): asserts pathname is Path {
+export function assertPathname (pathname: string, name: string): asserts pathname is Path {
   if (typeof pathname !== 'string' || !pathname.startsWith('/')) {
     throw new Error(`[i18n] ${name} must be a pathname starting with "/", got ${JSON.stringify(pathname)}.`)
   }
@@ -31,7 +31,7 @@ function assertPathname (pathname: string, name: string): asserts pathname is Pa
   }
 }
 
-function assertLocale (locale: string, config: I18nConfig): void {
+export function assertLocale (locale: string, config: I18nConfig): void {
   if (!config.locales.includes(locale)) {
     throw new Error(
       `[i18n] Unknown locale ${JSON.stringify(locale)}. ` +
@@ -43,7 +43,7 @@ function assertLocale (locale: string, config: I18nConfig): void {
 // Removes trailing slashes, keeping the top page as "/". Counts them from the
 // end instead of using a regular expression, whose time would grow with the
 // square of the length on long runs of slashes that do not end the path.
-function withoutTrailingSlash (path: Path): Path {
+export function withoutTrailingSlash (path: Path): Path {
   let end = path.length
   while (end > 1 && path[end - 1] === '/') {
     end--
@@ -60,7 +60,7 @@ function findPrefixLocale (pathname: Path, config: I18nConfig): string | undefin
   return config.locales.find(locale => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`))
 }
 
-function addPrefix (path: Path, locale: string, config: I18nConfig): Path {
+export function addPrefix (path: Path, locale: string, config: I18nConfig): Path {
   const clean = withoutTrailingSlash(path)
   if (locale === config.defaultLocale && !config.prefixDefault) {
     return clean
@@ -70,7 +70,7 @@ function addPrefix (path: Path, locale: string, config: I18nConfig): Path {
 
 // Throws when the rest after the prefix starts with "//" or "/\", as
 // "/en//example.com" would: the result would lead to another host.
-function removePrefix (pathname: Path, config: I18nConfig): Path {
+export function removePrefix (pathname: Path, config: I18nConfig): Path {
   const locale = findPrefixLocale(pathname, config)
   const rest = locale === undefined ? pathname : pathname.slice(locale.length + 1)
   const result = withoutTrailingSlash((rest === '' ? '/' : rest) as Path)

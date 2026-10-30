@@ -42,6 +42,9 @@ export type TranslationKeys<T, N extends string | undefined = undefined> = N ext
 
 /**
  * Configuration for define() function
+ *
+ * @deprecated Use I18nConfig for the locale settings. This type is removed
+ * before the 2.0.0 release.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface DefineConfig<L extends string, M extends Record<string, any>> {
