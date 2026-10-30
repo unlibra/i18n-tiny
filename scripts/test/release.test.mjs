@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { PACKAGES, checkVersions, distTagFor, packumentUrl, tarballName } from '../lib/release.mjs'
+import { PACKAGES, asPublished, checkVersions, distTagFor, packumentUrl, tarballName } from '../lib/release.mjs'
 
 test('a prerelease is published with the tag next', () => {
   for (const version of ['2.0.0-beta.1', '2.0.0-rc.0', '2.1.0-alpha', '3.0.0-0']) {
@@ -67,4 +67,22 @@ test('tarball names and packument URLs', () => {
   assert.equal(tarballName('next-i18n-tiny', '2.0.0'), 'next-i18n-tiny-2.0.0.tgz')
   assert.equal(packumentUrl('https://registry.npmjs.org/', '@i18n-tiny/core'), 'https://registry.npmjs.org/@i18n-tiny%2Fcore')
   assert.equal(packumentUrl('https://registry.example.com', 'next-i18n-tiny'), 'https://registry.example.com/next-i18n-tiny')
+})
+
+test('workspace:* is read as the version of the package it points at, as pnpm pack writes it', () => {
+  const sources = [
+    { name: '@i18n-tiny/core', version: '2.0.0' },
+    { name: '@i18n-tiny/astro', version: '2.0.1', dependencies: { '@i18n-tiny/core': 'workspace:*', other: '^1.0.0' } }
+  ]
+  const [, astro] = asPublished(sources)
+  assert.deepEqual(astro.dependencies, { '@i18n-tiny/core': '2.0.0', other: '^1.0.0' })
+  assert.deepEqual(checkVersions('v2.0.0', asPublished(sources)), ['@i18n-tiny/astro is version 2.0.1, but the Git tag is v2.0.0'])
+})
+
+test('other workspace: ranges are left as they are, so the check refuses them', () => {
+  const [, react] = asPublished([
+    { name: '@i18n-tiny/core', version: '2.0.0' },
+    { name: '@i18n-tiny/react', version: '2.0.0', dependencies: { '@i18n-tiny/core': 'workspace:^' } }
+  ])
+  assert.equal(react.dependencies['@i18n-tiny/core'], 'workspace:^')
 })

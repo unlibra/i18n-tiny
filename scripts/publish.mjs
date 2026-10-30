@@ -21,7 +21,7 @@ import { existsSync, mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { PACKAGES, checkVersions, distTagFor, packumentUrl, tarballName } from './lib/release.mjs'
+import { PACKAGES, asPublished, checkVersions, distTagFor, packumentUrl, tarballName } from './lib/release.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const { values: options } = parseArgs({
@@ -46,13 +46,7 @@ const run = (command, args) => execFileSync(command, args, { cwd: root, stdio: '
 // 1. Tag, versions and dependencies, as written in the repository.
 const sources = PACKAGES.map((dir) => JSON.parse(readFileSync(join(root, dir, 'package.json'), 'utf-8')))
 const version = gitTag.replace(/^v/, '')
-const asPublished = (pkg) => {
-  // pnpm pack replaces workspace:* with the exact version; any other
-  // workspace: range would not be pinned, so it is left to fail the check.
-  const pinned = (deps) => deps && Object.fromEntries(Object.entries(deps).map(([name, range]) => [name, range === 'workspace:*' ? pkg.version : range]))
-  return { ...pkg, dependencies: pinned(pkg.dependencies), peerDependencies: pinned(pkg.peerDependencies) }
-}
-const problems = checkVersions(gitTag, sources.map(asPublished))
+const problems = checkVersions(gitTag, asPublished(sources))
 let distTag
 try {
   distTag = distTagFor(version)

@@ -61,3 +61,16 @@ export function tarballName (name, version) {
 export function packumentUrl (registry, name) {
   return registry.replace(/\/?$/, '/') + name.replace('/', '%2F')
 }
+
+/**
+ * The manifests as pnpm pack will publish them: a "workspace:*" dependency on
+ * one of the packages becomes that package's version. Any other workspace:
+ * range would not be pinned, so it is left as it is for checkVersions to
+ * refuse.
+ */
+export function asPublished (manifests) {
+  const versions = new Map(manifests.map((pkg) => [pkg.name, pkg.version]))
+  const pin = (deps) => deps && Object.fromEntries(Object.entries(deps).map(([name, range]) =>
+    [name, range === 'workspace:*' && versions.has(name) ? versions.get(name) : range]))
+  return manifests.map((pkg) => ({ ...pkg, dependencies: pin(pkg.dependencies), peerDependencies: pin(pkg.peerDependencies) }))
+}
