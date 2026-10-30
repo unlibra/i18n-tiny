@@ -1,3 +1,4 @@
+import { builtinModules } from 'node:module'
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
@@ -49,6 +50,29 @@ export default tseslint.config(
         {
           selector: 'VariableDeclaration[kind="await using"]:not(:function VariableDeclaration)',
           message: 'Top-level await using breaks require() of the published ES modules.'
+        }
+      ]
+    }
+  },
+  {
+    // The core runs outside Node too, such as in edge runtimes and workers,
+    // so it must not import Node's built-in modules.
+    files: ['packages/core/src/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['node:*'],
+              message: 'The core must run outside Node: do not import Node built-in modules.'
+            }
+          ],
+          paths: builtinModules.map(name => ({
+            name,
+            message: 'The core must run outside Node: do not import Node built-in modules.'
+          }))
         }
       ]
     }
