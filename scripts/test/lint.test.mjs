@@ -39,3 +39,36 @@ test('tests may use top-level await', async () => {
   const code = 'await Promise.resolve(1)\nexport {}'
   assert.deepEqual(await restrictedSyntax(code, 'packages/core/src/__tests__/example.test.ts'), [])
 })
+
+async function restrictedGlobals (code, file) {
+  const [result] = await eslint.lintText(code, { filePath: resolve(root, file) })
+  return result.messages.filter((message) => message.ruleId === 'no-restricted-globals').map((message) => message.line)
+}
+
+// The router and the middleware entries of the core run outside Node, and so
+// do the files they load, the internal entry that the Astro middleware and
+// the Next.js proxy import included.
+const outsideNode = [
+  'packages/core/src/router/paths.ts',
+  'packages/core/src/middleware/index.ts',
+  'packages/core/src/config.ts',
+  'packages/core/src/detectLocale.ts',
+  'packages/core/src/internal/index.ts',
+  'packages/core/src/utils.ts'
+]
+
+for (const file of outsideNode) {
+  test(`Node globals are an error in ${file}`, async () => {
+    const code = [
+      'export const a = process.env.X',
+      'export const b = Buffer.from("x")',
+      'export const c = __dirname',
+      'export const d = globalThis.process'
+    ].join('\n')
+    assert.deepEqual(await restrictedGlobals(code, file), [1, 2, 3])
+  })
+}
+
+test('the tests of the core may use Node globals', async () => {
+  assert.deepEqual(await restrictedGlobals('export const a = process.env.X', 'packages/core/src/__tests__/example.test.ts'), [])
+})

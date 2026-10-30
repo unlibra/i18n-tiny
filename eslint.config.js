@@ -79,12 +79,16 @@ export default tseslint.config(
   },
   {
     // The router and the middleware entries, and the files they import, run
-    // outside Node, so they must not use the globals that only Node has.
+    // outside Node, so they must not use the globals that only Node has. So
+    // does the internal entry, which the Astro middleware and the Next.js
+    // proxy import.
     files: [
       'packages/core/src/router/**/*.ts',
       'packages/core/src/middleware/**/*.ts',
+      'packages/core/src/internal/**/*.ts',
       'packages/core/src/config.ts',
-      'packages/core/src/detectLocale.ts'
+      'packages/core/src/detectLocale.ts',
+      'packages/core/src/utils.ts'
     ],
     ignores: ['**/__tests__/**'],
     rules: {
