@@ -18,6 +18,15 @@ check({ ...config, messages: { ja: {}, en: {} } })
 const wide: { locales: string[], defaultLocale: string } = { locales: ['ja'], defaultLocale: 'fr' }
 check(wide)
 
+// Neither can a fallbackLocale typed as string, or messages whose locales are
+// typed as string: these are left to the runtime check
+const fallbackLocale: string = 'en'
+check({ ...config, fallbackLocale })
+const builtMessages = Object.fromEntries(config.locales.map(locale => [locale, {}]))
+check({ ...config, messages: builtMessages })
+const recordMessages: Record<string, object> = { ja: {}, en: {} }
+check({ ...config, messages: recordMessages })
+
 // @ts-expect-error defaultLocale is not one of locales
 check({ locales: ['ja', 'en'], defaultLocale: 'fr' })
 const badDefault = { locales: ['ja', 'en'], defaultLocale: 'fr' } as const
@@ -37,6 +46,8 @@ check({ locales: ['ja', '..'], defaultLocale: 'ja' })
 check({ locales: ['ja', '/'], defaultLocale: 'ja' })
 // @ts-expect-error a locale with "/" inside
 check({ locales: ['ja', 'en/us'], defaultLocale: 'ja' })
+// @ts-expect-error a locale with "\\"
+check({ locales: ['ja', 'en\\us'], defaultLocale: 'ja' })
 // @ts-expect-error a locale with whitespace
 check({ locales: ['ja', 'en US'], defaultLocale: 'ja' })
 // @ts-expect-error a locale with "?"

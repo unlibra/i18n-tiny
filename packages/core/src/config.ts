@@ -29,14 +29,16 @@ export interface ValidatableConfig {
   readonly messages?: Readonly<Record<string, unknown>>
 }
 
-type Whitespace = ' ' | '\t' | '\n' | '\r' | '\f' | '\v' | ' ' | '　'
+// The common whitespace characters. The runtime check rejects every character
+// that \s matches; the type check knows only these.
+type Whitespace = ' ' | '\t' | '\n' | '\r' | '\f' | '\v' | '\u00a0' | '\u3000'
 
 // A locale that cannot be a path segment of its own
 type InvalidLocale<S extends string> = string extends S
   ? never
   : S extends '' | '.' | '..'
     ? S
-    : S extends `${string}${'/' | '?' | '#' | Whitespace}${string}`
+    : S extends `${string}${'/' | '\\' | '?' | '#' | Whitespace}${string}`
       ? S
       : never
 
@@ -52,15 +54,19 @@ type LocalesError<T extends readonly string[]> = T extends readonly []
           : `locale "${InvalidLocale<T[number]>}" cannot be used as a path segment`
       : `locale "${FirstDuplicate<T> & string}" is listed more than once`
 
+// A fallbackLocale typed as string is left to the runtime check
 type FallbackLocaleError<C> = C extends { readonly fallbackLocale: infer F extends string }
   ? C extends { readonly locales: readonly (infer L extends string)[] }
-    ? F extends L ? never : `fallbackLocale "${F}" is not one of locales`
+    ? string extends F
+      ? never
+      : F extends L ? never : `fallbackLocale "${F}" is not one of locales`
     : never
   : never
 
+// Messages whose locales are typed as string are left to the runtime check
 type MessagesError<C> = C extends { readonly messages: infer M }
   ? C extends { readonly locales: readonly (infer L extends string)[] }
-    ? string extends L
+    ? string extends L | keyof M
       ? never
       : [Exclude<L, keyof M>] extends [never]
           ? [Exclude<keyof M & string, L>] extends [never]
@@ -89,7 +95,8 @@ export type ConfigCheck<C extends ValidatableConfig> = [ConfigError<C>] extends 
   ? unknown
   : { 'invalid i18n config': ConfigError<C> }
 
-const INVALID_LOCALE = /[/?#\s]/
+// "\" is rejected too, as URLs with http(s) read it as "/"
+const INVALID_LOCALE = /[/\\?#\s]/
 
 function quote (values: readonly string[]): string {
   return values.map(value => JSON.stringify(value)).join(', ')
@@ -98,7 +105,8 @@ function quote (values: readonly string[]): string {
 /**
  * Checks the locale settings and throws an Error describing the first problem:
  * - locales is empty, lists a locale twice, or has a locale that cannot be a
- *   path segment (empty, ".", "..", or containing "/", "?", "#" or whitespace)
+ *   path segment (empty, ".", "..", or containing "/", "\", "?", "#" or
+ *   whitespace)
  * - defaultLocale or fallbackLocale is not one of locales
  * - messages is missing a locale of locales, or has one that is not in it
  */
@@ -114,7 +122,7 @@ export function validateConfig (config: ValidatableConfig): void {
     if (typeof locale !== 'string' || locale === '' || locale === '.' || locale === '..' || INVALID_LOCALE.test(locale)) {
       throw new Error(
         `[i18n] Locale ${JSON.stringify(locale)} cannot be used as a path segment. ` +
-        'A locale must not be empty, "." or "..", and must not contain "/", "?", "#" or whitespace.'
+        'A locale must not be empty, "." or "..", and must not contain "/", "\\", "?", "#" or whitespace.'
       )
     }
     if (seen.has(locale)) {
@@ -136,6 +144,9 @@ export function validateConfig (config: ValidatableConfig): void {
   }
 
   if (messages !== undefined) {
+    if (typeof messages !== 'object' || messages === null || Array.isArray(messages)) {
+      throw new Error('[i18n] messages must be an object with the messages of each locale.')
+    }
     const missing = locales.filter(locale => !Object.hasOwn(messages, locale))
     if (missing.length > 0) {
       throw new Error(`[i18n] messages is missing locales: ${quote(missing)}.`)

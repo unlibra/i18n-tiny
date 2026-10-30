@@ -33,13 +33,14 @@ describe('validateConfig()', () => {
     ['..'],
     ['/'],
     ['en/us'],
+    ['en\\us'],
     ['en?'],
     ['en#x'],
     [' en'],
     ['en US'],
     ['en\t'],
     ['en\n'],
-    ['en　']
+    ['en\u3000']
   ])('should throw for the locale %j, which cannot be a path segment', (locale) => {
     expect(() => validateConfig({ locales: ['ja', locale], defaultLocale: 'ja' }))
       .toThrow(`Locale ${JSON.stringify(locale)} cannot be used as a path segment`)
@@ -80,6 +81,18 @@ describe('validateConfig()', () => {
   it('should throw when messages has a locale that is not in locales', () => {
     expect(() => validateConfig({ locales: ['ja'], defaultLocale: 'ja', messages: { ja: {}, en: {} } }))
       .toThrow('messages has locales that are not in locales: "en"')
+  })
+
+  it.each([
+    [null],
+    ['ja'],
+    [['ja']]
+  ])('should throw when messages is %j, not an object of locales', (messages) => {
+    expect(() => validateConfig({
+      locales: ['ja'],
+      defaultLocale: 'ja',
+      messages: messages as unknown as Record<string, unknown>
+    })).toThrow('[i18n] messages must be an object with the messages of each locale.')
   })
 
   it('should not count inherited properties of messages as locales', () => {
