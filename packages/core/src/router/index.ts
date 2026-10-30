@@ -4,6 +4,8 @@
  * Core routing utilities for i18n - framework agnostic
  */
 
+export type { I18nConfig } from '../config'
+
 /**
  * Generate a localized path with locale prefix
  *

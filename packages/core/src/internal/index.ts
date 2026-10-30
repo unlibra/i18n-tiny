@@ -1,2 +1,5 @@
+export { detectLocale } from '../detectLocale'
 export { resolveMessage } from '../utils'
+export { validateConfig } from '../config'
+export type { ConfigCheck, ValidatableConfig } from '../config'
 export type { NestedKeys, NamespaceKeys, TranslationKeys } from '../types'
