@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getMessages, isLocale, Link } from '@/i18n'
+import { getMessages, i18n, isLocale, Link } from '@/i18n'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
@@ -8,7 +8,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const messages = await getMessages(locale)
 
   return {
-    title: messages.about.title
+    title: messages.about.title,
+    // Relative URLs: Next.js joins them to metadataBase, which carries the
+    // basePath when there is one
+    metadataBase: new URL('https://example.com'),
+    alternates: {
+      languages: Object.fromEntries(i18n.locales.map((l) => [l, i18n.localizedPath('/about', l)]))
+    }
   }
 }
 

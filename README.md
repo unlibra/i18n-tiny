@@ -33,19 +33,20 @@ import { define } from '@i18n-tiny/next'
 import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
 import ja from './messages/ja'
 
-const { client, server, Provider } = define({
-  locales: ['en', 'ja'] as const,
+const { client, server, Provider, isLocale } = define({
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en, ja }
 })
 
-export { Provider }
+export { Provider, isLocale }
 export const { useMessages, useTranslations } = client
 export const { getMessages, getTranslations } = server
 ```
 
 ```tsx
 // Server Component (locale comes from the [locale] route params)
+if (!isLocale(locale)) notFound()  // ← Only the locales are pages
 const messages = await getMessages(locale)
 const t = await getTranslations(locale)
 return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
@@ -121,7 +122,7 @@ import ja from './messages/ja'
 export const messages = { en, ja }
 
 export const { Provider, useMessages, useTranslations } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages
 })
