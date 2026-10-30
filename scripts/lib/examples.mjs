@@ -84,3 +84,14 @@ export function middlewareFromProxy (source) {
   if (renamed === source) throw new Error('proxy.ts has no `export const proxy` to rename')
   return renamed
 }
+
+/**
+ * Whether a Next.js build includes a middleware (proxy), read from the
+ * parsed .next/server/middleware-manifest.json (an Edge middleware, as in
+ * Next.js 15) and functions-config-manifest.json (a Node.js one, as the
+ * proxy of Next.js 16). Either may be missing.
+ */
+export function hasMiddleware (middlewareManifest, functionsConfigManifest) {
+  return Object.keys(middlewareManifest?.middleware ?? {}).length > 0 ||
+    Object.hasOwn(functionsConfigManifest?.functions ?? {}, '/_middleware')
+}

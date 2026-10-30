@@ -3,17 +3,18 @@
 // framework majors, and built. This checks what only a framework can: the
 // Astro components, the react-server entries, and one React context shared
 // by the entry points. The static Astro example also renders the Link
-// component of the astro-i18n-tiny alias.
+// component of the astro-i18n-tiny alias, and the Next.js example must
+// include the proxy (as middleware.ts on Next.js 15).
 //
 //   node scripts/pack.mjs <tarballs>        (with pnpm, after pnpm build)
 //   node scripts/build-examples.mjs --tarballs <tarballs> --astro 6 --next 15 --react 18
 
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { frameworkVersions, middlewareFromProxy, rewriteManifest } from './lib/examples.mjs'
+import { frameworkVersions, hasMiddleware, middlewareFromProxy, rewriteManifest } from './lib/examples.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const { values: options } = parseArgs({
@@ -93,6 +94,17 @@ for (const example of ['astro', 'astro-ssr', 'next', 'react']) {
   result.build = spawnSync('npm', ['run', 'build'], { cwd: dir, stdio: 'inherit' }).status === 0 ? 'ok' : 'FAIL'
   if (example === 'astro' && result.build === 'ok') {
     result.check = findInBuild(join(dir, 'dist'), 'data-check="alias-link"') ? 'alias Link ok' : 'FAIL: alias Link not rendered'
+  }
+  // A Next.js build succeeds without a middleware too, so check that the
+  // proxy (middleware.ts on Next.js 15) made it into the build.
+  if (example === 'next' && result.build === 'ok') {
+    const manifest = (file) => {
+      const full = join(dir, '.next/server', file)
+      return existsSync(full) ? JSON.parse(readFileSync(full, 'utf-8')) : undefined
+    }
+    result.check = hasMiddleware(manifest('middleware-manifest.json'), manifest('functions-config-manifest.json'))
+      ? 'middleware ok'
+      : 'FAIL: no middleware in the build'
   }
 }
 

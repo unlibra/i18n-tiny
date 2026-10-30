@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { frameworkVersions, middlewareFromProxy, rewriteManifest } from '../lib/examples.mjs'
+import { frameworkVersions, hasMiddleware, middlewareFromProxy, rewriteManifest } from '../lib/examples.mjs'
 
 const packages = {
   '@i18n-tiny/core': { tarball: '/t/core.tgz', dependencies: undefined },
@@ -71,4 +71,15 @@ test('the Next.js 15 middleware is the proxy under the name middleware', () => {
   const proxy = "import { create } from '@i18n-tiny/next/proxy'\n\nexport const proxy = create({})\n\nexport const config = { matcher: ['/'] }\n"
   assert.equal(middlewareFromProxy(proxy), proxy.replace('export const proxy', 'export const middleware'))
   assert.throws(() => middlewareFromProxy('export default function proxy () {}'), /no `export const proxy`/)
+})
+
+test('a Next.js build has a middleware when either manifest lists one', () => {
+  const empty = { version: 3, middleware: {}, sortedMiddleware: [], functions: {} }
+  // Next.js 15: an Edge middleware
+  assert.equal(hasMiddleware({ ...empty, middleware: { '/': { name: 'middleware' } } }, undefined), true)
+  // Next.js 16: the proxy on the Node.js runtime
+  assert.equal(hasMiddleware(empty, { version: 1, functions: { '/_middleware': { runtime: 'nodejs' } } }), true)
+  assert.equal(hasMiddleware(empty, { version: 1, functions: {} }), false)
+  assert.equal(hasMiddleware(empty, undefined), false)
+  assert.equal(hasMiddleware(undefined, undefined), false)
 })
