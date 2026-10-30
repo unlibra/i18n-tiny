@@ -73,4 +73,35 @@ describe('detectLocale()', () => {
     )
     expect(result).toBe('en')
   })
+
+  describe('q=0 (not acceptable)', () => {
+    it('should not return a locale whose quality is 0', () => {
+      expect(detectLocale('ja;q=0', supportedLocales)).toBe(null)
+    })
+
+    it('should skip a locale whose quality is 0 and return the next match', () => {
+      expect(detectLocale('ja;q=0,en;q=0.5', supportedLocales)).toBe('en')
+    })
+
+    it('should treat q=0.0 and q=0.000 as 0', () => {
+      expect(detectLocale('ja;q=0.0,en;q=0.1', supportedLocales)).toBe('en')
+      expect(detectLocale('ja;q=0.000,en;q=0.1', supportedLocales)).toBe('en')
+    })
+
+    it('should not reach a refused locale through the language code of another tag', () => {
+      // en-US is acceptable, but en itself is refused
+      expect(detectLocale('en-US,en;q=0', supportedLocales)).toBe(null)
+      expect(detectLocale('en-US,en;q=0,ja;q=0.5', supportedLocales)).toBe('ja')
+    })
+
+    it('should read q with whitespace around the separators', () => {
+      expect(detectLocale('ja ; q=0, en', supportedLocales)).toBe('en')
+      expect(detectLocale('en; q=0.5, ja; q=0.9', supportedLocales)).toBe('ja')
+    })
+
+    it('should skip a tag whose quality is not a number from 0 to 1', () => {
+      expect(detectLocale('ja;q=abc,en;q=0.5', supportedLocales)).toBe('en')
+      expect(detectLocale('ja;q=2,en;q=0.5', supportedLocales)).toBe('en')
+    })
+  })
 })
