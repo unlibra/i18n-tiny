@@ -57,6 +57,19 @@ describe('create (proxy)', () => {
       expect(() => untyped(create)({ ...config, routing: 'rewrite', fallbackLocale: 'de' }))
         .toThrow('[i18n] fallbackLocale "de" is not one of locales')
     })
+
+    it('throws for the language detection of the rewrite mode without prefixDefault: true', () => {
+      for (const options of [{}, { prefixDefault: false }, { detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
+        expect(() => untyped(create)({ ...config, routing: 'rewrite', ...options }))
+          .toThrow('[i18n] The language detection of the rewrite mode needs prefixDefault: true.')
+      }
+    })
+
+    it('takes the config of define() in the rewrite mode', () => {
+      for (const options of [{ prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
+        expect(() => untyped(create)({ ...config, routing: 'rewrite', ...options })).not.toThrow()
+      }
+    })
   })
 
   describe('default behavior (prefixDefault: false, detectLanguage: true)', () => {
@@ -145,7 +158,7 @@ describe('create (proxy)', () => {
   })
 
   describe('routing: "rewrite" (SSR mode)', () => {
-    const proxy = create({ ...config, routing: 'rewrite' })
+    const proxy = create({ ...config, prefixDefault: true, routing: 'rewrite' })
 
     it('rewrites a URL with a locale prefix to the URL without it, with the locale in the x-locale request header', () => {
       const response = proxy(request('/ja/about?page=2', { 'accept-language': 'fr' }))
@@ -166,18 +179,24 @@ describe('create (proxy)', () => {
     })
 
     it('uses fallbackLocale when the detection finds no match', () => {
-      const withFallback = create({ ...config, routing: 'rewrite', fallbackLocale: 'fr' })
+      const withFallback = create({ ...config, prefixDefault: true, routing: 'rewrite', fallbackLocale: 'fr' })
       expect(forwardedHeaders(withFallback(request('/about', { 'accept-language': 'de' })))?.['x-locale']).toBe('fr')
       expect(forwardedHeaders(withFallback(request('/about')))?.['x-locale']).toBe('fr')
     })
 
     it('uses the default locale with detectLanguage: false', () => {
-      const noDetection = create({ ...config, routing: 'rewrite', detectLanguage: false, fallbackLocale: 'fr' })
-      const response = noDetection(request('/about', { 'accept-language': 'ja' }))
-      expect(routing(response)).toBe('next')
-      expect(forwardedHeaders(response)?.['x-locale']).toBe('en')
-      expect(vary(response)).toBe(null)
-      expect(forwardedHeaders(noDetection(request('/ja/about')))?.['x-locale']).toBe('ja')
+      // prefixDefault changes the links only: a URL without a locale prefix
+      // is served as the default locale, not redirected
+      for (const prefixDefault of [false, true]) {
+        const noDetection = create({ ...config, routing: 'rewrite', detectLanguage: false, prefixDefault, fallbackLocale: 'fr' })
+        const response = noDetection(request('/about', { 'accept-language': 'ja' }))
+        expect(routing(response)).toBe('next')
+        expect(forwardedHeaders(response)?.['x-locale']).toBe('en')
+        expect(vary(response)).toBe(null)
+        expect(forwardedHeaders(noDetection(request('/ja/about')))?.['x-locale']).toBe('ja')
+        expect(routing(noDetection(request('/en/about')))).toBe('rewrite /about')
+        expect(forwardedHeaders(noDetection(request('/en/about')))?.['x-locale']).toBe('en')
+      }
     })
 
     it('passes the other request headers on and replaces an x-locale header sent by the client', () => {
@@ -198,7 +217,7 @@ describe('create (proxy)', () => {
           expect(vary(response)).toBe(null)
         }
         // The rewrite mode passes no x-locale, not even one the client sent
-        const response = create({ ...config, routing: 'rewrite' })(request(path, { 'accept-language': 'ja', 'x-locale': 'fr', cookie: 'a=1' }))
+        const response = create({ ...config, prefixDefault: true, routing: 'rewrite' })(request(path, { 'accept-language': 'ja', 'x-locale': 'fr', cookie: 'a=1' }))
         expect(routing(response)).toBe('next')
         expect(forwardedHeaders(response)?.['x-locale']).toBe(undefined)
         expect(forwardedHeaders(response)?.cookie).toBe('a=1')

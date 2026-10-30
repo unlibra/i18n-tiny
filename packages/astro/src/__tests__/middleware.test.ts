@@ -78,8 +78,21 @@ describe('create (middleware)', () => {
       expect(() => create({ ...config, excludePaths: [''] })).toThrow('got "".')
     })
 
+    it('throws for the language detection of the rewrite mode without prefixDefault: true', () => {
+      for (const options of [{}, { prefixDefault: false }, { detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
+        expect(() => create({ ...config, routing: 'rewrite', ...options } as never))
+          .toThrow('[i18n] The language detection of the rewrite mode needs prefixDefault: true.')
+      }
+    })
+
+    it('takes the config of define() in the rewrite mode', () => {
+      for (const options of [{ prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
+        expect(() => create({ ...config, routing: 'rewrite', ...options } as never)).not.toThrow()
+      }
+    })
+
     it('does not store the locales in the locals', async () => {
-      for (const middlewareConfig of [config, { ...config, routing: 'rewrite' } as const]) {
+      for (const middlewareConfig of [config, { ...config, prefixDefault: true, routing: 'rewrite' } as const]) {
         const outcome = await run(middlewareConfig, '/ja/about')
         expect(outcome.locals).not.toHaveProperty('locales')
       }
@@ -173,7 +186,7 @@ describe('create (middleware)', () => {
   })
 
   describe('routing: "rewrite"', () => {
-    const rewrite = { ...config, routing: 'rewrite' } as const
+    const rewrite = { ...config, prefixDefault: true, routing: 'rewrite' } as const
 
     it('rewrites a URL with a prefix to the URL without it and stores the locale', async () => {
       const outcome = await run(rewrite, '/ja/about?x=1', { acceptLanguage: 'en' })
@@ -193,9 +206,17 @@ describe('create (middleware)', () => {
     })
 
     it('takes a URL without a prefix as the default locale with detectLanguage: false', async () => {
-      const outcome = await run({ ...rewrite, detectLanguage: false, fallbackLocale: 'fr' }, '/about', { acceptLanguage: 'ja' })
-      expect(outcome).toMatchObject({ kind: 'next', vary: null })
-      expect(outcome.locals.locale).toBe('en')
+      // prefixDefault changes the links only: a URL without a locale prefix
+      // is served as the default locale, not redirected
+      for (const prefixDefault of [false, true]) {
+        const noDetection = { ...config, routing: 'rewrite', detectLanguage: false, prefixDefault, fallbackLocale: 'fr' } as const
+        const outcome = await run(noDetection, '/about', { acceptLanguage: 'ja' })
+        expect(outcome).toMatchObject({ kind: 'next', vary: null })
+        expect(outcome.locals.locale).toBe('en')
+        const prefixed = await run(noDetection, '/en/about')
+        expect(prefixed).toMatchObject({ kind: 'rewrite', target: '/about' })
+        expect(prefixed.locals.locale).toBe('en')
+      }
     })
 
     it('leaves a request it has already rewritten', async () => {
@@ -230,7 +251,7 @@ describe('create (middleware)', () => {
 
   describe('pathnames that lead to another host', () => {
     it('are served without i18n handling', async () => {
-      for (const middlewareConfig of [config, { ...config, prefixDefault: true }, { ...config, routing: 'rewrite' } as const]) {
+      for (const middlewareConfig of [config, { ...config, prefixDefault: true }, { ...config, prefixDefault: true, routing: 'rewrite' } as const]) {
         for (const url of ['//evil.example/x', '/\\evil.example', '/ja//evil.example', '/ja/\\evil.example', '/ja//']) {
           const outcome = await run(middlewareConfig, url, { acceptLanguage: 'ja' })
           expect(outcome).toMatchObject({ kind: 'next', vary: null })
@@ -251,10 +272,10 @@ describe('create (middleware)', () => {
       expect(await run({ ...config, prefixDefault: true, detectLanguage: false }, '/docs/about?x=1'))
         .toMatchObject({ kind: 'redirect', target: '/docs/en/about?x=1' })
 
-      const rewrite = await run({ ...config, routing: 'rewrite' }, '/docs/ja/about')
+      const rewrite = await run({ ...config, prefixDefault: true, routing: 'rewrite' }, '/docs/ja/about')
       expect(rewrite).toMatchObject({ kind: 'rewrite', target: '/docs/about' })
       expect(rewrite.locals).toEqual({ locale: 'ja', originalPathname: '/docs/ja/about' })
-      expect(await run({ ...config, routing: 'rewrite' }, '/docs/ja')).toMatchObject({ kind: 'rewrite', target: '/docs' })
+      expect(await run({ ...config, prefixDefault: true, routing: 'rewrite' }, '/docs/ja')).toMatchObject({ kind: 'rewrite', target: '/docs' })
     })
 
     it('compares the excluded paths without the base', async () => {

@@ -168,10 +168,30 @@ const localesAsI18n: LinkProps = { href: '/about', locale: 'en', i18n: ['ja', 'e
 create({ ...config })
 create({ ...config, prefixDefault: true, detectLanguage: false, excludePaths: ['/api'] })
 create({ ...config, fallbackLocale: 'ja' })
-// The rewrite mode takes detectLanguage too
-create({ ...config, routing: 'rewrite', detectLanguage: false })
-// @ts-expect-error prefixDefault does not apply to the rewrite mode
+// The rewrite mode takes prefixDefault, so that the config of define() can be
+// spread into it. With the language detection, which is the default, a URL
+// without a locale prefix is the detected locale: prefixDefault must be true
 create({ ...config, routing: 'rewrite', prefixDefault: true })
+create({ ...config, routing: 'rewrite', prefixDefault: true, detectLanguage: true })
+create({ ...config, routing: 'rewrite', detectLanguage: false })
+create({ ...config, routing: 'rewrite', detectLanguage: false, prefixDefault: false })
+create({ ...config, routing: 'rewrite', detectLanguage: false, prefixDefault: true })
+const rewriteConfig = { ...config, prefixDefault: true } as const
+create({ ...rewriteConfig, routing: 'rewrite' })
+// @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
+create({ ...config, routing: 'rewrite' })
+// @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
+create({ ...config, routing: 'rewrite', detectLanguage: true })
+// @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
+create({ ...config, routing: 'rewrite', prefixDefault: false })
+const someBoolean: boolean = Math.random() > 0.5
+// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+create({ ...config, routing: 'rewrite', detectLanguage: someBoolean })
+// @ts-expect-error a prefixDefault that may be false does not go with the language detection
+create({ ...config, routing: 'rewrite', prefixDefault: someBoolean })
+create({ ...config, routing: 'rewrite', detectLanguage: someBoolean, prefixDefault: true })
+// @ts-expect-error the error of the config comes first
+create({ locales: ['en', 'ja'], defaultLocale: 'fr', routing: 'rewrite' })
 // @ts-expect-error defaultLocale is not one of locales
 create({ locales: ['en', 'ja'], defaultLocale: 'fr' })
 // @ts-expect-error fallbackLocale is not one of locales

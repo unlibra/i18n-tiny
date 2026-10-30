@@ -5,9 +5,6 @@ import jaMessages from './messages/ja'
 
 export const i18n = define({
   ...config,
-  // In the rewrite mode, a URL without a locale prefix is the detected
-  // locale, so the links for a locale always get its prefix: /en, /ja
-  prefixDefault: true,
   messages: {
     en: enMessages,
     ja: jaMessages

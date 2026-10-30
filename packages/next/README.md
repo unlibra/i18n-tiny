@@ -386,7 +386,7 @@ It is also exported from `@i18n-tiny/next/types` and `@i18n-tiny/next/router`.
 
 #### `create(config)`
 
-Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequest) => NextResponse`. The config is checked as `define()` checks it.
+Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequest) => NextResponse`. The config is checked as `define()` checks it, and the rewrite mode with detection without `prefixDefault: true` is a type error and throws.
 
 **Parameters:**
 
@@ -395,7 +395,7 @@ Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequ
 | `locales`        | `readonly string[]` | -               | Array of supported locales                                                 |
 | `defaultLocale`  | one of `locales`    | -               | The locale of URLs without a locale prefix                                 |
 | `fallbackLocale` | one of `locales`    | `defaultLocale` | Used when the detection finds no match                                     |
-| `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs (not with `routing: 'rewrite'`)   |
+| `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs. `true` for `routing: 'rewrite'` with detection |
 | `detectLanguage` | `boolean`           | `true`          | Whether to detect the language of URLs without a prefix from Accept-Language |
 | `routing`        | `'rewrite'`         | -               | SSR rewrite mode                                                           |
 
@@ -426,13 +426,29 @@ export const proxy = create({ ...i18nConfig, prefixDefault: true })
 // No detection: URLs without a prefix are the default locale
 export const proxy = create({ ...i18nConfig, detectLanguage: false })
 
-// SSR rewrite mode (locale in the x-locale request header)
+// SSR rewrite mode (locale in the x-locale request header). With detection,
+// the config has prefixDefault: true, see below
 export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
 ```
 
 #### Rewrite Mode
 
-In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale to the pages in the `x-locale` request header. For URLs without a prefix, the locale is detected from Accept-Language, or is the default locale with `detectLanguage: false`. An `x-locale` header sent by the client is replaced, and the other request headers, such as cookies, are passed on. Put routes directly under `app/`, without `app/[locale]`, and read the locale in Server Components:
+In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale to the pages in the `x-locale` request header. For URLs without a prefix, the locale is detected from Accept-Language, or is the default locale with `detectLanguage: false`. An `x-locale` header sent by the client is replaced, and the other request headers, such as cookies, are passed on.
+
+With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the proxy share: with detection, the rewrite mode without it is a type error and throws. A URL without a prefix is still served, not redirected. With `detectLanguage: false`, `prefixDefault` may be `false`.
+
+```typescript
+// i18n.config.ts
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefault: true } as const
+
+// i18n.ts
+export const i18n = define({ ...config, messages: { en, ja } })
+
+// proxy.ts
+export const proxy = create({ ...config, routing: 'rewrite' })
+```
+
+Put routes directly under `app/`, without `app/[locale]`, and read the locale in Server Components:
 
 ```typescript
 // locale.ts (for Server Components only)

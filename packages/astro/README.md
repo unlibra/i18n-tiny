@@ -291,11 +291,11 @@ export const onRequest = defineMiddleware(create({ ...config }))
 | `defaultLocale`  | `string`            | -               | The locale of URLs without a locale prefix (required). One of `locales`              |
 | `fallbackLocale` | `string`            | `defaultLocale` | The locale used when language detection finds no match. One of `locales`            |
 | `excludePaths`   | `string[]`          | `[]`            | Paths to leave out of i18n handling, such as `['/api']`. Each one starts with `/`    |
-| `prefixDefault`  | `boolean`           | `false`         | Whether URLs of the default locale also have the prefix. Not in the rewrite mode     |
+| `prefixDefault`  | `boolean`           | `false`         | Whether URLs of the default locale also have the prefix. `true` for the rewrite mode with detection |
 | `detectLanguage` | `boolean`           | `true`          | Whether to detect the language of a URL without a locale prefix from `Accept-Language` |
 | `routing`        | `'rewrite'`         | -               | The SSR rewrite mode                                                                 |
 
-The config is checked as `define()` checks it: an invalid config, and an `excludePaths` entry that does not start with `/`, throw an error.
+The config is checked as `define()` checks it: an invalid config, an `excludePaths` entry that does not start with `/`, and the rewrite mode with detection without `prefixDefault: true` throw an error.
 
 - `/_astro` and `/_image` are always excluded. An excluded path matches itself and the paths under it: `/api` matches `/api` and `/api/users`, but not `/apis` or `/api-docs`. Requests for static files (such as `.png`, `.css` or `.js`) are skipped as well.
 - With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the middleware removes it from the URL before routing and adds it to the redirect and rewrite targets. Write `excludePaths` without the base.
@@ -310,7 +310,7 @@ The config is checked as `define()` checks it: an invalid config, and an `exclud
 | Standard, detection        | `src/pages/[...locale]/about.astro`            | Served as it is                          | Redirects to the detected locale, or is served as the default locale        |
 | `prefixDefault: true`      | `src/pages/[...locale]/about.astro`            | Served as it is                          | Redirects to `/[defaultLocale]/about`                                       |
 | `prefixDefault: true`, detection | `src/pages/[...locale]/about.astro`      | Served as it is                          | Redirects to the detected locale                                            |
-| `routing: 'rewrite'`, detection | `src/pages/about.astro`                   | Rewritten to `/about`, the locale in `Astro.locals.locale` | The detected locale in `Astro.locals.locale`              |
+| `routing: 'rewrite'`, detection, `prefixDefault: true` | `src/pages/about.astro` | Rewritten to `/about`, the locale in `Astro.locals.locale` | The detected locale in `Astro.locals.locale`              |
 | `routing: 'rewrite'`, `detectLanguage: false` | `src/pages/about.astro`     | Rewritten to `/about`, the locale in `Astro.locals.locale` | The default locale in `Astro.locals.locale`               |
 
 "Detection" is `detectLanguage: true`, the default. It uses `fallbackLocale` when `Accept-Language` matches none of `locales`. Languages marked with `q=0` are never picked.
@@ -355,7 +355,20 @@ const messages = i18n.getMessages(locale)
 </html>
 ```
 
-With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Give `define()` `prefixDefault: true` (but not the middleware): `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale.
+With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
+
+```typescript
+// src/i18n.config.ts
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefault: true } as const
+
+// src/i18n.ts
+export const i18n = define({ ...config, messages: { en, ja } })
+
+// src/middleware.ts
+export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite' }))
+```
+
+With `detectLanguage: false`, a URL without a prefix is the default locale, and `prefixDefault` may be `false`.
 
 #### `MiddlewareConfig` (type)
 

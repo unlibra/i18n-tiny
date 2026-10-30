@@ -70,10 +70,20 @@ interface StandardRoutingConfig extends BaseConfig {
  * is passed to the pages in the x-locale request header, and /ja/about is
  * rewritten to /about. A URL without a locale prefix is the detected
  * locale, or the default locale with detectLanguage: false.
+ *
+ * With the language detection, a URL without a locale prefix is not the
+ * default locale, so the links of the default locale need its prefix:
+ * prefixDefault must be true, in this config and in the one of define().
  */
 interface RewriteRoutingConfig extends BaseConfig {
   readonly routing: 'rewrite'
-  readonly prefixDefault?: never
+  /**
+   * Whether the links of the default locale carry the locale prefix. Must
+   * be true unless detectLanguage is false. A URL without a locale prefix
+   * is served in the rewrite mode either way.
+   * @default false
+   */
+  readonly prefixDefault?: boolean
 }
 
 /**
@@ -81,6 +91,24 @@ interface RewriteRoutingConfig extends BaseConfig {
  * Either the standard routing with prefixDefault, or routing: 'rewrite'
  */
 export type ProxyConfig = StandardRoutingConfig | RewriteRoutingConfig
+
+// The language detection of the rewrite mode needs prefixDefault: true. A
+// detectLanguage or a prefixDefault typed as boolean may break it, and fails.
+type RewriteCheck<C> = C extends { readonly routing: 'rewrite' }
+  ? C extends { readonly detectLanguage: false }
+    ? unknown
+    : C extends { readonly prefixDefault: true }
+      ? unknown
+      : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
+  : unknown
+
+// The type checks of the proxy config: those of define(), then those of the routing
+type ProxyConfigCheck<C extends ProxyConfig> = unknown extends ConfigCheck<C> ? RewriteCheck<C> : ConfigCheck<C>
+
+const REWRITE_NEEDS_PREFIX_DEFAULT =
+  '[i18n] The language detection of the rewrite mode needs prefixDefault: true. ' +
+  'A URL without a locale prefix is the detected locale, so the links of the default locale need its prefix. ' +
+  'Set prefixDefault: true in the config shared with define(), or detectLanguage: false.'
 
 /** The request header that passes the locale to the pages in the rewrite mode */
 const LOCALE_HEADER = 'x-locale'
@@ -115,9 +143,10 @@ function varyOnAcceptLanguage (response: NextResponse): NextResponse {
 /**
  * Creates a Next.js proxy (middleware) handler for i18n routing
  *
- * The config is checked as define() checks it. A pathname that starts with
- * "//" or "/\", also once its locale prefix is removed, gets no i18n
- * handling. Responses that depend on the language detection get
+ * The config is checked as define() checks it, and the rewrite mode with the
+ * language detection throws without prefixDefault: true. A pathname that
+ * starts with "//" or "/\", also once its locale prefix is removed, gets no
+ * i18n handling. Responses that depend on the language detection get
  * `Vary: Accept-Language`.
  *
  * @example
@@ -134,17 +163,22 @@ function varyOnAcceptLanguage (response: NextResponse): NextResponse {
  * // Always prefix the default locale
  * export const proxy = create({ ...i18nConfig, prefixDefault: true })
  *
- * // SSR with rewrite (clean URLs, locale in the x-locale request header)
+ * // SSR with rewrite (clean URLs, locale in the x-locale request header).
+ * // With the language detection, the config has prefixDefault: true:
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
  * export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
  * ```
  */
-export function create<const C extends ProxyConfig> (config: C & ConfigCheck<C>) {
+export function create<const C extends ProxyConfig> (config: C & ProxyConfigCheck<C>) {
   const { locales, defaultLocale, fallbackLocale = defaultLocale } = config as ProxyConfig
   validateConfig({ locales, defaultLocale, fallbackLocale })
 
   const isRewriteMode = config.routing === 'rewrite'
-  const prefixDefault = isRewriteMode ? false : (config.prefixDefault ?? false)
+  const prefixDefault = config.prefixDefault ?? false
   const detectLanguage = config.detectLanguage ?? true
+  if (isRewriteMode && detectLanguage && prefixDefault !== true) {
+    throw new Error(REWRITE_NEEDS_PREFIX_DEFAULT)
+  }
   const urlConfig = { locales, defaultLocale, prefixDefault }
 
   return function proxy (request: NextRequest): NextResponse {

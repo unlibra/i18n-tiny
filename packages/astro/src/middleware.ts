@@ -68,10 +68,20 @@ interface StandardRoutingConfig extends BaseConfig {
  * is stored in Astro.locals.locale, and /ja/about is rewritten to /about.
  * A URL without a locale prefix is the detected locale, or the default
  * locale with detectLanguage: false.
+ *
+ * With the language detection, a URL without a locale prefix is not the
+ * default locale, so the links of the default locale need its prefix:
+ * prefixDefault must be true, in this config and in the one of define().
  */
 interface RewriteRoutingConfig extends BaseConfig {
   readonly routing: 'rewrite'
-  readonly prefixDefault?: never
+  /**
+   * Whether the links of the default locale carry the locale prefix. Must
+   * be true unless detectLanguage is false. A URL without a locale prefix
+   * is served in the rewrite mode either way.
+   * @default false
+   */
+  readonly prefixDefault?: boolean
 }
 
 /**
@@ -79,6 +89,19 @@ interface RewriteRoutingConfig extends BaseConfig {
  * Either the standard routing with prefixDefault, or routing: 'rewrite'
  */
 export type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
+
+// The language detection of the rewrite mode needs prefixDefault: true. A
+// detectLanguage or a prefixDefault typed as boolean may break it, and fails.
+type RewriteCheck<C> = C extends { readonly routing: 'rewrite' }
+  ? C extends { readonly detectLanguage: false }
+    ? unknown
+    : C extends { readonly prefixDefault: true }
+      ? unknown
+      : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
+  : unknown
+
+/** The type checks of the middleware config: those of define(), then those of the routing */
+type MiddlewareConfigCheck<C extends MiddlewareConfig> = unknown extends ConfigCheck<C> ? RewriteCheck<C> : ConfigCheck<C>
 
 // import.meta.env is set where Vite builds the middleware, as Astro does.
 // Typed here, as declaring it globally would clash with the types of Vite.
@@ -89,8 +112,9 @@ function currentBase (): string {
 /**
  * Creates an Astro middleware handler for i18n routing
  *
- * The config is checked as define() checks it, and an excludePaths entry
- * that does not start with "/" throws.
+ * The config is checked as define() checks it. An excludePaths entry that
+ * does not start with "/" throws, and so does the rewrite mode with the
+ * language detection without prefixDefault: true.
  *
  * @example
  * ```typescript
@@ -109,10 +133,12 @@ function currentBase (): string {
  * // Always prefix the default locale
  * export const onRequest = defineMiddleware(create({ ...config, prefixDefault: true }))
  *
- * // SSR with rewrite (clean URLs, locale in Astro.locals)
+ * // SSR with rewrite (clean URLs, locale in Astro.locals). With the
+ * // language detection, the config has prefixDefault: true:
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
  * export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite' }))
  * ```
  */
-export function create<const C extends MiddlewareConfig> (config: C & ConfigCheck<C>): MiddlewareHandler {
+export function create<const C extends MiddlewareConfig> (config: C & MiddlewareConfigCheck<C>): MiddlewareHandler {
   return createMiddleware(config, currentBase)
 }
