@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2]
   pull_request:
-    branches: [main]
+    branches: [main, v2]
 
 permissions:
   contents: read
@@ -14,7 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [22, 24]
+        # Every supported Node.js version, with the frameworks the workspace
+        # develops against (the highest supported majors). The examples job
+        # below covers the other framework majors.
+        node-version: [22, 24, 26]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -53,6 +56,63 @@ jobs:
       - name: Check bundle size
         run: pnpm size
 
+  # Builds the examples as consumers would: out of the workspace, installed
+  # from the packed packages, with the lowest and the highest supported
+  # majors of Astro, Next.js and React, and React 18 and 19 with both
+  # Next.js majors. Covers what only a framework can check: the Astro
+  # components, the react-server entries and the React context shared by the
+  # entry points.
+  examples:
+    name: Examples (Node ${{ matrix.node }}, Astro ${{ matrix.astro }}, Next.js ${{ matrix.next }}, React ${{ matrix.react }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The lowest supported versions; 22.12.0 is the lowest Node.js
+          # that the packages declare.
+          - { node: '22.12.0', astro: 6, next: 15, react: 18 }
+          # The highest
+          - { node: '26', astro: 7, next: 16, react: 19 }
+          # React 18 with Next.js 16, and React 19 with Next.js 15
+          - { node: '24', astro: 7, next: 16, react: 18 }
+          - { node: '24', astro: 6, next: 15, react: 19 }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      # The packages are built and packed with the Node.js the workspace uses;
+      # the examples are installed and built with the one of the row.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          check-latest: true
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and pack the packages
+        run: |
+          pnpm -r --filter "./packages/*" build
+          node scripts/pack.mjs "$RUNNER_TEMP/tarballs"
+
+      - name: Use Node.js ${{ matrix.node }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      - name: Build the examples
+        env:
+          ASTRO: ${{ matrix.astro }}
+          NEXT: ${{ matrix.next }}
+          REACT: ${{ matrix.react }}
+        run: |
+          node --version
+          node scripts/build-examples.mjs --tarballs "$RUNNER_TEMP/tarballs" --astro "$ASTRO" --next "$NEXT" --react "$REACT"
+
   # Builds the VitePress site, as the deploy workflow does on main, so dead
   # links and config errors fail the pull request instead of the deploy.
   website:
@@ -85,11 +145,11 @@ jobs:
   # Use this job name in Branch Protection Rules
   status-check:
     runs-on: ubuntu-latest
-    needs: [test, website]
+    needs: [test, examples, website]
     if: always()
     steps:
       - name: Check test status
-        if: ${{ needs.test.result != 'success' || needs.website.result != 'success' }}
+        if: ${{ needs.test.result != 'success' || needs.examples.result != 'success' || needs.website.result != 'success' }}
         run: exit 1
       - name: All tests passed
         run: echo "All tests passed"
