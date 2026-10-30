@@ -1,10 +1,10 @@
 ---
 import Link from '@i18n-tiny/astro/router/Link.astro'
-import { getMessages } from '../i18n'
+import { i18n } from '../i18n'
 
-// SSR: Get locale from middleware (detected from Accept-Language)
+// SSR: Get locale from middleware (from the URL, or detected from Accept-Language)
 const locale = Astro.locals.locale
-const messages = getMessages(locale)
+const messages = i18n.getMessages(locale)
 ---
 
 <html lang={locale}>

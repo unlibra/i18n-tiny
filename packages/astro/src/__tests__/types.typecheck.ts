@@ -6,6 +6,7 @@ import type { I18nConfig } from '../index'
 // @ts-expect-error DefineConfig is replaced by I18nConfig
 import type { DefineConfig } from '../index'
 import type { LinkProps } from '../internal'
+import { create } from '../middleware'
 import { alternatePath, localizedPath, pathLocale, removeLocalePrefix } from '../router'
 // @ts-expect-error the positional form is gone: use localizedPath()
 import { getLocalizedPath } from '../router'
@@ -157,10 +158,28 @@ const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current'
 const localeWithoutI18n: LinkProps = { href: '/about', locale: 'en' }
 // @ts-expect-error normalize needs i18n
 const normalizeWithoutI18n: LinkProps = { href: '/about', normalize: true }
-// @ts-expect-error locale="" no longer means the path without a locale: use locale={false}
+// @ts-expect-error locale="" without i18n, the 1.x way to leave the path without a locale: use locale={false}.
+// With i18n, locale="" passes the type check and throws as an unknown locale.
 const emptyLocale: LinkProps = { href: '/about', locale: '' }
 // @ts-expect-error i18n is the define() result, not the locales
 const localesAsI18n: LinkProps = { href: '/about', locale: 'en', i18n: ['ja', 'en'] }
+
+// create() takes the same config, checked by type too
+create({ ...config })
+create({ ...config, prefixDefault: true, detectLanguage: false, excludePaths: ['/api'] })
+create({ ...config, fallbackLocale: 'ja' })
+// The rewrite mode takes detectLanguage too
+create({ ...config, routing: 'rewrite', detectLanguage: false })
+// @ts-expect-error prefixDefault does not apply to the rewrite mode
+create({ ...config, routing: 'rewrite', prefixDefault: true })
+// @ts-expect-error defaultLocale is not one of locales
+create({ locales: ['en', 'ja'], defaultLocale: 'fr' })
+// @ts-expect-error fallbackLocale is not one of locales
+create({ ...config, fallbackLocale: 'fr' })
+// @ts-expect-error a locale is listed twice
+create({ locales: ['en', 'en'], defaultLocale: 'en' })
+// @ts-expect-error defaultLocale is required
+create({ locales: ['en', 'ja'] })
 
 export {
   keepLocale, withoutLocale, forLocale, normalized, withAttributes, localeWithoutI18n, normalizeWithoutI18n,

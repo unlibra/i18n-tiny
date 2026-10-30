@@ -5,7 +5,6 @@
   "description": "Type-safe i18n for Astro that ships no client JavaScript, with automatic type inference and zero dependencies",
   "keywords": [
     "astro",
-    "astro-integration",
     "i18n",
     "internationalization",
     "typescript",

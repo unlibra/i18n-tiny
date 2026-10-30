@@ -1,10 +1,10 @@
 ---
-import { getTranslations } from '../i18n'
 import Link from '@i18n-tiny/astro/router/Link.astro'
+import { i18n } from '../i18n'
 
-// SSR: Get locale from middleware (detected from Accept-Language)
+// SSR: Get locale from middleware (from the URL, or detected from Accept-Language)
 const locale = Astro.locals.locale
-const t = getTranslations(locale)
+const t = i18n.getTranslations(locale)
 
 const buttonStyle = (isActive: boolean) => `
   height: 2rem;
@@ -49,15 +49,15 @@ const buttonStyle = (isActive: boolean) => `
 
     <p style="margin-bottom: 0.5rem;">Switch language (using Link component):</p>
     <div>
-      <Link href="/" locale='en' style={buttonStyle(locale === 'en')}>
+      <Link href="/" locale="en" i18n={i18n} style={buttonStyle(locale === 'en')}>
         English
       </Link>
-      <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
+      <Link href="/" locale="ja" i18n={i18n} style={buttonStyle(locale === 'ja')}>
         日本語
       </Link>
     </div>
     <p style="margin-top: 1rem; font-size: 0.9rem;">
-      <Link href="/" locale="" style="color: #666;">
+      <Link href="/" locale={false} style="color: #666;">
         {"< Auto (detect from browser)"}
       </Link>
     </p>
