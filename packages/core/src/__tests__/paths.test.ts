@@ -184,3 +184,59 @@ describe('configs with more settings', () => {
     expect(() => localizedPath('/about', 'en', defineConfig)).toThrow('messages is missing locales: "en"')
   })
 })
+
+describe('paths that browsers read as another host', () => {
+  // A path left after removing the prefix must not start with "//" or "/\",
+  // or a redirect to it would lead to another host
+  it.each([
+    ['/en//evil.com'],
+    ['/en/\\evil.com'],
+    ['/ja//evil.com'],
+    ['/en///evil.com']
+  ])('should throw for %j, whose rest after the prefix starts with another host', (pathname) => {
+    expect(() => alternatePath(pathname, 'ja', config)).toThrow('must not start with "//" or "/\\"')
+    expect(() => alternatePath(pathname, 'en', config)).toThrow('must not start with "//" or "/\\"')
+    expect(() => removeLocalePrefix(pathname, config)).toThrow('must not start with "//" or "/\\"')
+  })
+
+  it('should never return a path that starts with "//" or "/\\"', () => {
+    const inputs = ['/', '/en', '/en/', '/ja/', '/about', '/en/about', '/en/a//b', '/a/\\b', '/en/a/', '/x//']
+    for (const input of inputs) {
+      for (const output of [
+        localizedPath(input, 'ja', config),
+        localizedPath(input, 'en', config),
+        alternatePath(input, 'ja', config),
+        alternatePath(input, 'en', config),
+        alternatePath(input, 'ja', prefixed),
+        removeLocalePrefix(input, config)
+      ]) {
+        expect(output.startsWith('//') || output.startsWith('/\\')).toBe(false)
+      }
+    }
+  })
+})
+
+describe('long inputs', () => {
+  // Slashes that do not end the path must not make the time grow with the
+  // square of the length
+  it('should handle runs of slashes in linear time', () => {
+    const time = (length: number) => {
+      const path = '/a' + '/'.repeat(length) + 'b'
+      const start = performance.now()
+      localizedPath(path, 'en', config)
+      alternatePath(path, 'en', config)
+      removeLocalePrefix(path, config)
+      return performance.now() - start
+    }
+    time(1000)
+    // 16 times the length takes well under 16 * 16 times the time
+    const short = Math.max(time(4000), 1)
+    const long = time(64000)
+    expect(long).toBeLessThan(short * 64)
+    expect(long).toBeLessThan(200)
+  })
+
+  it('should still drop every trailing slash of a long run', () => {
+    expect(localizedPath('/a' + '/'.repeat(64000), 'en', config)).toBe('/en/a')
+  })
+})

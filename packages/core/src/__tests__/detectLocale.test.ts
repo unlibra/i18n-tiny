@@ -104,4 +104,28 @@ describe('detectLocale()', () => {
       expect(detectLocale('ja;q=2,en;q=0.5', supportedLocales)).toBe('en')
     })
   })
+
+  describe('long headers', () => {
+    // The header comes from the client: its length must not make the time
+    // grow with the square of the length
+    it('should read a long run of whitespace in a parameter in linear time', () => {
+      const time = (length: number) => {
+        const header = 'ja;q=0' + ' '.repeat(length) + 'x,en'
+        const start = performance.now()
+        detectLocale(header, supportedLocales)
+        return performance.now() - start
+      }
+      time(1000)
+      const short = Math.max(time(4000), 1)
+      const long = time(64000)
+      expect(long).toBeLessThan(short * 64)
+      expect(long).toBeLessThan(200)
+    })
+
+    it('should still read q with whitespace around its value', () => {
+      expect(detectLocale('ja;q=  0  ,en;q=0.5', supportedLocales)).toBe('en')
+      expect(detectLocale('ja; Q = 0.9 ,en;q=0.5', supportedLocales)).toBe('ja')
+    })
+  })
 })
+

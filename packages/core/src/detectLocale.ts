@@ -48,8 +48,12 @@ export function detectLocale(
 
     let quality = 1
     for (const param of params) {
-      const match = /^\s*q\s*=\s*(.*?)\s*$/i.exec(param)
-      if (match) quality = /^\d+(?:\.\d*)?$/.test(match[1]) ? Number(match[1]) : NaN
+      // Split at "=" and trim instead of one regular expression, whose time
+      // would grow with the square of the length of the header
+      const eq = param.indexOf('=')
+      if (eq === -1 || param.slice(0, eq).trim().toLowerCase() !== 'q') continue
+      const value = param.slice(eq + 1).trim()
+      quality = /^\d+(?:\.\d*)?$/.test(value) ? Number(value) : NaN
     }
     if (!(quality >= 0 && quality <= 1)) continue
 
