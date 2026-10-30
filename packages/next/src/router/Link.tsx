@@ -1,7 +1,7 @@
 'use client'
 
-import NextLink from 'next/link'
-import { usePathname } from 'next/navigation'
+import NextLink from 'next/link.js'
+import { usePathname } from 'next/navigation.js'
 import type { ComponentProps } from 'react'
 
 import { useLocale, useLocales } from '@i18n-tiny/react/internal'

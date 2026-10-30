@@ -12,8 +12,8 @@
  * export const config = { matcher: ['/((?!api|_next|.*\\..*).*)'] }
  */
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server.js'
+import type { NextRequest } from 'next/server.js'
 import { detectLocale } from '@i18n-tiny/core/middleware'
 
 // Re-export middleware utilities from @i18n-tiny/core/middleware

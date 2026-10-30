@@ -19,16 +19,18 @@ test('top-level await is an error in package sources', async () => {
     'const a = await Promise.resolve(1)',
     'for await (const x of [a]) { console.log(x) }',
     'if (a) { await Promise.resolve(2) }',
+    'await using b = { async [Symbol.asyncDispose] () {} }',
     'export {}'
   ].join('\n')
-  assert.deepEqual(await restrictedSyntax(code), [1, 2, 3])
+  assert.deepEqual(await restrictedSyntax(code), [1, 2, 3, 4])
 })
 
 test('await inside functions is allowed', async () => {
   const code = [
     'export async function f () { const b = await Promise.resolve(1); for await (const y of [b]) { console.log(y) } return b }',
     'export const g = async () => await Promise.resolve(2)',
-    'export class C { async m () { return await Promise.resolve(3) } }'
+    'export class C { async m () { return await Promise.resolve(3) } }',
+    'export async function h () { await using r = { async [Symbol.asyncDispose] () {} }; return r }'
   ].join('\n')
   assert.deepEqual(await restrictedSyntax(code), [])
 })
