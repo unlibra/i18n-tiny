@@ -5,8 +5,9 @@ import type { LinkProps as NextLinkProps } from 'next/link.js'
 import { usePathname } from 'next/navigation.js'
 import type { AnchorHTMLAttributes, ReactNode, RefAttributes } from 'react'
 
-import { useLocale, useLocales } from '@i18n-tiny/react/internal'
+import { useLocale, useLocaleConfig } from '@i18n-tiny/react/internal'
 import { getLinkHref } from '@i18n-tiny/core/router'
+import type { LinkHrefOptions } from '@i18n-tiny/core/router'
 
 // The props of next/link's Link, built from its named LinkProps type rather
 // than from the type of its default export: next/link is CommonJS, so under
@@ -16,16 +17,16 @@ type NextLinkComponentProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyo
 
 export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
   /**
-   * Override the locale for this link
-   * - undefined: auto-localize based on current locale (default)
-   * - string (e.g., 'en', 'ja'): generate path for specified locale with prefix
-   * - '' (empty string) or false: use href as-is without any localization (raw path)
+   * The locale of the link
+   * - undefined: keep the locale of the current URL (default)
+   * - a locale such as 'en': the link for that locale. The default locale
+   *   gets no prefix unless prefixDefault is true. Any other value throws
+   * - false: the path without a locale
    */
   locale?: string | false
   /**
-   * Normalize href by removing any existing locale prefix before processing.
-   * When true, locales are read from I18nProvider context.
-   * Useful when href comes from usePathname() or similar.
+   * Remove a locale prefix from href first, such as when href comes from
+   * usePathname()
    * @default false
    */
   normalize?: boolean
@@ -34,7 +35,12 @@ export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
 /**
  * Next.js Link component with automatic locale prefix
  *
- * Automatically detects whether locale prefix is needed based on current URL:
+ * The href is a path without a locale prefix and without the basePath, and
+ * must start with "/". Hrefs that are not paths on this site, such as
+ * 'https://…' or '#top', are left unchanged. The locale settings are read
+ * from the Provider returned by define().
+ *
+ * Without `locale`, the link keeps the pattern of the current URL:
  * - If current URL has locale prefix → generated links have prefix
  * - If current URL has no prefix → generated links have no prefix
  *
@@ -45,27 +51,25 @@ export interface LinkProps extends Omit<NextLinkComponentProps, 'locale'> {
  * // Auto-localized link (uses current locale and URL pattern)
  * <Link href="/about">About</Link>
  *
- * // Language switch with explicit locale prefix
+ * // A link for another locale: the default locale gets no prefix
  * <Link href="/" locale="ja">日本語</Link>
  *
  * // Raw path (no localization)
- * <Link href="/" locale="">English</Link>
  * <Link href="/" locale={false}>English</Link>
- * <Link href="/" locale={condition && 'ja'}>Conditional</Link>
  *
- * // With href normalization (removes existing locale prefix before processing)
+ * // The current page in another locale
  * const pathname = usePathname() // '/ja/about'
  * <Link href={pathname} locale="en" normalize>English</Link>  // → /en/about
  * ```
  */
 export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
   let currentLocale: string
-  let locales: readonly string[]
+  let config: LinkHrefOptions['config']
   let pathname: string | null
 
   try {
     currentLocale = useLocale()
-    locales = useLocales()
+    config = useLocaleConfig()
     pathname = usePathname()
   } catch {
     const error = new Error(
@@ -79,16 +83,15 @@ export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
     throw error
   }
 
-  // Get locales for normalization if enabled
-  const normalizeLocales = normalize ? locales : undefined
+  const options = { locale, normalize, config } as LinkHrefOptions
 
   // Handle both string and UrlObject. A UrlObject without pathname, such as
   // { query: { page: 2 } }, points at the current page and is left as is.
   const localizedHref = typeof href === 'string'
-    ? getLinkHref(href, pathname ?? '', currentLocale, { locale, locales: normalizeLocales })
+    ? getLinkHref(href, pathname ?? '', currentLocale, options)
     : href.pathname == null
       ? href
-      : { ...href, pathname: getLinkHref(href.pathname, pathname ?? '', currentLocale, { locale, locales: normalizeLocales }) }
+      : { ...href, pathname: getLinkHref(href.pathname, pathname ?? '', currentLocale, options) }
 
   return <NextLink href={localizedHref} {...props} />
 }

@@ -1,5 +1,5 @@
 import { defineConfig, type Options } from 'tsup'
-import { readFileSync, writeFileSync } from 'fs'
+import { copyFileSync, readFileSync, writeFileSync } from 'fs'
 
 const sharedConfig: Options = {
   format: ['esm'],
@@ -27,15 +27,31 @@ async function addUseClientDirective(files: string[]) {
 // The configs run in parallel, so none of them cleans dist: one that did could
 // delete files another has just written. The build script cleans it first.
 export default defineConfig([
-  // Router utilities (Client Components)
+  // Link (Client Component). A file of its own with "use client", so that
+  // the router entry can be imported by Server Components too.
+  {
+    ...sharedConfig,
+    entry: {
+      'router/Link': 'src/router/Link.tsx'
+    },
+    clean: false,
+    async onSuccess () {
+      await addUseClientDirective(['dist/router/Link.js'])
+    }
+  },
+  // Router utilities: the Link and the URL functions. The source has only
+  // re-exports, so it is its own type declaration: the declaration bundler
+  // would rewrite the path of the external './Link.js'.
   {
     ...sharedConfig,
     entry: {
       'router/index': 'src/router/index.ts'
     },
+    external: [...(sharedConfig.external ?? []), './Link.js'],
+    dts: false,
     clean: false,
     async onSuccess () {
-      await addUseClientDirective(['dist/router/index.js'])
+      copyFileSync('src/router/index.ts', 'dist/router/index.d.ts')
     }
   },
   // React Client build

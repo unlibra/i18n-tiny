@@ -1,11 +1,13 @@
 /**
  * @i18n-tiny/next/router
  *
- * Routing utilities for Next.js i18n
+ * Routing utilities for Next.js i18n. The URL functions work in Server and
+ * Client Components; the Link is a Client Component.
  */
 
-// Components
-export { Link } from './Link'
+// Components: a module of its own with "use client", kept apart in the build
+export { Link } from './Link.js'
 
-// Router utilities (re-exported from @i18n-tiny/core/router)
-export { getLocalizedPath, removeLocalePrefix, hasLocalePrefix } from '@i18n-tiny/core/router'
+// The URL functions of @i18n-tiny/core/router, which take the config object
+export { localizedPath, alternatePath, removeLocalePrefix, pathLocale } from '@i18n-tiny/core/router'
+export type { I18nConfig } from '@i18n-tiny/core'

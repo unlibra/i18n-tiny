@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
-import { getMessages, Link } from '@/i18n'
+import { notFound } from 'next/navigation'
+import { getMessages, isLocale, Link } from '@/i18n'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
+  if (!isLocale(locale)) notFound()
   const messages = await getMessages(locale)
 
   return {
@@ -12,6 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
+  if (!isLocale(locale)) notFound()
   const messages = await getMessages(locale)
 
   return (

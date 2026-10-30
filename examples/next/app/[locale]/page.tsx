@@ -1,8 +1,10 @@
-import { getTranslations, getMessages } from '@/i18n'
+import { notFound } from 'next/navigation'
+import { getTranslations, getMessages, isLocale } from '@/i18n'
 import ClientComponent from './client-component'
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
+  if (!isLocale(locale)) notFound()
   const t = await getTranslations(locale)
   const messages = await getMessages(locale)
 

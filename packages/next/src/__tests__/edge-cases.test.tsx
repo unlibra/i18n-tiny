@@ -77,18 +77,16 @@ describe('Edge Cases & Bug Fixes', () => {
       expect(screen.getByText('Next page').closest('a')?.getAttribute('href')).not.toMatch(/^\/ja/)
     })
 
-    it('should handle relative paths correctly by adding a leading slash', async () => {
+    it('should throw for a relative path', async () => {
       const { usePathname } = await import('next/navigation')
       vi.mocked(usePathname).mockReturnValue('/ja/home')
 
       const messages = await i18n.server.getMessages('ja')
-      render(
+      expect(() => render(
         <i18n.Provider locale="ja" messages={messages}>
           <Link href="about">About</Link>
         </i18n.Provider>
-      )
-      const link = screen.getByText('About')
-      expect(link.closest('a')).toHaveAttribute('href', '/ja/about')
+      )).toThrow('[i18n] href must be a pathname starting with "/", got "about".')
     })
 
     it('should handle root path correctly when URL has prefix', async () => {
