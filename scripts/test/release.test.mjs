@@ -101,12 +101,20 @@ test('the commit must be on a branch the dist-tag allows', () => {
   assert.match(checkReleaseBranch('latest', 'abc', ['v2'])[0], /abc is not on origin\/main,/)
 })
 
-test('the CI workflow must have succeeded on the commit itself', () => {
-  const run = (headSha, status, conclusion) => ({ headSha, status, conclusion, url: `https://example.com/${headSha}` })
-  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'success')], 'abc'), [])
-  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'failure'), run('abc', 'completed', 'success')], 'abc'), [])
-  assert.match(checkCiRuns([], 'abc')[0], /has not run on the commit abc/)
-  assert.match(checkCiRuns([run('def', 'completed', 'success')], 'abc')[0], /has not run on the commit abc/)
-  assert.match(checkCiRuns([run('abc', 'completed', 'failure')], 'abc')[0], /has not succeeded .* completed\/failure/)
-  assert.match(checkCiRuns([run('abc', 'in_progress', '')], 'abc')[0], /has not succeeded .* in_progress\/-/)
+test('the CI workflow must have succeeded on a push of the commit to an allowed branch', () => {
+  const run = (headSha, status, conclusion, event = 'push', headBranch = 'v2') =>
+    ({ headSha, status, conclusion, event, headBranch, url: `https://example.com/${headSha}/${event}/${headBranch}` })
+  const branches = ['main', 'v2']
+  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'success')], 'abc', branches), [])
+  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'success', 'push', 'main'), run('abc', 'completed', 'success')], 'abc', branches), [])
+  // A failed push run is not made good by another run.
+  assert.match(checkCiRuns([run('abc', 'completed', 'failure'), run('abc', 'completed', 'success', 'push', 'main')], 'abc', branches)[0], /has not succeeded .* completed\/failure/)
+  assert.match(checkCiRuns([run('abc', 'in_progress', '')], 'abc', branches)[0], /has not succeeded .* in_progress\/-/)
+  // Runs that do not test the commit on an allowed branch do not count.
+  assert.match(checkCiRuns([], 'abc', branches)[0], /has not run on a push of the commit abc to main or v2/)
+  assert.match(checkCiRuns([run('def', 'completed', 'success')], 'abc', branches)[0], /has not run on a push/)
+  assert.match(checkCiRuns([run('abc', 'completed', 'success', 'pull_request')], 'abc', branches)[0], /has not run on a push/)
+  assert.match(checkCiRuns([run('abc', 'completed', 'success', 'push', 'feature')], 'abc', branches)[0], /has not run on a push/)
+  assert.match(checkCiRuns([run('abc', 'completed', 'success')], 'abc', ['main'])[0], /has not run on a push of the commit abc to main$/)
+  assert.deepEqual(checkCiRuns([run('abc', 'completed', 'success', 'pull_request'), run('abc', 'completed', 'failure', 'push', 'feature'), run('abc', 'completed', 'success')], 'abc', branches), [])
 })

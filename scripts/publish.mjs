@@ -8,7 +8,8 @@
 //      between them agree, and the tag points at the checked-out commit. The
 //      commit is on a branch the release may come from (a release on
 //      origin/main, a prerelease on origin/main or origin/v2), and the CI
-//      workflow has succeeded on it (read with gh).
+//      workflow has succeeded on every push of it to such a branch (read
+//      with gh; pull request runs test a merge ref, so they do not count).
 //   2. check:packages packs and checks the tarballs, and size checks the
 //      browser bundles.
 //   3. The packed tarballs agree with the tag too (pnpm has replaced
@@ -98,17 +99,17 @@ if (options['skip-ci-check']) {
   const repo = process.env.GITHUB_REPOSITORY ??
     /github\.com[/:]([^/]+\/[^/.]+)/.exec(JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8')).repository?.url ?? '')?.[1]
   const runs = repo && spawnSync('gh', [
-    'run', 'list', '--repo', repo, '--workflow', 'ci.yml', '--commit', head,
-    '--json', 'databaseId,headSha,status,conclusion,url', '--limit', '50'
+    'run', 'list', '--repo', repo, '--workflow', 'ci.yml', '--commit', head, '--event', 'push',
+    '--json', 'headSha,status,conclusion,event,headBranch,url', '--limit', '50'
   ], { cwd: root, encoding: 'utf-8' })
   if (!repo) {
     problems.push('CI not confirmed: the GitHub repository is unknown')
   } else if (runs.error || runs.status !== 0) {
     problems.push(`CI not confirmed: gh run list failed: ${runs.error?.message ?? runs.stderr.trim()}`)
   } else {
-    const ci = checkCiRuns(JSON.parse(runs.stdout), head)
+    const ci = checkCiRuns(JSON.parse(runs.stdout), head, distTag ? releaseBranchesFor(distTag) : [])
     problems.push(...ci)
-    if (ci.length === 0) notes.push(`CI: succeeded on ${head.slice(0, 7)} (${repo})`)
+    if (ci.length === 0) notes.push(`CI: succeeded on a push of ${head.slice(0, 7)} (${repo})`)
   }
 }
 if (notes.length > 0) console.log(notes.join('\n'))

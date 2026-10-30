@@ -98,12 +98,16 @@ export function checkReleaseBranch (distTag, commit, containing) {
 
 /**
  * Checks the runs of the CI workflow (as `gh run list --json
- * databaseId,headSha,status,conclusion,url` gives them) for a successful one
- * of the commit. Returns the problems, empty when one succeeded.
+ * headSha,status,conclusion,event,headBranch,url` gives them) for the commit.
+ * Only runs of a push of the commit to one of `branches` count: a pull
+ * request run tests a merge ref, not the commit. At least one must exist,
+ * and every one of them must have completed successfully. Returns the
+ * problems, empty when the commit passed.
  */
-export function checkCiRuns (runs, commit) {
-  const own = runs.filter((run) => run.headSha === commit)
-  if (own.some((run) => run.status === 'completed' && run.conclusion === 'success')) return []
-  if (own.length === 0) return [`the CI workflow has not run on the commit ${commit}`]
-  return [`the CI workflow has not succeeded on the commit ${commit}: ${own.map((run) => `${run.status}/${run.conclusion || '-'} ${run.url}`).join(', ')}`]
+export function checkCiRuns (runs, commit, branches) {
+  const own = runs.filter((run) => run.headSha === commit && run.event === 'push' && branches.includes(run.headBranch))
+  if (own.length === 0) return [`the CI workflow has not run on a push of the commit ${commit} to ${branches.join(' or ')}`]
+  const bad = own.filter((run) => run.status !== 'completed' || run.conclusion !== 'success')
+  if (bad.length === 0) return []
+  return [`the CI workflow has not succeeded on the commit ${commit}: ${bad.map((run) => `${run.headBranch} ${run.status}/${run.conclusion || '-'} ${run.url}`).join(', ')}`]
 }
