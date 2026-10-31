@@ -39,11 +39,15 @@ export interface LinkProps<T extends string = string> extends Omit<NextLinkCompo
 // one, or in a locale that only the server knows. Links that are not paths
 // on this site, such as '#top' or 'https://…', are not.
 function leadsToAnotherLocale (href: string | null | undefined, currentLocale: string, config: I18nConfig): boolean {
-  if (typeof href !== 'string' || !href.startsWith('/') || leadsToAnotherHost(href)) {
+  if (typeof href !== 'string') {
     return false
   }
+  // Only the path is read: the query and the hash cannot lead to another host
   const suffixStart = href.search(/[?#]/)
   const path = suffixStart === -1 ? href : href.slice(0, suffixStart)
+  if (!path.startsWith('/') || leadsToAnotherHost(path)) {
+    return false
+  }
   const locale = findPrefixLocale(path as `/${string}`, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
   return locale !== currentLocale
 }

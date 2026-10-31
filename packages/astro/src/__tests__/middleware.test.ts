@@ -313,6 +313,7 @@ describe('create (middleware)', () => {
             const outcome = await runWithBase(middlewareConfig, base === '/' ? url : `/docs${url}`, { acceptLanguage: 'ja', base })
             if (outcome.kind !== 'next') {
               expect(new URL(outcome.target ?? '', 'http://localhost/').host).toBe('localhost')
+              expect(outcome.target).not.toMatch(/^\/[/\\]/)
             }
           }
         }
@@ -320,7 +321,9 @@ describe('create (middleware)', () => {
     })
 
     it('serves a pathname with a tab or a line break without i18n handling', async () => {
-      // Not from a parsed URL, in case a pathname is given as it was sent
+      // The pathname of a request is parsed, so it has none: given one that
+      // has them, the check of the middleware still leaves it alone. Dot
+      // segments are resolved by the parsing and are not checked here.
       for (const middlewareConfig of configs) {
         for (const pathname of ['/\t/evil.example', '/ja/\n/evil.example', '/\r\\evil.example', '/about\t']) {
           const locals: Record<string, unknown> = {}

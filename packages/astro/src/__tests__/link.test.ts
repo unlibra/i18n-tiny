@@ -119,6 +119,18 @@ describe('linkHref', () => {
 
   // Browsers remove tabs and line breaks before reading a URL:
   // "/\t/evil.com" is read as "//evil.com"
+  it('builds the link of an href whose query or hash has a tab or a line break', () => {
+    // Only the path can lead to another host: the query and the hash are kept
+    for (const suffix of ['?x=\t', '#a\nb', '?q=a\r#b']) {
+      expect(linkHref({ href: `/about${suffix}`, locale: 'en', i18n, ...page('/docs/p', 'ja', '/docs') })).toBe(`/docs/en/about${suffix}`)
+      expect(linkHref({ href: `/about${suffix}`, locale: 'ja', i18n, ...page('/docs/en/p', 'en', '/docs') })).toBe(`/docs/about${suffix}`)
+      expect(linkHref({ href: `/about${suffix}`, ...page('/docs/en/p', 'en', '/docs') })).toBe(`/docs/en/about${suffix}`)
+      expect(linkHref({ href: `/about${suffix}`, ...page('/docs/p', 'ja', '/docs') })).toBe(`/docs/about${suffix}`)
+      expect(linkHref({ href: `/about${suffix}`, locale: false, ...page('/docs/p', 'ja', '/docs') })).toBe(`/docs/about${suffix}`)
+      expect(linkHref({ href: `/${suffix}`, locale: 'en', i18n, ...page('/p', 'ja') })).toBe(`/en${suffix}`)
+    }
+  })
+
   it('throws for an href with a tab or a line break', () => {
     for (const href of ['/\t/evil.com', '/\n/evil.com', '/\r\\evil.com']) {
       for (const base of ['/', '/docs']) {

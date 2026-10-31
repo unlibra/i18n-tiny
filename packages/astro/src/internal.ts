@@ -94,9 +94,10 @@ export function addBase (path: string, base: string): string {
   return path.slice(0, end) === '/' ? trimmed + path.slice(end) : trimmed + path
 }
 
-// A path on this site, which gets the base: not one that leads to another host
+// A path on this site, which gets the base: not one that leads to another
+// host. Only the path is read: the query and the hash cannot lead there.
 function isSitePath (href: string): boolean {
-  return href.startsWith('/') && !leadsToAnotherHost(href)
+  return href.startsWith('/') && !leadsToAnotherHost(href.slice(0, suffixStart(href)))
 }
 
 /** What the Link component reads from its props and the current request */

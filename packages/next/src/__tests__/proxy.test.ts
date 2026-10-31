@@ -286,7 +286,10 @@ describe('create (proxy)', () => {
           const response = untyped(create)(proxyConfig)(request(path, { 'accept-language': 'ja' })) as NextResponse
           for (const target of [response.headers.get('location'), response.headers.get('x-middleware-rewrite')]) {
             if (target !== null) {
-              expect(new URL(target).host).toBe('localhost')
+              const url = new URL(target)
+              expect(url.host).toBe('localhost')
+              // A pathname that starts with "//" or "/\\" would lead to another host once given to a browser
+              expect(url.pathname).not.toMatch(/^\/[/\\]/)
             }
           }
         }
@@ -294,7 +297,9 @@ describe('create (proxy)', () => {
     })
 
     it('passes a pathname with a tab or a line break through without i18n handling', () => {
-      // Not from a parsed URL, in case a pathname is given as it was sent
+      // The pathname of a request is parsed, so it has none: given one that
+      // has them, the check of the middleware still leaves it alone. Dot
+      // segments are resolved by the parsing and are not checked here.
       for (const proxyConfig of configs) {
         for (const pathname of ['/\t/evil.com', '/ja/\n/evil.com', '/\r\\evil.com', '/about\t']) {
           const raw = { nextUrl: { pathname }, headers: new Headers({ 'accept-language': 'ja', 'x-locale': 'fr' }) }

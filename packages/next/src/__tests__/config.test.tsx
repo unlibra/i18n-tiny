@@ -289,6 +289,27 @@ describe('Link to another locale', () => {
     }
   })
 
+  it('loads the page of another locale in full when its query or hash has a tab or a line break', async () => {
+    await renderLinks(<>
+      <Link href={'/about?q=a\tb'} locale="ja">ja query</Link>
+      <Link href={'/about#a\nb'} locale="ja">ja hash</Link>
+      <Link href={'/ja/about?q=\r'} locale={false}>ja raw</Link>
+      <Link href={'/about?q=a\tb'}>keep</Link>
+    </>)
+    const location = spyOnLocation()
+    try {
+      for (const text of ['ja query', 'ja hash', 'ja raw']) {
+        expect(fireEvent.click(anchor(text))).toBe(false)
+      }
+      expect(location.assign.mock.calls.map(([url]) => new URL(url, 'http://localhost').pathname))
+        .toEqual(['/ja/about', '/ja/about', '/ja/about'])
+      fireEvent.click(anchor('keep'))
+      expect(location.assign).toHaveBeenCalledTimes(3)
+    } finally {
+      location.restore()
+    }
+  })
+
   it('replaces the history entry with replace', async () => {
     await renderLinks(<Link href="/" locale="ja" replace>ja</Link>)
     const location = spyOnLocation()
