@@ -297,6 +297,48 @@ describe('create (middleware)', () => {
         }
       }
     })
+
+    // The URL of a request has no tab or line break: the URL parser removes
+    // them, and their encoded forms stay encoded in the pathname
+    const configs = [config, detecting, { ...detecting, prefixDefault: true }, { ...detecting, prefixDefault: true, routing: 'rewrite' } as const]
+
+    it('never redirects or rewrites a URL with a tab or a line break to another host', async () => {
+      const urls = [
+        '/\t/evil.example', '/\n/evil.example', '/\r\\evil.example', '/ja/\t/evil.example', '/ja/\n\\evil.example',
+        '/%09/evil.example', '/%0A/evil.example', '/%0D%5Cevil.example', '/ja/%09/evil.example'
+      ]
+      for (const middlewareConfig of configs) {
+        for (const base of ['/', '/docs/']) {
+          for (const url of urls) {
+            const outcome = await runWithBase(middlewareConfig, base === '/' ? url : `/docs${url}`, { acceptLanguage: 'ja', base })
+            if (outcome.kind !== 'next') {
+              expect(new URL(outcome.target ?? '', 'http://localhost/').host).toBe('localhost')
+            }
+          }
+        }
+      }
+    })
+
+    it('serves a pathname with a tab or a line break without i18n handling', async () => {
+      // Not from a parsed URL, in case a pathname is given as it was sent
+      for (const middlewareConfig of configs) {
+        for (const pathname of ['/\t/evil.example', '/ja/\n/evil.example', '/\r\\evil.example', '/about\t']) {
+          const locals: Record<string, unknown> = {}
+          let kind = 'none'
+          const context = {
+            url: { pathname, search: '' },
+            request: new Request('http://localhost/', { headers: { 'Accept-Language': 'ja' } }),
+            locals,
+            redirect: () => { kind = 'redirect'; return new Response(null, { status: 302 }) },
+            rewrite: () => { kind = 'rewrite'; return Promise.resolve(new Response('rewritten')) }
+          } as unknown as APIContext
+          const next = (() => { kind = 'next'; return Promise.resolve(new Response('page')) }) as unknown as MiddlewareNext
+          await createMiddleware(middlewareConfig, () => '/')(context, next)
+          expect(kind).toBe('next')
+          expect(locals).toEqual({})
+        }
+      }
+    })
   })
 
   describe('with a base', () => {

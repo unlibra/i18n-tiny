@@ -6,4 +6,6 @@ export type { NestedKeys, NamespaceKeys, TranslationKeys, LocaleMessages, Transl
 // The URL functions without the check of the config, for a config that is
 // checked once instead
 export { localizedPathOf, alternatePathOf, findPrefixLocale } from '../router/paths'
+// Whether browsers may read a path as another host
+export { leadsToAnotherHost } from '../router/paths'
 export { linkHref } from '../router/linkHref'

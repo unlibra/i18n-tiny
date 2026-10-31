@@ -24,7 +24,9 @@ export type LinkHrefOptions<C extends I18nConfig = I18nConfig> =
     }
 
 // Hrefs that are not paths on this site: absolute URLs (https:, mailto:, ...),
-// protocol-relative URLs, and in-page '#' or '?' links
+// protocol-relative URLs, and in-page '#' or '?' links. Only "//" written as
+// such is a link to another host: other paths that browsers may read as
+// another host, such as "/\host" or "/\t/host", throw in assertPathname().
 const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
 
 function hasPrefix (pathname: string, locale: string): boolean {

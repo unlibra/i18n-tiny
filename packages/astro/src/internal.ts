@@ -7,6 +7,7 @@
 
 import type { HTMLAttributes } from 'astro/types'
 import { getLinkHref } from '@i18n-tiny/core/router'
+import { leadsToAnotherHost } from '@i18n-tiny/core/internal'
 
 /** What a Link with `locale` reads from the define() result */
 export interface LinkI18n {
@@ -93,9 +94,9 @@ export function addBase (path: string, base: string): string {
   return path.slice(0, end) === '/' ? trimmed + path.slice(end) : trimmed + path
 }
 
-// A path on this site, which gets the base: not "//host" or "/\host"
+// A path on this site, which gets the base: not one that leads to another host
 function isSitePath (href: string): boolean {
-  return href.startsWith('/') && !href.startsWith('//') && !href.startsWith('/\\')
+  return href.startsWith('/') && !leadsToAnotherHost(href)
 }
 
 /** What the Link component reads from its props and the current request */

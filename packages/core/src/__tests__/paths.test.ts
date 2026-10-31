@@ -199,6 +199,63 @@ describe('paths that browsers read as another host', () => {
     expect(() => removeLocalePrefix(pathname, config)).toThrow('must not start with "//" or "/\\"')
   })
 
+  // Browsers and the URL standard remove tabs and line breaks from a URL
+  // before reading it: "/\t/evil.com" is read as "//evil.com"
+  const hostOf = (path: string) => new URL(path, 'https://example.com/').host
+
+  it.each([
+    ['/\t/evil.com'],
+    ['/\n/evil.com'],
+    ['/\r\\evil.com'],
+    ['/\t\n\r/evil.com'],
+    ['/\\\t/evil.com'],
+    ['/about\t'],
+    ['/a\nb']
+  ])('should throw for %j, which contains a tab or a line break', (path) => {
+    for (const locale of ['ja', 'en'] as const) {
+      expect(() => localizedPath(path, locale, config)).toThrow('contain a tab or a line break')
+      expect(() => localizedPath(path, locale, prefixed)).toThrow('contain a tab or a line break')
+      expect(() => alternatePath(path, locale, config)).toThrow('contain a tab or a line break')
+    }
+    expect(() => removeLocalePrefix(path, config)).toThrow('contain a tab or a line break')
+    expect(() => pathLocale(path, config)).toThrow('contain a tab or a line break')
+  })
+
+  it.each([
+    ['/en/\t/evil.com'],
+    ['/en/\n/evil.com'],
+    ['/en/\r\\evil.com'],
+    ['/ja/\t/evil.com'],
+    ['/en\t//evil.com']
+  ])('should throw for %j, whose rest after the prefix has a tab or a line break', (pathname) => {
+    expect(() => alternatePath(pathname, 'ja', config)).toThrow('contain a tab or a line break')
+    expect(() => alternatePath(pathname, 'en', config)).toThrow('contain a tab or a line break')
+    expect(() => alternatePath(pathname, 'ja', prefixed)).toThrow('contain a tab or a line break')
+    expect(() => removeLocalePrefix(pathname, config)).toThrow('contain a tab or a line break')
+  })
+
+  it('should never return a path that browsers read as another host', () => {
+    const inputs = ['/', '/en', '/en/about', '/en/a//b', '/a/\\b', '/\t/evil.com', '/en/\t/evil.com', '/en/\n\\evil.com']
+    for (const input of inputs) {
+      for (const run of [
+        () => localizedPath(input, 'ja', config),
+        () => localizedPath(input, 'en', config),
+        () => alternatePath(input, 'ja', config),
+        () => alternatePath(input, 'en', config),
+        () => alternatePath(input, 'ja', prefixed),
+        () => removeLocalePrefix(input, config)
+      ]) {
+        let output: string | undefined
+        try {
+          output = run()
+        } catch {
+          continue
+        }
+        expect(hostOf(output)).toBe('example.com')
+      }
+    }
+  })
+
   it('should never return a path that starts with "//" or "/\\"', () => {
     const inputs = ['/', '/en', '/en/', '/ja/', '/about', '/en/about', '/en/a//b', '/a/\\b', '/en/a/', '/x//']
     for (const input of inputs) {

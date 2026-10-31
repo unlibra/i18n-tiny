@@ -117,6 +117,20 @@ describe('linkHref', () => {
     expect(() => linkHref({ href: '/about', locale: '', i18n, ...page('/page', undefined) })).toThrow('[i18n] Unknown locale "".')
   })
 
+  // Browsers remove tabs and line breaks before reading a URL:
+  // "/\t/evil.com" is read as "//evil.com"
+  it('throws for an href with a tab or a line break', () => {
+    for (const href of ['/\t/evil.com', '/\n/evil.com', '/\r\\evil.com']) {
+      for (const base of ['/', '/docs']) {
+        expect(() => linkHref({ href, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
+        expect(() => linkHref({ href, ...page('/en/page', 'en', base) })).toThrow('contain a tab or a line break')
+        expect(() => linkHref({ href, locale: false, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
+        expect(() => linkHref({ href, locale: 'ja', i18n, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
+        expect(() => linkHref({ href, locale: 'en', i18n: prefixed, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
+      }
+    }
+  })
+
   it('throws for a relative href', () => {
     expect(() => linkHref({ href: 'about', ...page('/page', undefined) })).toThrow('[i18n] href must be a pathname starting with "/"')
     expect(() => linkHref({ href: 'about', locale: 'en', i18n, ...page('/page', undefined) })).toThrow('[i18n] href must be a pathname starting with "/"')

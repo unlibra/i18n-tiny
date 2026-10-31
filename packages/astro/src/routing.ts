@@ -3,7 +3,7 @@
 
 import { detectLocale } from '@i18n-tiny/core/middleware'
 import { pathLocale } from '@i18n-tiny/core/router'
-import { validateConfig } from '@i18n-tiny/core/internal'
+import { leadsToAnotherHost, validateConfig } from '@i18n-tiny/core/internal'
 import type { MiddlewareHandler } from 'astro'
 import { addBase, stripBase } from './internal'
 import type { MiddlewareConfig } from './middleware'
@@ -26,11 +26,6 @@ function trimTrailingSlashes (path: string): string {
     end--
   }
   return path.slice(0, end)
-}
-
-// "//host" and "/\host" lead to another host
-function startsWithAnotherHost (path: string): boolean {
-  return path.startsWith('//') || path.startsWith('/\\')
 }
 
 // Adds Accept-Language to the Vary header of a response that depends on it
@@ -94,12 +89,12 @@ export function createMiddleware (config: MiddlewareConfig, getBase: () => strin
 
     // A pathname that leads to another host, also once its locale prefix is
     // removed, gets no i18n handling
-    if (startsWithAnotherHost(pathname)) {
+    if (leadsToAnotherHost(pathname)) {
       return next()
     }
     const urlLocale = pathLocale(pathname, urlConfig)
     const rest = urlLocale === undefined ? pathname : (pathname.slice(urlLocale.length + 1) || '/')
-    if (startsWithAnotherHost(rest)) {
+    if (leadsToAnotherHost(rest)) {
       return next()
     }
 

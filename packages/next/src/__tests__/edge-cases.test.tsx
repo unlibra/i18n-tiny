@@ -89,6 +89,34 @@ describe('Edge Cases & Bug Fixes', () => {
       )).toThrow('[i18n] href must be a pathname starting with "/", got "about".')
     })
 
+    // Browsers remove tabs and line breaks before reading a URL:
+    // "/\t/evil.com" is read as "//evil.com"
+    it('should throw for an href with a tab or a line break', async () => {
+      const { usePathname } = await import('next/navigation')
+      vi.mocked(usePathname).mockReturnValue('/ja/home')
+
+      const messages = await i18n.server.getMessages('ja')
+      for (const href of ['/\t/evil.com', '/\n/evil.com', '/\r\\evil.com']) {
+        for (const locale of [undefined, false, 'en', 'ja'] as const) {
+          expect(() => render(
+            <i18n.Provider locale="ja" messages={messages}>
+              <Link href={href} locale={locale}>Link</Link>
+            </i18n.Provider>
+          )).toThrow('contain a tab or a line break')
+          expect(() => render(
+            <i18n.Provider locale="ja" messages={messages}>
+              <Link href={{ pathname: href }} locale={locale}>Link</Link>
+            </i18n.Provider>
+          )).toThrow('contain a tab or a line break')
+        }
+        expect(() => render(
+          <i18n.Provider locale="ja" messages={messages}>
+            <Link href={`/en${href}`} locale="ja" normalize>Link</Link>
+          </i18n.Provider>
+        )).toThrow('contain a tab or a line break')
+      }
+    })
+
     it('should handle root path correctly when URL has prefix', async () => {
       const { usePathname } = await import('next/navigation')
       vi.mocked(usePathname).mockReturnValue('/ja/home')

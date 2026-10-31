@@ -5,7 +5,7 @@ import type { LinkProps as NextLinkProps } from 'next/link.js'
 import type { AnchorHTMLAttributes, MouseEvent, ReactNode, RefAttributes } from 'react'
 
 import { useLocale, useLocaleConfig } from '@i18n-tiny/react/internal'
-import { findPrefixLocale, linkHref } from '@i18n-tiny/core/internal'
+import { findPrefixLocale, leadsToAnotherHost, linkHref } from '@i18n-tiny/core/internal'
 import type { I18nConfig } from '@i18n-tiny/core/router'
 
 // The props of next/link's Link, built from its named LinkProps type rather
@@ -39,7 +39,7 @@ export interface LinkProps<T extends string = string> extends Omit<NextLinkCompo
 // one, or in a locale that only the server knows. Links that are not paths
 // on this site, such as '#top' or 'https://…', are not.
 function leadsToAnotherLocale (href: string | null | undefined, currentLocale: string, config: I18nConfig): boolean {
-  if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//')) {
+  if (typeof href !== 'string' || !href.startsWith('/') || leadsToAnotherHost(href)) {
     return false
   }
   const suffixStart = href.search(/[?#]/)

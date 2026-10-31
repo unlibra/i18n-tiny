@@ -265,5 +265,45 @@ describe('create (proxy)', () => {
         expect(forwardedHeaders(response)?.cookie).toBe('a=1')
       })
     }
+
+    // The URL of a request has no tab or line break: the URL parser removes
+    // them, and their encoded forms stay encoded in the pathname
+    const configs: ProxyConfig[] = [
+      config,
+      { ...config, detectLanguage: true },
+      { ...config, prefixDefault: true },
+      { ...config, prefixDefault: true, detectLanguage: true },
+      { ...config, prefixDefault: true, routing: 'rewrite', detectLanguage: true }
+    ]
+
+    it('never redirects or rewrites a URL with a tab or a line break to another host', () => {
+      const paths = [
+        '/\t/evil.com', '/\n/evil.com', '/\r\\evil.com', '/ja/\t/evil.com', '/ja/\n\\evil.com',
+        '/%09/evil.com', '/%0A/evil.com', '/%0D%5Cevil.com', '/ja/%09/evil.com'
+      ]
+      for (const proxyConfig of configs) {
+        for (const path of paths) {
+          const response = untyped(create)(proxyConfig)(request(path, { 'accept-language': 'ja' })) as NextResponse
+          for (const target of [response.headers.get('location'), response.headers.get('x-middleware-rewrite')]) {
+            if (target !== null) {
+              expect(new URL(target).host).toBe('localhost')
+            }
+          }
+        }
+      }
+    })
+
+    it('passes a pathname with a tab or a line break through without i18n handling', () => {
+      // Not from a parsed URL, in case a pathname is given as it was sent
+      for (const proxyConfig of configs) {
+        for (const pathname of ['/\t/evil.com', '/ja/\n/evil.com', '/\r\\evil.com', '/about\t']) {
+          const raw = { nextUrl: { pathname }, headers: new Headers({ 'accept-language': 'ja', 'x-locale': 'fr' }) }
+          const response = untyped(create)(proxyConfig)(raw) as NextResponse
+          expect(routing(response)).toBe('next')
+          expect(vary(response)).toBe(null)
+          expect(forwardedHeaders(response)?.['x-locale']).toBe(undefined)
+        }
+      }
+    })
   })
 })

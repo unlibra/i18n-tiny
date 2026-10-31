@@ -16,7 +16,7 @@ import { NextResponse } from 'next/server.js'
 import type { NextRequest } from 'next/server.js'
 import { detectLocale } from '@i18n-tiny/core/middleware'
 import { pathLocale } from '@i18n-tiny/core/router'
-import { validateConfig } from '@i18n-tiny/core/internal'
+import { leadsToAnotherHost, validateConfig } from '@i18n-tiny/core/internal'
 import type { ConfigCheck } from '@i18n-tiny/core/internal'
 
 // Re-export middleware utilities from @i18n-tiny/core/middleware
@@ -120,11 +120,6 @@ const REWRITE_NEEDS_PREFIX_DEFAULT =
 /** The request header that passes the locale to the pages in the rewrite mode */
 const LOCALE_HEADER = 'x-locale'
 
-// "//host" and "/\host" lead to another host
-function startsWithAnotherHost (path: string): boolean {
-  return path.startsWith('//') || path.startsWith('/\\')
-}
-
 // The headers of the request, with the locale set, or removed when it is
 // undefined: an x-locale header sent by the client is never passed on
 function requestHeaders (request: NextRequest, locale: string | undefined): { request: { headers: Headers } } {
@@ -152,8 +147,8 @@ function varyOnAcceptLanguage (response: NextResponse): NextResponse {
  *
  * The config is checked as define() checks it, and the rewrite mode with the
  * language detection throws without prefixDefault: true. A pathname that
- * starts with "//" or "/\", also once its locale prefix is removed, gets no
- * i18n handling. Responses that depend on the language detection get
+ * starts with "//" or "/\", also once its locale prefix is removed, or that
+ * has a tab or a line break, gets no i18n handling. Responses that depend on the language detection get
  * `Vary: Accept-Language`.
  *
  * @example
@@ -198,9 +193,9 @@ export function create<const C extends ProxyConfig> (config: C & ProxyConfigChec
 
     // A pathname that leads to another host, also once its locale prefix is
     // removed, gets no i18n handling
-    const urlLocale = startsWithAnotherHost(pathname) ? undefined : pathLocale(pathname, urlConfig)
+    const urlLocale = leadsToAnotherHost(pathname) ? undefined : pathLocale(pathname, urlConfig)
     const rest = urlLocale === undefined ? pathname : (pathname.slice(urlLocale.length + 1) || '/')
-    if (startsWithAnotherHost(rest)) {
+    if (leadsToAnotherHost(rest)) {
       return isRewriteMode ? NextResponse.next(requestHeaders(request, undefined)) : NextResponse.next()
     }
 

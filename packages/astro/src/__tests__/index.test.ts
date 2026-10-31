@@ -152,7 +152,8 @@ describe('define', () => {
     const pathnames = [
       '/', '/about', '/about/', '/en', '/en/', '/en/about', '/ja', '/ja/about', '/english', '/a/b/c',
       // Invalid inputs throw the same errors
-      'about', '', '//evil.com', '/\\evil.com', '/en//evil.com', '/about?x=1', '/about#top'
+      'about', '', '//evil.com', '/\\evil.com', '/en//evil.com', '/about?x=1', '/about#top',
+      '/\t/evil.com', '/en/\n/evil.com'
     ]
 
     for (const prefixDefault of [false, true]) {

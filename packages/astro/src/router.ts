@@ -20,7 +20,7 @@ export { localizedPath, alternatePath, pathLocale } from '@i18n-tiny/core/router
  * slash, except for the top page "/".
  *
  * Throws when the pathname does not start with "/", starts with "//" or "/\",
- * contains "?" or "#", or when the config is invalid.
+ * contains a tab, a line break, "?" or "#", or when the config is invalid.
  *
  * @example
  * ```typescript

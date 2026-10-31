@@ -11,15 +11,16 @@ export type CheckedConfig<C extends I18nConfig> = C & ConfigCheck<C>
 export type Path = `/${string}`
 
 // Throws unless the input is a pathname of this site: it must start with a
-// single "/" and carry no query or hash. "//" and "/\" are refused, since
-// browsers read them as the start of another host.
+// single "/" and carry no query or hash. Paths that browsers may read as
+// another host are refused: see leadsToAnotherHost().
 export function assertPathname (pathname: string, name: string): asserts pathname is Path {
   if (typeof pathname !== 'string' || !pathname.startsWith('/')) {
     throw new Error(`[i18n] ${name} must be a pathname starting with "/", got ${JSON.stringify(pathname)}.`)
   }
-  if (startsWithAnotherHost(pathname)) {
+  if (leadsToAnotherHost(pathname)) {
     throw new Error(
-      `[i18n] ${name} must not start with "//" or "/\\", which browsers read as another host, ` +
+      `[i18n] ${name} must not start with "//" or "/\\" or contain a tab or a line break, ` +
+      'which can lead browsers to another host, ' +
       `got ${JSON.stringify(pathname)}.`
     )
   }
@@ -51,8 +52,14 @@ export function withoutTrailingSlash (path: Path): Path {
   return end === path.length ? path : path.slice(0, end) as Path
 }
 
-function startsWithAnotherHost (path: string): boolean {
-  return path.startsWith('//') || path.startsWith('/\\')
+/**
+ * Whether browsers may read a path that starts with "/" as another host: it
+ * starts with "//" or "/\", or it has a tab or a line break, which browsers
+ * remove before reading a URL ("/\t/host" is read as "//host"). The URL
+ * functions throw for such a path, and the middleware leaves it alone.
+ */
+export function leadsToAnotherHost (path: string): boolean {
+  return /^\/[/\\]|[\t\n\r]/.test(path)
 }
 
 // The locale whose prefix the pathname starts with, if any
@@ -74,7 +81,7 @@ export function removePrefix (pathname: Path, config: I18nConfig): Path {
   const locale = findPrefixLocale(pathname, config)
   const rest = locale === undefined ? pathname : pathname.slice(locale.length + 1)
   const result = withoutTrailingSlash((rest === '' ? '/' : rest) as Path)
-  if (startsWithAnotherHost(result)) {
+  if (leadsToAnotherHost(result)) {
     throw new Error(
       `[i18n] pathname must not start with "//" or "/\\" after its locale prefix, ` +
       `which browsers read as another host, got ${JSON.stringify(pathname)}.`
@@ -107,8 +114,8 @@ export function alternatePathOf (pathname: string, locale: string, config: I18nC
  * another one: use alternatePath() for the path of the current page.
  *
  * Throws when the path does not start with "/", starts with "//" or "/\",
- * contains "?" or "#", when the locale is not one of `locales`, or when the
- * config is invalid.
+ * contains a tab, a line break, "?" or "#", when the locale is not one of
+ * `locales`, or when the config is invalid.
  *
  * @example
  * ```typescript

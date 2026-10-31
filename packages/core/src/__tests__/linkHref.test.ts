@@ -163,6 +163,32 @@ describe('getLinkHref() with the options of the config', () => {
       expect(() => getLinkHref(href, '/page', 'ja', { locale: 'en', config })).toThrow(message)
     })
 
+    // Browsers remove tabs and line breaks before reading a URL:
+    // "/\t/evil.com" is read as "//evil.com"
+    it.each([
+      ['/\t/evil.com'],
+      ['/\n/evil.com'],
+      ['/\r\\evil.com'],
+      ['/\t/evil.com?x=1'],
+      ['/about\t#top']
+    ])('should throw for the href %j, which contains a tab or a line break', (href) => {
+      const message = 'contain a tab or a line break'
+      expect(() => getLinkHref(href, '/', 'ja', { locale: false })).toThrow(message)
+      expect(() => getLinkHref(href, '/page', 'ja', {})).toThrow(message)
+      expect(() => getLinkHref(href, '/en/page', 'en', {})).toThrow(message)
+      expect(() => getLinkHref(href, '/page', 'ja', { locale: 'ja', config })).toThrow(message)
+      expect(() => getLinkHref(href, '/page', 'ja', { locale: 'en', normalize: true, config })).toThrow(message)
+    })
+
+    it('should throw when normalize leaves a path with a tab or a line break after the prefix', () => {
+      for (const href of ['/en/\t/evil.com', '/en/\n/evil.com', '/en/\r\\evil.com']) {
+        expect(() => getLinkHref(href, '/page', 'ja', { locale: 'ja', normalize: true, config }))
+          .toThrow('contain a tab or a line break')
+        expect(() => getLinkHref(href, '/page', 'ja', { locale: false, normalize: true, config }))
+          .toThrow('contain a tab or a line break')
+      }
+    })
+
     it('should throw when normalize leaves a path that leads to another host', () => {
       expect(() => getLinkHref('/en//evil.com', '/page', 'ja', { locale: 'ja', normalize: true, config }))
         .toThrow('must not start with "//" or "/\\" after its locale prefix')

@@ -22,7 +22,7 @@ export type { LinkHrefOptions } from './linkHref'
  * path segments match: '/english' keeps its path.
  *
  * Throws when the pathname does not start with "/", starts with "//" or "/\",
- * contains "?" or "#", or when the config is invalid.
+ * contains a tab, a line break, "?" or "#", or when the config is invalid.
  *
  * @example
  * ```typescript
@@ -57,8 +57,8 @@ export function removeLocalePrefix<const C extends I18nConfig>(
  *
  * The path has no trailing slash, except for the top page "/".
  *
- * Throws when the path does not start with "/" or starts with "/\", when the
- * locale is not one of `locales`, when `config` is missing with a locale or
+ * Throws when the path does not start with "/", starts with "/\" or contains
+ * a tab or a line break, when the locale is not one of `locales`, when `config` is missing with a locale or
  * `normalize`, or when the config is invalid.
  *
  * @param href - The href of the link, such as '/about' or '/about#team'
