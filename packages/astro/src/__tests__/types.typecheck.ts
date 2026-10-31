@@ -173,31 +173,29 @@ create({ ...config, routing: 'rewrite', prefixDefault: true, detectLanguage: tru
 create({ ...config, routing: 'rewrite', detectLanguage: false })
 create({ ...config, routing: 'rewrite', detectLanguage: false, prefixDefault: false })
 create({ ...config, routing: 'rewrite', detectLanguage: false, prefixDefault: true })
+create({ ...config, routing: 'rewrite', detectLanguage: undefined })
 const rewriteConfig = { ...config, prefixDefault: true } as const
 create({ ...rewriteConfig, routing: 'rewrite', detectLanguage: true })
+const satisfying = { ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: true } as const satisfies MiddlewareConfig
+create(satisfying)
+// A config whose types say that it throws is a type error
 // @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
 create({ ...config, routing: 'rewrite', detectLanguage: true })
 // @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
 create({ ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: false })
+const throwing = { ...config, routing: 'rewrite', detectLanguage: true } as const satisfies MiddlewareConfig
+// @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
+create(throwing)
+// Where the types cannot tell, the config is left to the check of create()
+// at run time: a value typed as boolean, a detectLanguage that may be
+// undefined, a wider type, and a config typed as MiddlewareConfig
 const someBoolean: boolean = Math.random() > 0.5
-// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
 create({ ...config, routing: 'rewrite', detectLanguage: someBoolean })
-// @ts-expect-error a prefixDefault that may be false does not go with the language detection
 create({ ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: someBoolean })
-// Without the language detection, prefixDefault may be any boolean
 create({ ...config, routing: 'rewrite', prefixDefault: someBoolean })
 create({ ...config, routing: 'rewrite', detectLanguage: someBoolean, prefixDefault: true })
-// The check goes by the type of detectLanguage: a type that includes true may
-// detect, and needs prefixDefault: true. Only false, undefined and leaving it
-// out mean no detection
 const maybeDetect = (Math.random() > 0.5 ? true : undefined) as true | undefined
-// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
 create({ ...config, routing: 'rewrite', detectLanguage: maybeDetect })
-create({ ...config, routing: 'rewrite', detectLanguage: maybeDetect, prefixDefault: true })
-const neverDetect = (Math.random() > 0.5 ? false : undefined) as false | undefined
-create({ ...config, routing: 'rewrite', detectLanguage: neverDetect })
-create({ ...config, routing: 'rewrite', detectLanguage: undefined })
-// A wider type with an optional detectLanguage may detect
 interface WideRewriteConfig {
   readonly locales: readonly ['en', 'ja']
   readonly defaultLocale: 'en'
@@ -205,38 +203,23 @@ interface WideRewriteConfig {
   readonly detectLanguage?: boolean
   readonly prefixDefault?: boolean
 }
-const wideRewrite: WideRewriteConfig = { ...config, routing: 'rewrite' }
-// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+const wideRewrite: WideRewriteConfig = { ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: true }
 create(wideRewrite)
-create({ ...wideRewrite, prefixDefault: true })
-// A config typed as MiddlewareConfig keeps only what the type says: in the
-// rewrite mode, detectLanguage and prefixDefault may be anything, so it fails
-// even with prefixDefault: true. Use satisfies MiddlewareConfig to keep the values
-const annotated: MiddlewareConfig = { ...config, routing: 'rewrite', detectLanguage: true }
-// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+const annotated: MiddlewareConfig = { ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: true }
 create(annotated)
 const annotatedWithoutDetection: MiddlewareConfig = { ...config, routing: 'rewrite' }
-// @ts-expect-error the type MiddlewareConfig does not say that detectLanguage is left out
 create(annotatedWithoutDetection)
-create({ ...annotated, prefixDefault: true })
 const annotatedStandard: MiddlewareConfig = { ...config, detectLanguage: true }
 create(annotatedStandard)
-const satisfying = { ...config, routing: 'rewrite', detectLanguage: true, prefixDefault: true } as const satisfies MiddlewareConfig
-create(satisfying)
-// A config that may be either routing may be the rewrite mode with the detection
 function createAny (anyConfig: MiddlewareConfig): void {
-  // @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
   create(anyConfig)
 }
 createAny(config)
-// A routing that may be 'rewrite' is checked as the rewrite mode
+// A routing that may be 'rewrite' may also be the standard routing
 const maybeRewrite = (Math.random() > 0.5 ? 'rewrite' : undefined) as 'rewrite' | undefined
-// @ts-expect-error a routing that may be 'rewrite' with the detection needs prefixDefault: true
 create({ ...config, routing: maybeRewrite, detectLanguage: true })
-create({ ...config, routing: maybeRewrite, detectLanguage: true, prefixDefault: true })
-create({ ...config, routing: maybeRewrite })
 // The type error says what to fix
-const rewriteMessage: Parameters<typeof create<typeof annotated>>[0]['invalid i18n config'] =
+const rewriteMessage: Parameters<typeof create<typeof throwing>>[0]['invalid i18n config'] =
   'the language detection of the rewrite mode needs prefixDefault: true; without it, detectLanguage must be false or left out'
 export { rewriteMessage }
 // @ts-expect-error the error of the config comes first

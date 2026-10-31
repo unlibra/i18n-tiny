@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { NextRequest } from 'next/server'
 import type { NextResponse } from 'next/server'
 import { create } from '../proxy'
+import type { ProxyConfig } from '../proxy'
 
 // Calls a function from JavaScript, without the type checks
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +64,21 @@ describe('create (proxy)', () => {
         expect(() => untyped(create)({ ...config, routing: 'rewrite', ...options }))
           .toThrow('[i18n] The language detection of the rewrite mode needs prefixDefault: true.')
       }
+    })
+
+    it('throws at run time for the configs that the types cannot tell to throw', () => {
+      // These pass the type check: their types do not say that they throw
+      const annotated: ProxyConfig = { ...config, routing: 'rewrite', detectLanguage: true }
+      const detectLanguage: boolean = Math.random() < 2
+      const maybeDetect = (Math.random() < 2 ? true : undefined) as true | undefined
+      const prefixDefault: boolean = Math.random() > 2
+      const fromAny = (anyConfig: ProxyConfig) => create(anyConfig)
+      const message = '[i18n] The language detection of the rewrite mode needs prefixDefault: true.'
+      expect(() => create(annotated)).toThrow(message)
+      expect(() => fromAny(annotated)).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage })).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage: maybeDetect })).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage: true, prefixDefault })).toThrow(message)
     })
 
     it('takes the config of define() in the rewrite mode', () => {

@@ -94,21 +94,20 @@ interface RewriteRoutingConfig extends BaseConfig {
 export type ProxyConfig = StandardRoutingConfig | RewriteRoutingConfig
 
 // The language detection of the rewrite mode needs prefixDefault: true. The
-// check goes by the types: a routing that may be 'rewrite' with a
-// detectLanguage that may be true needs a prefixDefault that is always true.
-// Only a detectLanguage that is false, undefined or left out does not detect.
-// Each member of a union is checked.
+// types stop a config only when they say that it throws: a routing that is
+// 'rewrite' and a detectLanguage that is true, with a prefixDefault that
+// cannot be true. Where they cannot tell, as for a value typed as boolean or
+// a config typed as the type above, create() checks it at run time. A union
+// is stopped when each of its members throws.
 type PropertyType<C, K extends PropertyKey> = K extends keyof C ? C[K] : undefined
-type DetectingRewriteWithoutPrefix<C> = C extends unknown
-  ? 'rewrite' extends PropertyType<C, 'routing'>
-    ? true extends PropertyType<C, 'detectLanguage'>
-      ? PropertyType<C, 'prefixDefault'> extends true ? never : C
-      : never
-    : never
+type Throws<C> = C extends unknown
+  ? [PropertyType<C, 'routing'>, PropertyType<C, 'detectLanguage'>] extends ['rewrite', true]
+      ? true extends PropertyType<C, 'prefixDefault'> ? false : true
+      : false
   : never
-type RewriteCheck<C> = [DetectingRewriteWithoutPrefix<C>] extends [never]
-  ? unknown
-  : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true; without it, detectLanguage must be false or left out' }
+type RewriteCheck<C> = [Throws<C>] extends [true]
+  ? { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true; without it, detectLanguage must be false or left out' }
+  : unknown
 
 // The type checks of the proxy config: those of define(), then those of the routing
 type ProxyConfigCheck<C extends ProxyConfig> = unknown extends ConfigCheck<C> ? RewriteCheck<C> : ConfigCheck<C>

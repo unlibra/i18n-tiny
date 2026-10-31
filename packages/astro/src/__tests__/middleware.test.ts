@@ -86,6 +86,21 @@ describe('create (middleware)', () => {
       }
     })
 
+    it('throws at run time for the configs that the types cannot tell to throw', () => {
+      // These pass the type check: their types do not say that they throw
+      const annotated: MiddlewareConfig = { ...config, routing: 'rewrite', detectLanguage: true }
+      const detectLanguage: boolean = Math.random() < 2
+      const maybeDetect = (Math.random() < 2 ? true : undefined) as true | undefined
+      const prefixDefault: boolean = Math.random() > 2
+      const fromAny = (anyConfig: MiddlewareConfig) => create(anyConfig)
+      const message = '[i18n] The language detection of the rewrite mode needs prefixDefault: true.'
+      expect(() => create(annotated)).toThrow(message)
+      expect(() => fromAny(annotated)).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage })).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage: maybeDetect })).toThrow(message)
+      expect(() => create({ ...config, routing: 'rewrite', detectLanguage: true, prefixDefault })).toThrow(message)
+    })
+
     it('takes the config of define() in the rewrite mode', () => {
       for (const options of [{}, { prefixDefault: false }, { prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
         expect(() => create({ ...config, routing: 'rewrite', ...options } as never)).not.toThrow()
