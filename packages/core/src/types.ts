@@ -88,21 +88,14 @@ type VarsOf<Names> = [Names] extends [string]
   // A key that points to a nested object
   : [vars?: Record<string, string | number>]
 
-/**
- * The vars of a translation function for a message of type V. A message with
- * a literal type, from `as const`, takes exactly its variables: none, or an
- * object with each of them. A message typed as `string` takes any vars. For
- * a union of messages, such as from a union of keys, the vars are those of
- * all of them.
- */
-export type TranslationVars<V> = VarsOf<V extends string ? string extends V ? string : VariableNames<V> : V>
-
 type Scope<T, N extends string | undefined> = N extends string ? ValueAt<T, N> : T
 
 /**
  * The translation function for the messages T, relative to the namespace N
- * when one is given, with the vars of each key typed from its message, as
- * TranslationVars describes
+ * when one is given, with the vars of each key typed from its message. A
+ * message with a literal type, from `as const`, takes exactly its variables:
+ * none, or an object with each of them. A message typed as `string` takes any
+ * vars. For a union of keys, the vars are those of all of their messages.
  */
 // The names are looked up in NamesTree rather than computed from the message
 // of the key: TypeScript resolves the vars for every key of the constraint
