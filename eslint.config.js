@@ -4,6 +4,9 @@ import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
 
+// The globals that only Node has
+const nodeGlobals = ['process', 'Buffer', 'global', 'require', 'module', 'exports', '__dirname', '__filename', 'setImmediate', 'clearImmediate']
+
 export default tseslint.config(
   {
     ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts']
@@ -79,9 +82,9 @@ export default tseslint.config(
   },
   {
     // The router and the middleware entries, and the files they import, run
-    // outside Node, so they must not use the globals that only Node has. So
-    // does the internal entry, which the Astro middleware and the Next.js
-    // proxy import.
+    // outside Node, so they must not use the globals that only Node has, by
+    // name or as properties of globalThis. So does the internal entry, which
+    // the Astro middleware and the Next.js proxy import.
     files: [
       'packages/core/src/router/**/*.ts',
       'packages/core/src/middleware/**/*.ts',
@@ -94,11 +97,18 @@ export default tseslint.config(
     rules: {
       'no-restricted-globals': [
         'error',
-        ...['process', 'Buffer', 'global', 'require', 'module', 'exports', '__dirname', '__filename', 'setImmediate', 'clearImmediate']
-          .map(name => ({
-            name,
-            message: 'The router and the middleware must run outside Node: do not use Node globals.'
-          }))
+        ...nodeGlobals.map(name => ({
+          name,
+          message: 'The router and the middleware must run outside Node: do not use Node globals.'
+        }))
+      ],
+      'no-restricted-properties': [
+        'error',
+        ...nodeGlobals.map(property => ({
+          object: 'globalThis',
+          property,
+          message: 'The router and the middleware must run outside Node: do not use Node globals.'
+        }))
       ]
     }
   }
