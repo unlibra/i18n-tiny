@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0-beta.1] - Unreleased
+## [2.0.0] - Unreleased
 
-The first beta of 2.0, with breaking changes. See [MIGRATION.md](./MIGRATION.md)
-for how to update from 1.x.
+A major release with breaking changes. See [MIGRATION.md](./MIGRATION.md) for
+how to update from 1.x. 1.x gets no more releases.
 
 ### Changed
 
@@ -60,7 +60,8 @@ for how to update from 1.x.
 - In the rewrite mode, the Astro middleware and the Next.js proxy accept
   `detectLanguage` and `prefixDefault`, so they take the same config as
   `define()`. With detection, `prefixDefault: true` is required: without it,
-  the config is a type error and throws. In this mode `prefixDefault` changes
+  `create()` throws, and a config written inline, with `as const` or with
+  `satisfies` is a type error too. In this mode `prefixDefault` changes
   the links only, and a URL without a locale prefix is not redirected.
 - The Next.js `Link` without `locale` builds the link for the locale of the
   `Provider`, as `localizedPath()` does, instead of following the current URL.
@@ -102,8 +103,10 @@ for how to update from 1.x.
 - `@i18n-tiny/astro/integration` (and `astro-i18n-tiny/integration`).
 - `getLocalizedPath()` and `hasLocalePrefix()`.
 - `Astro.locals.locales`.
-- The `normalize` prop of the Astro `Link`; use `i18n.alternatePath()`, or
-  the path of the page with `locale`.
+- The `normalize` prop of the Astro `Link`; use the path of the page with
+  `locale`, or pass `i18n.alternatePath()` to a `Link` with `locale={false}`
+  or to a plain `<a>`. A `Link` without `locale` adds the prefix of the
+  current page to it, and `Astro.url.pathname` includes the `base`.
 - `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`, the
   same props of the internal provider (not those of the `Provider` of
   `define()`).

@@ -1,12 +1,12 @@
 # Migrating from 1.x to 2.0
 
-This guide covers the changes from i18n-tiny 1.x to **2.0.0-beta.1**. Each section shows the 1.x code and the 2.0 code. The 2.0 code is taken from the [examples](./examples).
-
-2.0 is in beta, and a later 2.0 beta may bring more changes. This guide will be updated with them.
+This guide covers the changes from i18n-tiny 1.x to **2.0.0**. Each section shows the 1.x code and the 2.0 code. The 2.0 code is taken from the [examples](./examples).
 
 ```bash
-npm install @i18n-tiny/next@2.0.0-beta.1    # or @i18n-tiny/astro, @i18n-tiny/react
+npm install @i18n-tiny/next@2    # or @i18n-tiny/astro, @i18n-tiny/react
 ```
+
+1.x gets no more releases.
 
 The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` have the same version and the same changes as the `@i18n-tiny` packages.
 
@@ -138,7 +138,7 @@ import type { I18nConfig } from '@i18n-tiny/next/types'
 export const config = { locales: ['en', 'ja'], defaultLocale: 'en' } as const satisfies I18nConfig
 ```
 
-Use `satisfies` rather than a type annotation: `const config: I18nConfig<'en' | 'ja'>` widens `prefixDefault: true` to `boolean`, which the rewrite mode with detection rejects.
+Use `satisfies` rather than a type annotation, which widens the config to its type: with `const config: I18nConfig<'en' | 'ja'>`, `prefixDefault` is a `boolean`, so the rewrite mode with detection is checked only when `create()` runs, not by type.
 
 `@i18n-tiny/astro` exported its own `I18nConfig<L, M, Msgs>` in 1.x, a config with `messages` and optional `locales` and `defaultLocale`. In 2.0, `I18nConfig` from `@i18n-tiny/astro` is the locale settings above. Let `define()` infer the type of the messages, and use `typeof i18n` for the type of the instance.
 
@@ -241,7 +241,7 @@ export const proxy = create({ locales: ['en', 'ja'], defaultLocale: 'en' })
 export const proxy = create({ ...config, detectLanguage: true })
 ```
 
-With detection, also put `prefixDefault: true` in the [shared config](#one-config-for-everything). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix (see [Link](#link)), and the middleware or the proxy detects its language again, so a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/en`). In the rewrite mode, detection without `prefixDefault: true` is a type error and throws.
+With detection, also put `prefixDefault: true` in the [shared config](#one-config-for-everything). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix (see [Link](#link)), and the middleware or the proxy detects its language again, so a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/en`). In the rewrite mode, detection needs `prefixDefault: true`: `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too.
 
 ## Astro
 
@@ -411,6 +411,20 @@ A `Link` without `locale` works as in 1.x, without the `i18n` prop: it keeps the
 
 `path` is the path of the page without a locale prefix, such as `/about`, which each page passes to `LanguageSwitcher`.
 
+To keep building the links from the current URL, as with `normalize`, pass the result of `i18n.alternatePath()` to a `Link` with `locale={false}`, or to a plain `<a>`:
+
+```astro
+<!-- 1.x -->
+<Link href={Astro.url.pathname} locale="en" normalize>English</Link>
+
+<!-- 2.0 -->
+<Link href={i18n.alternatePath(Astro.url.pathname, 'en')} locale={false}>English</Link>
+```
+
+- Do not pass it to a `Link` without `locale`: such a link adds the prefix of the current page, so on `/ja/about` the link to English would be `/ja/about`.
+- `Astro.url.pathname` includes the `base`. With a `base`, pass the path of the page without the base, as in the example above, and not `Astro.url.pathname`.
+- In the rewrite mode, the current URL is `Astro.locals.originalPathname`.
+
 With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link removes the base from the current URL to find the locale, and adds it to the result.
 
 The `Link` currently removes the trailing slash of every link except `/`, also when `astro.config` has `trailingSlash: 'always'`: on such a site, the links point to URLs without the slash, which Astro or your host may redirect or not serve.
@@ -461,7 +475,7 @@ Other changes of the middleware:
 
 ### Astro: rewrite mode
 
-With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault` may be `false`. Detection (`detectLanguage: true`, the default of 1.x) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, the config is a type error and throws. Put `prefixDefault: true` in the shared config.
+With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault` may be `false`. Detection (`detectLanguage: true`, the default of 1.x) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too. Put `prefixDefault: true` in the shared config.
 
 In the rewrite mode, `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected.
 
@@ -737,7 +751,7 @@ const pathname = usePathname()
 
 The proxy now passes the locale to the pages as the `x-locale` **request** header, so Server Components read it with `headers()`. In 1.x, it was set on the response, which Server Components did not see. An `x-locale` header sent by the client is replaced.
 
-As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`. Detection is off by default; with `detectLanguage: true`, which the example uses for its "Auto" button, it needs `prefixDefault: true`: without it, the config is a type error and throws. Put it in the shared config. `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
+As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`. Detection is off by default; with `detectLanguage: true`, which the example uses for its "Auto" button, it needs `prefixDefault: true`: `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too. Put it in the shared config. `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
 
 ```typescript
 // 1.x: proxy.ts (rewrite mode)
@@ -817,4 +831,5 @@ See [examples/next-ssr](./examples/next-ssr) for the whole app.
 - `detectLocale()`, and the detection of the middleware and the proxy, never pick a language marked with `q=0`, also through another tag (`en-US,en;q=0` does not give `en`). Tags whose `q` is not a number from 0 to 1 are ignored.
 - When detection decides the response, the middleware and the proxy add `Vary: Accept-Language` to it. Next.js replaces it on the pages it renders: see the Next.js README on [language detection and caches](./packages/next/README.md#language-detection-and-caches).
 - A request whose path leads to another host, such as `/en//example.com`, gets no i18n handling in the middleware and the proxy.
+- A variable named after a property that every object inherits, such as `{constructor}` or `{toString}`, is no longer replaced with that property when the vars do not have it: it stays as it is, like any variable without a value.
 - A missing key no longer throws a `ReferenceError` where `process` is not defined and nothing replaces `process.env.NODE_ENV`, as in some edge runtimes. The warning for a missing key in development is unchanged.
