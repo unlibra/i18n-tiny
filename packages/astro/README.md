@@ -527,7 +527,12 @@ const names = { ja: '日本語', en: 'English' }
 
 Pass it `Astro.props.pageLocales` from the page, so that it only links to the locales the page is built in.
 
-With the [middleware](#i18n-tinyastromiddleware-ssr-only) and a language switcher, pass `detectLanguage: false` to the middleware. With detection, the default, and `prefixDefault: false`, the link to the default locale has no prefix, and the middleware detects its language again: a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`, so it cannot reach the pages of the default locale. A static build has no middleware and no detection.
+With the [middleware](#i18n-tinyastromiddleware-ssr-only), `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With a language switcher, do one of these:
+
+- Pass `detectLanguage: false` to the middleware.
+- Put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). The URLs of the default locale then have the prefix too (`/ja/about`).
+
+A static build has no middleware and no detection.
 
 ### With Astro's Built-in i18n
 

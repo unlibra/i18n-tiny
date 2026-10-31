@@ -201,7 +201,7 @@ These changes apply to the `Link` of both Astro and Next.js.
 
 - `locale=""` is removed. Use `locale={false}` for the path without a locale.
 - A link for the default locale gets no prefix unless `prefixDefault` is true. In 1.x, `<Link href="/" locale="en">` was `/en` even for the default locale `en`; in 2.0 it is `/`.
-- With a language switcher, pass `detectLanguage: false` to the middleware or the proxy. With detection, the default, and `prefixDefault: false`, the link to the default locale has no prefix, and the middleware or the proxy detects its language again: a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. In 1.x, the link was `/en` and was served as it was.
+- With `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware or the proxy detects its language again, so a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. In 1.x, the link was `/en` and was served as it was. With a language switcher, either pass `detectLanguage: false` to the middleware or the proxy, or put `prefixDefault: true` in the [shared config](#one-config-for-everything), so that the URLs of the default locale have the prefix too (`/en`).
 - `href` must start with `/`. A relative path such as `about` throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged, as in 1.x.
 - The query and the hash of `href` are kept, and the path has no trailing slash, except for `/`.
 

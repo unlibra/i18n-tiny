@@ -598,7 +598,10 @@ export function LanguageSwitcher() {
 }
 ```
 
-With a language switcher, pass `detectLanguage: false` to the proxy. With detection, the default, and `prefixDefault: false`, the link to the default locale has no prefix, and the proxy detects its language again: a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`, so it cannot reach the pages of the default locale.
+With `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the proxy detects its language again, so a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`. With a language switcher, do one of these:
+
+- Pass `detectLanguage: false` to the proxy.
+- Put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). The URLs of the default locale then have the prefix too (`/en/about`).
 
 ## Examples
 
