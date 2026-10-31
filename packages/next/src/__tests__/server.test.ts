@@ -99,6 +99,21 @@ describe('Server version - define()', () => {
       const t = await i18n.server.getTranslations('en')
       expect(t('nested.deep.value')).toBe('Deep Value')
     })
+
+    it('should show "{{" and "}}" as "{" and "}"', async () => {
+      const i18n = define({
+        locales: ['en', 'ja'] as const,
+        defaultLocale: 'en',
+        messages: {
+          en: { code: 'Write {{name}} for {name}', plain: 'Use {{ and }}' },
+          ja: { code: '{name} は {{name}} と書く', plain: '{{ と }} を使う' }
+        }
+      })
+
+      const t = await i18n.server.getTranslations('ja')
+      expect(t('code', { name: 'Ann' })).toBe('Ann は {name} と書く')
+      expect(t('plain')).toBe('{ と } を使う')
+    })
   })
 
   describe('client APIs should throw errors', () => {

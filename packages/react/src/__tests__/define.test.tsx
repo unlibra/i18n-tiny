@@ -183,4 +183,39 @@ describe('define', () => {
 
     expect(screen.getByText('Default: en')).toBeInTheDocument()
   })
+
+  it('shows "{{" and "}}" as "{" and "}" in translations', () => {
+    const braces = {
+      en: { code: 'Write {{name}} for {name}', plain: 'Use {{ and }}' },
+      ja: { code: '{name} は {{name}} と書く', plain: '{{ と }} を使う' }
+    } as const
+    const i18n = define({ locales, defaultLocale: 'en', messages: braces })
+
+    function TestComponent () {
+      const t = i18n.useTranslations()
+      return (
+        <>
+          <p data-testid="code">{t('code', { name: 'Ann' })}</p>
+          <p data-testid="plain">{t('plain')}</p>
+        </>
+      )
+    }
+
+    const { unmount } = render(
+      <i18n.Provider locale="en" messages={braces.en}>
+        <TestComponent />
+      </i18n.Provider>
+    )
+    expect(screen.getByTestId('code').textContent).toBe('Write {name} for Ann')
+    expect(screen.getByTestId('plain').textContent).toBe('Use { and }')
+    unmount()
+
+    render(
+      <i18n.Provider locale="ja" messages={braces.ja}>
+        <TestComponent />
+      </i18n.Provider>
+    )
+    expect(screen.getByTestId('code').textContent).toBe('Ann は {name} と書く')
+    expect(screen.getByTestId('plain').textContent).toBe('{ と } を使う')
+  })
 })

@@ -124,6 +124,19 @@ describe('define', () => {
       expect(i18n.getTranslations('en', 'common')('title')).toBe('Hello')
     })
 
+    it('shows "{{" and "}}" as "{" and "}"', () => {
+      const withBraces = define({
+        ...config,
+        messages: {
+          ja: { code: '{name} は {{name}} と書く', plain: '{{ と }} を使う' },
+          en: { code: 'Write {{name}} for {name}', plain: 'Use {{ and }}' }
+        }
+      })
+      expect(withBraces.getTranslations('en')('code', { name: 'Ann' })).toBe('Write {name} for Ann')
+      expect(withBraces.getTranslations('ja')('plain')).toBe('{ と } を使う')
+      expect(withBraces.getTranslations('ja')('code', { name: 'Ann' })).toBe('Ann は {name} と書く')
+    })
+
     it('returns the key when a translation is missing', () => {
       const t = i18n.getTranslations('en')
       expect(untyped(t)('missing.key')).toBe('missing.key')

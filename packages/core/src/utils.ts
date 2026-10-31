@@ -1,6 +1,13 @@
+// The grammar of messages, which the type of the variables (VariableNames in
+// ./types) follows too: "{{" is "{", "}}" is "}", and "{name}", with a name of
+// letters, digits and "_", is a variable. Read from left to right, so "{{name}}"
+// is the text "{name}".
+const TOKENS = /\{\{|\}\}|\{(\w+)\}/g
+
 /**
  * Interpolates variables into a string.
- * Replaces {key} placeholders with values from the vars object.
+ * Replaces {key} placeholders with values from the vars object, and "{{" and
+ * "}}" with "{" and "}".
  *
  * @param str - The string containing {key} placeholders
  * @param vars - Object with key-value pairs to interpolate
@@ -9,10 +16,15 @@
  * @example
  * interpolate("Hello, {name}!", { name: "John" }) // "Hello, John!"
  * interpolate("Missing {key}", {}) // "Missing {key}"
+ * interpolate("{{name}} is {name}", { name: "John" }) // "{name} is John"
  */
-function interpolate (str: string, vars: Record<string, string | number>): string {
-  return str.replace(/\{(\w+)\}/g, (match, key) => {
-    const value = vars[key]
+function interpolate (str: string, vars?: Record<string, string | number>): string {
+  return str.replace(TOKENS, (match, key: string | undefined) => {
+    if (key === undefined) {
+      // "{{" or "}}"
+      return match[0]
+    }
+    const value = vars?.[key]
     return value !== undefined ? String(value) : match
   })
 }
@@ -20,7 +32,8 @@ function interpolate (str: string, vars: Record<string, string | number>): strin
 /**
  * Resolves a nested key in a messages object.
  * Handles missing keys and object values gracefully.
- * Supports variable interpolation with {key} syntax.
+ * Supports variable interpolation with {key} syntax, and "{{" and "}}" for
+ * "{" and "}".
  *
  * @param messages - The messages object to search
  * @param key - Dot-separated key path (e.g., "common.title")
@@ -68,32 +81,33 @@ export function resolveMessage (
     traverse(key)
   }
 
-  // Helper to construct full key only when needed (lazy evaluation)
-  const getFullKey = () => (namespace ? `${namespace}.${key}` : key)
-
-  if (obj === undefined) {
-    const fullKey = getFullKey()
-    // Many bundlers replace process.env.NODE_ENV with a string at build time,
-    // but not all do, and code that is not bundled keeps it. Then it is read
-    // at run time: only a missing key, or a key that points to an object,
-    // reads it, so a runtime without process fails only there.
-    // eslint-disable-next-line no-restricted-globals -- often replaced at build time, see above
-    if (process.env.NODE_ENV === 'development' && locale) {
-      console.warn(`[i18n] Missing key: "${fullKey}" in locale "${locale}"`)
-    }
-    return fullKey
+  // A string, or another value that is not an object
+  if (obj !== undefined && (typeof obj !== 'object' || obj === null)) {
+    return interpolate(String(obj), vars)
   }
 
-  // Prevent returning "[object Object]" if the key points to a nested object
-  if (typeof obj === 'object' && obj !== null) {
-    const fullKey = getFullKey()
-    // eslint-disable-next-line no-restricted-globals -- often replaced at build time, as above
+  // A missing key, or a key that points to a nested object, which would be
+  // "[object Object]": the key instead
+  const fullKey = namespace ? `${namespace}.${key}` : key
+  // Many bundlers, such as Vite, webpack and esbuild, replace
+  // process.env.NODE_ENV with a string at build time, and Vite does it in
+  // development too, so the expression is kept as it is in the condition:
+  // then the warning is dropped from production bundles. A guard such as
+  // `typeof process` would hide the warning in the browser, which has no
+  // process even where the expression is replaced. Where nothing replaces it
+  // and there is no process, as in some edge runtimes, reading it throws:
+  // that is not development.
+  try {
+    // eslint-disable-next-line no-restricted-globals -- replaced at build time, or caught, see above
     if (process.env.NODE_ENV === 'development' && locale) {
-      console.warn(`[i18n] Key "${fullKey}" points to an object in locale "${locale}". Returning key instead.`)
+      console.warn(
+        obj === undefined
+          ? `[i18n] Missing key: "${fullKey}" in locale "${locale}"`
+          : `[i18n] Key "${fullKey}" points to an object in locale "${locale}". Returning key instead.`
+      )
     }
-    return fullKey
+  } catch {
+    // Not development
   }
-
-  const result = String(obj)
-  return vars ? interpolate(result, vars) : result
+  return fullKey
 }

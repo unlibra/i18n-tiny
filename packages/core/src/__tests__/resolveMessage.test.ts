@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveMessage } from '../utils'
 
 describe('resolveMessage()', () => {
@@ -75,6 +75,49 @@ describe('resolveMessage()', () => {
     it('should work with namespace and vars', () => {
       const result = resolveMessage(messages, 'greeting', 'common', undefined, { name: 'World' })
       expect(result).toBe('Hello, World!')
+    })
+  })
+
+  describe('warnings in development', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs()
+      vi.restoreAllMocks()
+    })
+
+    it('warns for a missing key and for a key that points to an object', () => {
+      vi.stubEnv('NODE_ENV', 'development')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      expect(resolveMessage(messages, 'common.missing', undefined, 'en')).toBe('common.missing')
+      expect(resolveMessage(messages, 'nested', 'common', 'en')).toBe('common.nested')
+      expect(warn.mock.calls).toEqual([
+        ['[i18n] Missing key: "common.missing" in locale "en"'],
+        ['[i18n] Key "common.nested" points to an object in locale "en". Returning key instead.']
+      ])
+    })
+
+    it('does not warn in production', () => {
+      vi.stubEnv('NODE_ENV', 'production')
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      expect(resolveMessage(messages, 'common.missing', undefined, 'en')).toBe('common.missing')
+      expect(resolveMessage(messages, 'common', undefined, 'en')).toBe('common')
+      expect(warn).not.toHaveBeenCalled()
+    })
+
+    it('returns the key without a warning where there is no process', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'process')!
+      const results: string[] = []
+      // As in a runtime without process, where reading it throws a ReferenceError
+      delete (globalThis as { process?: unknown }).process
+      try {
+        results.push(resolveMessage(messages, 'common.missing', undefined, 'en'))
+        results.push(resolveMessage(messages, 'common', undefined, 'en'))
+        results.push(resolveMessage(messages, 'common.greeting', undefined, 'en', { name: 'John' }))
+      } finally {
+        Object.defineProperty(globalThis, 'process', descriptor)
+      }
+      expect(results).toEqual(['common.missing', 'common', 'Hello, John!'])
+      expect(warn).not.toHaveBeenCalled()
     })
   })
 })
