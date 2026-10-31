@@ -59,21 +59,47 @@ describe('create (proxy)', () => {
     })
 
     it('throws for the language detection of the rewrite mode without prefixDefault: true', () => {
-      for (const options of [{}, { prefixDefault: false }, { detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
+      for (const options of [{ detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
         expect(() => untyped(create)({ ...config, routing: 'rewrite', ...options }))
           .toThrow('[i18n] The language detection of the rewrite mode needs prefixDefault: true.')
       }
     })
 
     it('takes the config of define() in the rewrite mode', () => {
-      for (const options of [{ prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
+      for (const options of [{}, { prefixDefault: false }, { prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
         expect(() => untyped(create)({ ...config, routing: 'rewrite', ...options })).not.toThrow()
       }
     })
   })
 
-  describe('default behavior (prefixDefault: false, detectLanguage: true)', () => {
-    const proxy = create({ ...config })
+  describe('without detectLanguage: no detection', () => {
+    it('rewrites a URL without a locale prefix to the default locale, ignoring Accept-Language', () => {
+      for (const proxy of [create({ ...config }), create({ ...config, fallbackLocale: 'ja' })]) {
+        const response = proxy(request('/about?page=2', { 'accept-language': 'ja' }))
+        expect(routing(response)).toBe('rewrite /en/about?page=2')
+        expect(vary(response)).toBe(null)
+        expect(routing(proxy(request('/', { 'accept-language': 'ja' })))).toBe('rewrite /en')
+      }
+    })
+
+    it('redirects a URL without a locale prefix to the default locale with prefixDefault', () => {
+      const response = create({ ...config, prefixDefault: true })(request('/about', { 'accept-language': 'ja' }))
+      expect(routing(response)).toBe('redirect 307 /en/about')
+      expect(vary(response)).toBe(null)
+    })
+
+    it('takes a URL without a locale prefix as the default locale in the rewrite mode, without prefixDefault', () => {
+      for (const prefixDefault of [false, true]) {
+        const response = create({ ...config, routing: 'rewrite', prefixDefault })(request('/about', { 'accept-language': 'ja' }))
+        expect(routing(response)).toBe('next')
+        expect(forwardedHeaders(response)?.['x-locale']).toBe('en')
+        expect(vary(response)).toBe(null)
+      }
+    })
+  })
+
+  describe('prefixDefault: false, detectLanguage: true', () => {
+    const proxy = create({ ...config, detectLanguage: true })
 
     it('passes a URL with a locale prefix through', () => {
       for (const path of ['/en', '/en/about', '/ja', '/ja/about/team']) {
@@ -115,7 +141,7 @@ describe('create (proxy)', () => {
     })
 
     it('uses fallbackLocale when the detection finds no match', () => {
-      const withFallback = create({ ...config, fallbackLocale: 'ja' })
+      const withFallback = create({ ...config, detectLanguage: true, fallbackLocale: 'ja' })
       expect(routing(withFallback(request('/about', { 'accept-language': 'de' })))).toBe('redirect 307 /ja/about')
       expect(routing(withFallback(request('/about')))).toBe('redirect 307 /ja/about')
       expect(routing(withFallback(request('/about', { 'accept-language': 'en' })))).toBe('rewrite /en/about')
@@ -123,7 +149,7 @@ describe('create (proxy)', () => {
   })
 
   describe('prefixDefault: true, detectLanguage: true', () => {
-    const proxy = create({ ...config, prefixDefault: true })
+    const proxy = create({ ...config, prefixDefault: true, detectLanguage: true })
 
     it('redirects to the detected locale, the default one included', () => {
       expect(routing(proxy(request('/')))).toBe('redirect 307 /en')
@@ -158,7 +184,7 @@ describe('create (proxy)', () => {
   })
 
   describe('routing: "rewrite" (SSR mode)', () => {
-    const proxy = create({ ...config, prefixDefault: true, routing: 'rewrite' })
+    const proxy = create({ ...config, prefixDefault: true, detectLanguage: true, routing: 'rewrite' })
 
     it('rewrites a URL with a locale prefix to the URL without it, with the locale in the x-locale request header', () => {
       const response = proxy(request('/ja/about?page=2', { 'accept-language': 'fr' }))
@@ -179,7 +205,7 @@ describe('create (proxy)', () => {
     })
 
     it('uses fallbackLocale when the detection finds no match', () => {
-      const withFallback = create({ ...config, prefixDefault: true, routing: 'rewrite', fallbackLocale: 'fr' })
+      const withFallback = create({ ...config, prefixDefault: true, detectLanguage: true, routing: 'rewrite', fallbackLocale: 'fr' })
       expect(forwardedHeaders(withFallback(request('/about', { 'accept-language': 'de' })))?.['x-locale']).toBe('fr')
       expect(forwardedHeaders(withFallback(request('/about')))?.['x-locale']).toBe('fr')
     })

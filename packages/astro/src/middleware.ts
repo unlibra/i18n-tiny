@@ -38,7 +38,7 @@ interface BaseConfig {
    * Accept-Language header
    * - true: detect, and use fallbackLocale when nothing matches
    * - false: a URL without a locale prefix is the default locale
-   * @default true
+   * @default false
    */
   readonly detectLanguage?: boolean
 }
@@ -67,8 +67,8 @@ interface StandardRoutingConfig extends BaseConfig {
 /**
  * SSR rewrite routing: the pages are not under a locale folder. The locale
  * is stored in Astro.locals.locale, and /ja/about is rewritten to /about.
- * A URL without a locale prefix is the detected locale, or the default
- * locale with detectLanguage: false.
+ * A URL without a locale prefix is the default locale, or with
+ * detectLanguage: true the detected locale.
  *
  * With the language detection, a URL without a locale prefix is not the
  * default locale, so the links of the default locale need its prefix:
@@ -78,7 +78,7 @@ interface RewriteRoutingConfig extends BaseConfig {
   readonly routing: 'rewrite'
   /**
    * Whether the links of the default locale carry the locale prefix. Must
-   * be true unless detectLanguage is false. A URL without a locale prefix
+   * be true with detectLanguage: true. A URL without a locale prefix
    * is served in the rewrite mode either way.
    * @default false
    */
@@ -93,12 +93,15 @@ export type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
 
 // The language detection of the rewrite mode needs prefixDefault: true. A
 // detectLanguage or a prefixDefault typed as boolean may break it, and fails.
+// Without detectLanguage, there is no detection.
 type RewriteCheck<C> = C extends { readonly routing: 'rewrite' }
   ? C extends { readonly detectLanguage: false }
     ? unknown
-    : C extends { readonly prefixDefault: true }
-      ? unknown
-      : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
+    : C extends { readonly detectLanguage: boolean }
+      ? C extends { readonly prefixDefault: true }
+        ? unknown
+        : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
+      : unknown
   : unknown
 
 /** The type checks of the middleware config: those of define(), then those of the routing */
@@ -124,22 +127,25 @@ function currentBase (): string {
  * import { create } from '@i18n-tiny/astro/middleware'
  * import { config } from './i18n.config'
  *
- * // Detects the language of URLs without a locale prefix: redirects to
- * // another locale, or serves the default locale
+ * // URLs without a locale prefix are the default locale
  * export const onRequest = defineMiddleware(create({ ...config }))
  *
- * // No detection: URLs without a locale prefix are the default locale
- * export const onRequest = defineMiddleware(create({ ...config, detectLanguage: false }))
+ * // Detects the language of URLs without a locale prefix: redirects to
+ * // another locale, or serves the default locale
+ * export const onRequest = defineMiddleware(create({ ...config, detectLanguage: true }))
  *
  * // Always prefix the default locale: prefixDefault: true goes in the
  * // config shared with define(), whose Link and URL functions read it
  * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
  * export const onRequest = defineMiddleware(create({ ...config }))
  *
- * // SSR with rewrite (clean URLs, locale in Astro.locals). With the
- * // language detection, the config has prefixDefault: true:
- * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * // SSR with rewrite (clean URLs, locale in Astro.locals)
  * export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite' }))
+ *
+ * // The rewrite mode with the language detection: the config has
+ * // prefixDefault: true
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite', detectLanguage: true }))
  * ```
  */
 export function create<const C extends MiddlewareConfig> (config: C & MiddlewareConfigCheck<C>): MiddlewareHandler {

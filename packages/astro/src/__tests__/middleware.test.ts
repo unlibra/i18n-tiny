@@ -5,6 +5,7 @@ import type { MiddlewareConfig } from '../middleware'
 import { createMiddleware } from '../routing'
 
 const config = { locales: ['en', 'ja', 'fr'], defaultLocale: 'en' } as const
+const detecting = { ...config, detectLanguage: true } as const
 
 interface Outcome {
   /** What the middleware did */
@@ -79,14 +80,14 @@ describe('create (middleware)', () => {
     })
 
     it('throws for the language detection of the rewrite mode without prefixDefault: true', () => {
-      for (const options of [{}, { prefixDefault: false }, { detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
+      for (const options of [{ detectLanguage: true }, { detectLanguage: true, prefixDefault: false }]) {
         expect(() => create({ ...config, routing: 'rewrite', ...options } as never))
           .toThrow('[i18n] The language detection of the rewrite mode needs prefixDefault: true.')
       }
     })
 
     it('takes the config of define() in the rewrite mode', () => {
-      for (const options of [{ prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
+      for (const options of [{}, { prefixDefault: false }, { prefixDefault: true }, { prefixDefault: true, detectLanguage: true }, { detectLanguage: false }, { detectLanguage: false, prefixDefault: false }, { detectLanguage: false, prefixDefault: true }]) {
         expect(() => create({ ...config, routing: 'rewrite', ...options } as never)).not.toThrow()
       }
     })
@@ -99,53 +100,75 @@ describe('create (middleware)', () => {
     })
   })
 
-  describe('prefixDefault: false, detectLanguage: true (default)', () => {
+  describe('without detectLanguage: no detection', () => {
+    it('serves a URL without a prefix as the default locale, ignoring Accept-Language', async () => {
+      for (const url of ['/', '/about', '/about/?x=1']) {
+        expect(await run(config, url, { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
+      }
+      expect(await run({ ...config, fallbackLocale: 'ja' }, '/about', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
+    })
+
+    it('redirects a URL without a prefix to the default locale with prefixDefault', async () => {
+      expect(await run({ ...config, prefixDefault: true }, '/about', { acceptLanguage: 'ja' }))
+        .toMatchObject({ kind: 'redirect', target: '/en/about', vary: null })
+    })
+
+    it('takes a URL without a prefix as the default locale in the rewrite mode, without prefixDefault', async () => {
+      for (const prefixDefault of [false, true]) {
+        const outcome = await run({ ...config, routing: 'rewrite', prefixDefault }, '/about', { acceptLanguage: 'ja' })
+        expect(outcome).toMatchObject({ kind: 'next', vary: null })
+        expect(outcome.locals.locale).toBe('en')
+      }
+    })
+  })
+
+  describe('prefixDefault: false, detectLanguage: true', () => {
     it('serves URLs with a locale prefix as they are, without Vary', async () => {
       for (const url of ['/en', '/ja', '/ja/about', '/fr/a/b']) {
-        const outcome = await run(config, url, { acceptLanguage: 'ja' })
+        const outcome = await run(detecting, url, { acceptLanguage: 'ja' })
         expect(passed(outcome)).toBe(true)
         expect(outcome.vary).toBeNull()
       }
     })
 
     it('redirects a URL without a prefix to the detected locale', async () => {
-      const outcome = await run(config, '/about', { acceptLanguage: 'ja,en;q=0.5' })
+      const outcome = await run(detecting, '/about', { acceptLanguage: 'ja,en;q=0.5' })
       expect(outcome).toMatchObject({ kind: 'redirect', target: '/ja/about', status: 302, vary: 'Accept-Language' })
-      expect((await run(config, '/', { acceptLanguage: 'fr' })).target).toBe('/fr')
+      expect((await run(detecting, '/', { acceptLanguage: 'fr' })).target).toBe('/fr')
     })
 
     it('serves the default locale without a prefix, with Vary', async () => {
-      const outcome = await run(config, '/about', { acceptLanguage: 'en-US' })
+      const outcome = await run(detecting, '/about', { acceptLanguage: 'en-US' })
       expect(outcome).toMatchObject({ kind: 'next', status: 200, vary: 'Accept-Language' })
       expect(outcome.locals).not.toHaveProperty('locale')
     })
 
     it('serves the fallback locale when nothing matches', async () => {
-      expect(await run(config, '/about', { acceptLanguage: 'de' })).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
-      expect(await run(config, '/about')).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
-      expect(await run({ ...config, fallbackLocale: 'ja' }, '/about', { acceptLanguage: 'de' }))
+      expect(await run(detecting, '/about', { acceptLanguage: 'de' })).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
+      expect(await run(detecting, '/about')).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
+      expect(await run({ ...detecting, fallbackLocale: 'ja' }, '/about', { acceptLanguage: 'de' }))
         .toMatchObject({ kind: 'redirect', target: '/ja/about', vary: 'Accept-Language' })
     })
 
     it('never picks a language marked with q=0', async () => {
-      expect(await run(config, '/about', { acceptLanguage: 'ja;q=0, en;q=0.1' })).toMatchObject({ kind: 'next' })
-      expect(await run({ ...config, fallbackLocale: 'fr' }, '/about', { acceptLanguage: 'ja;q=0' }))
+      expect(await run(detecting, '/about', { acceptLanguage: 'ja;q=0, en;q=0.1' })).toMatchObject({ kind: 'next' })
+      expect(await run({ ...detecting, fallbackLocale: 'fr' }, '/about', { acceptLanguage: 'ja;q=0' }))
         .toMatchObject({ kind: 'redirect', target: '/fr/about' })
     })
 
     it('keeps the query string and the trailing slash', async () => {
-      expect((await run(config, '/about/?x=1&y=2', { acceptLanguage: 'ja' })).target).toBe('/ja/about/?x=1&y=2')
-      expect((await run(config, '/?q=a', { acceptLanguage: 'ja' })).target).toBe('/ja?q=a')
+      expect((await run(detecting, '/about/?x=1&y=2', { acceptLanguage: 'ja' })).target).toBe('/ja/about/?x=1&y=2')
+      expect((await run(detecting, '/?q=a', { acceptLanguage: 'ja' })).target).toBe('/ja?q=a')
     })
 
     it('adds Accept-Language to the Vary of the page', async () => {
       const withVary = () => new Response('page', { headers: { Vary: 'Cookie' } })
-      expect((await run(config, '/about', { acceptLanguage: 'en', nextResponse: withVary })).vary).toBe('Cookie, Accept-Language')
+      expect((await run(detecting, '/about', { acceptLanguage: 'en', nextResponse: withVary })).vary).toBe('Cookie, Accept-Language')
       const already = () => new Response('page', { headers: { Vary: 'accept-language' } })
-      expect((await run(config, '/about', { acceptLanguage: 'en', nextResponse: already })).vary).toBe('accept-language')
+      expect((await run(detecting, '/about', { acceptLanguage: 'en', nextResponse: already })).vary).toBe('accept-language')
       // Responses such as Response.redirect() have immutable headers
       const immutable = () => Response.redirect('http://localhost/elsewhere', 307)
-      const outcome = await run(config, '/about', { acceptLanguage: 'en', nextResponse: immutable })
+      const outcome = await run(detecting, '/about', { acceptLanguage: 'en', nextResponse: immutable })
       expect(outcome).toMatchObject({ status: 307, vary: 'Accept-Language' })
     })
   })
@@ -163,7 +186,7 @@ describe('create (middleware)', () => {
   })
 
   describe('prefixDefault: true, detectLanguage: true', () => {
-    const prefixed = { ...config, prefixDefault: true }
+    const prefixed = { ...detecting, prefixDefault: true }
 
     it('redirects to the detected locale, the default locale included', async () => {
       expect(await run(prefixed, '/about', { acceptLanguage: 'en' })).toMatchObject({ kind: 'redirect', target: '/en/about', vary: 'Accept-Language' })
@@ -186,7 +209,7 @@ describe('create (middleware)', () => {
   })
 
   describe('routing: "rewrite"', () => {
-    const rewrite = { ...config, prefixDefault: true, routing: 'rewrite' } as const
+    const rewrite = { ...detecting, prefixDefault: true, routing: 'rewrite' } as const
 
     it('rewrites a URL with a prefix to the URL without it and stores the locale', async () => {
       const outcome = await run(rewrite, '/ja/about?x=1', { acceptLanguage: 'en' })
@@ -228,30 +251,30 @@ describe('create (middleware)', () => {
 
   describe('excluded paths and static files', () => {
     it('skips the excluded paths and the paths under them', async () => {
-      const excluding = { ...config, excludePaths: ['/api', '/docs/'] }
+      const excluding = { ...detecting, excludePaths: ['/api', '/docs/'] }
       for (const url of ['/api', '/api/users', '/docs', '/docs/a', '/_astro/x', '/_image']) {
         expect(await run(excluding, url, { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
       }
     })
 
     it('should not skip paths that only start with the same letters as an excluded path', async () => {
-      const excluding = { ...config, excludePaths: ['/api'] }
+      const excluding = { ...detecting, excludePaths: ['/api'] }
       for (const pathname of ['/apis', '/api-docs']) {
         expect(await run(excluding, pathname, { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: `/ja${pathname}` })
       }
-      expect(await run(config, '/_astro-like', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect' })
+      expect(await run(detecting, '/_astro-like', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect' })
     })
 
     it('skips static files', async () => {
       for (const url of ['/favicon.ico', '/images/a.png', '/ja/style.css']) {
-        expect(await run(config, url, { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
+        expect(await run(detecting, url, { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
       }
     })
   })
 
   describe('pathnames that lead to another host', () => {
     it('are served without i18n handling', async () => {
-      for (const middlewareConfig of [config, { ...config, prefixDefault: true }, { ...config, prefixDefault: true, routing: 'rewrite' } as const]) {
+      for (const middlewareConfig of [config, { ...detecting, prefixDefault: true }, { ...detecting, prefixDefault: true, routing: 'rewrite' } as const]) {
         for (const url of ['//evil.example/x', '/\\evil.example', '/ja//evil.example', '/ja/\\evil.example', '/ja//']) {
           const outcome = await run(middlewareConfig, url, { acceptLanguage: 'ja' })
           expect(outcome).toMatchObject({ kind: 'next', vary: null })
@@ -265,23 +288,23 @@ describe('create (middleware)', () => {
     it('removes the base to route and adds it to the targets', async () => {
       const run = (middlewareConfig: MiddlewareConfig, url: string, options: Parameters<typeof runWithBase>[2] = {}) =>
         runWithBase(middlewareConfig, url, { ...options, base: '/docs/' })
-      expect(await run(config, '/docs/about', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: '/docs/ja/about' })
-      expect(await run(config, '/docs', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: '/docs/ja' })
-      expect(await run(config, '/docs/ja/about', { acceptLanguage: 'en' })).toMatchObject({ kind: 'next', vary: null })
-      expect(await run(config, '/docs/about', { acceptLanguage: 'en' })).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
+      expect(await run(detecting, '/docs/about', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: '/docs/ja/about' })
+      expect(await run(detecting, '/docs', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: '/docs/ja' })
+      expect(await run(detecting, '/docs/ja/about', { acceptLanguage: 'en' })).toMatchObject({ kind: 'next', vary: null })
+      expect(await run(detecting, '/docs/about', { acceptLanguage: 'en' })).toMatchObject({ kind: 'next', vary: 'Accept-Language' })
       expect(await run({ ...config, prefixDefault: true, detectLanguage: false }, '/docs/about?x=1'))
         .toMatchObject({ kind: 'redirect', target: '/docs/en/about?x=1' })
 
-      const rewrite = await run({ ...config, prefixDefault: true, routing: 'rewrite' }, '/docs/ja/about')
+      const rewrite = await run({ ...detecting, prefixDefault: true, routing: 'rewrite' }, '/docs/ja/about')
       expect(rewrite).toMatchObject({ kind: 'rewrite', target: '/docs/about' })
       expect(rewrite.locals).toEqual({ locale: 'ja', originalPathname: '/docs/ja/about' })
-      expect(await run({ ...config, prefixDefault: true, routing: 'rewrite' }, '/docs/ja')).toMatchObject({ kind: 'rewrite', target: '/docs' })
+      expect(await run({ ...detecting, prefixDefault: true, routing: 'rewrite' }, '/docs/ja')).toMatchObject({ kind: 'rewrite', target: '/docs' })
     })
 
     it('compares the excluded paths without the base', async () => {
       const run = (middlewareConfig: MiddlewareConfig, url: string, options: Parameters<typeof runWithBase>[2] = {}) =>
         runWithBase(middlewareConfig, url, { ...options, base: '/docs' })
-      const excluding = { ...config, excludePaths: ['/api'] }
+      const excluding = { ...detecting, excludePaths: ['/api'] }
       expect(await run(excluding, '/docs/api/users', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
       expect(await run(excluding, '/docs/_astro/x', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'next', vary: null })
       expect(await run(excluding, '/docs/apis', { acceptLanguage: 'ja' })).toMatchObject({ kind: 'redirect', target: '/docs/ja/apis' })

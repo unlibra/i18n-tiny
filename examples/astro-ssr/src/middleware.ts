@@ -5,7 +5,7 @@ import { config } from './i18n.config'
 /**
  * SSR Middleware using @i18n-tiny/astro/middleware
  *
- * With routing: 'rewrite':
+ * With routing: 'rewrite' and detectLanguage: true:
  * - /ja/about → rewrites to /about, stores 'ja' in Astro.locals.locale
  * - / → detects from Accept-Language, stores in Astro.locals.locale, and
  *   adds Vary: Accept-Language to the response
@@ -17,6 +17,7 @@ export const onRequest = defineMiddleware(
   create({
     ...config,
     routing: 'rewrite',
+    detectLanguage: true,
     excludePaths: ['/api']
   })
 )

@@ -146,25 +146,28 @@ import { create } from '../proxy'
 create({ ...routerConfig })
 create({ ...routerConfig, prefixDefault: true, detectLanguage: false, fallbackLocale: 'ja' })
 // The rewrite mode takes prefixDefault, so that the config of define() can be
-// spread into it. With the language detection, which is the default, a URL
-// without a locale prefix is the detected locale: prefixDefault must be true
+// spread into it. With the language detection (detectLanguage: true), a URL
+// without a locale prefix is the detected locale: prefixDefault must be true.
+// Without detectLanguage, there is no detection
+create({ ...routerConfig, routing: 'rewrite' })
+create({ ...routerConfig, routing: 'rewrite', prefixDefault: false })
 create({ ...routerConfig, routing: 'rewrite', prefixDefault: true })
 create({ ...routerConfig, routing: 'rewrite', prefixDefault: true, detectLanguage: true })
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: false })
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: false, prefixDefault: false })
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: false, prefixDefault: true })
 const rewriteConfig = { ...routerConfig, prefixDefault: true } as const
-create({ ...rewriteConfig, routing: 'rewrite' })
-// @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
-create({ ...routerConfig, routing: 'rewrite' })
+create({ ...rewriteConfig, routing: 'rewrite', detectLanguage: true })
 // @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: true })
 // @ts-expect-error the language detection in the rewrite mode needs prefixDefault: true
-create({ ...routerConfig, routing: 'rewrite', prefixDefault: false })
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: true, prefixDefault: false })
 const someBoolean: boolean = Math.random() > 0.5
 // @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: someBoolean })
 // @ts-expect-error a prefixDefault that may be false does not go with the language detection
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: true, prefixDefault: someBoolean })
+// Without the language detection, prefixDefault may be any boolean
 create({ ...routerConfig, routing: 'rewrite', prefixDefault: someBoolean })
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: someBoolean, prefixDefault: true })
 // @ts-expect-error the error of the config comes first

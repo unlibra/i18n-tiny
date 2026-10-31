@@ -11,7 +11,7 @@ A zero-dependency, type-safe, minimal internationalization library for Astro tha
 Works with both SSG and SSR. Configuration is completed by a single `define` function, with full auto-completion for key paths like `messages.common.title`.
 
 **SSG**: Put the pages under `src/pages/[...locale]/` and return `i18n.getStaticPaths()` from their `getStaticPaths`. The default locale is served without a prefix (`/about`), the others with one (`/en/about`).
-**SSR**: Use `middleware.create()` for routing with language detection.
+**SSR**: Use `middleware.create()` for routing, with language detection if you turn it on.
 
 ## Features
 
@@ -141,7 +141,7 @@ That's it! **Types are automatically inferred** - no manual type annotations nee
 
 The build output has `/` and `/about` in Japanese and `/en` and `/en/about` in English, with no `/ja`. Use `Astro.props.locale`, typed as one of the locales, rather than `Astro.params.locale`, which is `undefined` for the default locale.
 
-For server rendering with language detection, add the [middleware](#i18n-tinyastromiddleware-ssr-only).
+For server rendering, and for language detection, add the [middleware](#i18n-tinyastromiddleware-ssr-only).
 
 ## API Reference
 
@@ -278,7 +278,7 @@ export const onRequest = defineMiddleware(create({ ...config }))
 | `fallbackLocale` | `string`            | `defaultLocale` | The locale used when language detection finds no match. One of `locales`            |
 | `excludePaths`   | `string[]`          | `[]`            | Paths to leave out of i18n handling, such as `['/api']`. Each one starts with `/`    |
 | `prefixDefault`  | `boolean`           | `false`         | Whether URLs of the default locale also have the prefix. Put it in the config shared with `define()`, see below. `true` for the rewrite mode with detection |
-| `detectLanguage` | `boolean`           | `true`          | Whether to detect the language of a URL without a locale prefix from `Accept-Language` |
+| `detectLanguage` | `boolean`           | `false`         | Whether to detect the language of a URL without a locale prefix from `Accept-Language` |
 | `routing`        | `'rewrite'`         | -               | The SSR rewrite mode                                                                 |
 
 The config is checked as `define()` checks it: an invalid config, an `excludePaths` entry that does not start with `/`, and the rewrite mode with detection without `prefixDefault: true` throw an error.
@@ -296,8 +296,8 @@ The config is checked as `define()` checks it: an invalid config, an `excludePat
 | Standard, detection        | `src/pages/[...locale]/about.astro`            | Served as it is                          | Redirects to the detected locale, or is served as the default locale        |
 | `prefixDefault: true` in the shared config | `src/pages/[...locale]/about.astro` | Served as it is                 | Redirects to `/[defaultLocale]/about`                                       |
 | `prefixDefault: true` in the shared config, detection | `src/pages/[...locale]/about.astro` | Served as it is      | Redirects to the detected locale                                            |
+| `routing: 'rewrite'`       | `src/pages/about.astro`                        | Rewritten to `/about`, the locale in `Astro.locals.locale` | The default locale in `Astro.locals.locale`               |
 | `routing: 'rewrite'`, detection, `prefixDefault: true` in the shared config | `src/pages/about.astro` | Rewritten to `/about`, the locale in `Astro.locals.locale` | The detected locale in `Astro.locals.locale` |
-| `routing: 'rewrite'`, `detectLanguage: false` | `src/pages/about.astro`     | Rewritten to `/about`, the locale in `Astro.locals.locale` | The default locale in `Astro.locals.locale`               |
 
 The shared config is the one that `define()` and the middleware both take, such as `src/i18n.config.ts`. `Link` and the URL functions read `prefixDefault` from the config of `define()`, not from the middleware: with `prefixDefault: true` in `create()` only, a link to the default locale has no prefix, so the middleware redirects it, and with detection to the detected locale, which may not be the default one.
 
@@ -312,7 +312,7 @@ export const i18n = define({ ...config, messages: { ja, en } })
 export const onRequest = defineMiddleware(create({ ...config }))
 ```
 
-"Detection" is `detectLanguage: true`, the default. It uses `fallbackLocale` when `Accept-Language` matches none of `locales`. Languages marked with `q=0` are never picked.
+"Detection" is `detectLanguage: true`. Without it, there is no detection. It uses `fallbackLocale` when `Accept-Language` matches none of `locales`. Languages marked with `q=0` are never picked.
 
 When detection decides the response, the response gets `Vary: Accept-Language`, added to any `Vary` the page sets. A CDN or a shared cache that ignores `Vary` may serve one visitor's language to another: cache these URLs per `Accept-Language`, or not at all.
 
@@ -354,7 +354,9 @@ const messages = i18n.getMessages(locale)
 </html>
 ```
 
-With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, `<Link href="/" i18n={i18n}>` has the prefix of the current locale, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
+Without detection, a URL without a prefix is the default locale, and `prefixDefault` may be `false`.
+
+With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, `<Link href="/" i18n={i18n}>` has the prefix of the current locale, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
 
 ```typescript
 // src/i18n.config.ts
@@ -364,10 +366,8 @@ export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefaul
 export const i18n = define({ ...config, messages: { en, ja } })
 
 // src/middleware.ts
-export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite' }))
+export const onRequest = defineMiddleware(create({ ...config, routing: 'rewrite', detectLanguage: true }))
 ```
-
-With `detectLanguage: false`, a URL without a prefix is the default locale, and `prefixDefault` may be `false`.
 
 #### `MiddlewareConfig` (type)
 
@@ -509,12 +509,9 @@ const names = { ja: '日本語', en: 'English' }
 
 For a page in some locales only, map over its locales instead of `i18n.locales`. Without a `base`, `i18n.alternatePath(Astro.url.pathname, locale)` gives the same paths from the current URL.
 
-With the [middleware](#i18n-tinyastromiddleware-ssr-only), `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With a language switcher, do one of these:
+If you turn on detection in the [middleware](#i18n-tinyastromiddleware-ssr-only) with `detectLanguage: true`, also put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/ja/about`), and are not detected.
 
-- Pass `detectLanguage: false` to the middleware.
-- Put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). The URLs of the default locale then have the prefix too (`/ja/about`).
-
-A static build has no middleware and no detection.
+Without detection, the default, the language switcher works as it is. A static build has no middleware and no detection.
 
 ### With Astro's Built-in i18n
 

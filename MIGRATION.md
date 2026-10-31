@@ -37,6 +37,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | Astro static builds | `src/pages/[locale]/`, `@i18n-tiny/astro/integration` | `src/pages/[...locale]/`, `i18n.getStaticPaths()` | [Astro: static builds](#astro-static-builds) |
 | `@i18n-tiny/astro/integration` | Copied the default locale to the root | Removed | [Astro: static builds](#astro-static-builds) |
 | Astro middleware, standard routing | Rewrote the default locale to `/[defaultLocale]` | Serves `src/pages/[...locale]/` | [Astro: server rendering](#astro-server-rendering) |
+| Language detection of the middleware and the proxy | On by default | Off by default, `detectLanguage: true` turns it on | [Language detection](#language-detection) |
 | Middleware and proxy without detection | Used `fallbackLocale` | Uses `defaultLocale` | [Astro: server rendering](#astro-server-rendering), [Next.js: proxy](#nextjs-proxy) |
 | Astro `excludePaths` | Prefix match (`/api` matched `/apis`) | Whole path segments, each entry starts with `/` | [Astro: server rendering](#astro-server-rendering) |
 | `Astro.locals.locales` | Set in every routing mode | Removed | [Astro: server rendering](#astro-server-rendering) |
@@ -203,9 +204,23 @@ These changes apply to the `Link` of both Astro and Next.js.
 
 - `locale=""` is removed. Use `locale={false}` for the path without a locale.
 - A link for the default locale gets no prefix unless `prefixDefault` is true. In 1.x, `<Link href="/" locale="en">` was `/en` even for the default locale `en`; in 2.0 it is `/`.
-- With `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware or the proxy detects its language again, so a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. In 1.x, the link was `/en` and was served as it was. With a language switcher, either pass `detectLanguage: false` to the middleware or the proxy, or put `prefixDefault: true` in the [shared config](#one-config-for-everything), so that the URLs of the default locale have the prefix too (`/en`).
+- With detection and `prefixDefault: false`, a link to the default locale is detected again: see [Language detection](#language-detection).
 - `href` must start with `/`. A relative path such as `about` throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged, as in 1.x.
 - The query and the hash of `href` are kept, and the path has no trailing slash, except for `/`.
+
+## Language detection
+
+The Astro middleware and the Next.js proxy no longer detect the language by default: `detectLanguage` defaults to `false`, and a URL without a locale prefix is the default locale. In 1.x, it defaulted to `true`. To keep detecting the language of these URLs from `Accept-Language`, pass `detectLanguage: true`:
+
+```typescript
+// 1.x: detection by default
+export const proxy = create({ locales: ['en', 'ja'], defaultLocale: 'en' })
+
+// 2.0
+export const proxy = create({ ...config, detectLanguage: true })
+```
+
+With detection, also put `prefixDefault: true` in the [shared config](#one-config-for-everything). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix (see [Link](#link)), and the middleware or the proxy detects its language again, so a browser that prefers Japanese follows the link to `/` for English, the default locale, and is redirected back to `/ja`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/en`). In the rewrite mode, detection without `prefixDefault: true` is a type error and throws.
 
 ## Astro
 
@@ -413,7 +428,7 @@ export const onRequest = defineMiddleware(
   })
 )
 
-// 2.0
+// 2.0: no detection unless detectLanguage: true
 import { config } from './i18n.config'
 
 export const onRequest = defineMiddleware(create({ ...config }))
@@ -421,7 +436,7 @@ export const onRequest = defineMiddleware(create({ ...config }))
 
 Other changes of the middleware:
 
-- **Without detection, the default locale.** With `detectLanguage: false`, a URL without a locale prefix is the default locale, and `prefixDefault: true` redirects to `/[defaultLocale]`. In 1.x, both used `fallbackLocale`. `fallbackLocale` is now used only when detection finds no match. If you set `fallbackLocale` to another locale than `defaultLocale` with `detectLanguage: false`, the locale of those URLs and the redirect target change.
+- **Without detection, the default locale.** Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault: true` redirects to `/[defaultLocale]`. In 1.x, both used `fallbackLocale` with `detectLanguage: false`. `fallbackLocale` is now used only when detection finds no match. If you set `fallbackLocale` to another locale than `defaultLocale` with `detectLanguage: false`, the locale of those URLs and the redirect target change.
 - **`excludePaths` matches whole path segments.** `'/api'` matches `/api` and `/api/users`, but no longer `/apis` or `/api-docs`. An entry that does not start with `/` throws when `create()` runs. Write the entries without the `base`.
 - **`Astro.locals.locales` is removed.** Read the locales from `i18n.locales`.
 - **`prefixDefault` goes in the shared config**, which `define()` takes too: see [One config for everything](#one-config-for-everything).
@@ -430,7 +445,7 @@ Other changes of the middleware:
 
 ### Astro: rewrite mode
 
-With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Detection (`detectLanguage: true`, the default) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, the config is a type error and throws. Put `prefixDefault: true` in the shared config, or turn detection off with `detectLanguage: false`, where `prefixDefault` may be `false`.
+With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault` may be `false`. Detection (`detectLanguage: true`, the default of 1.x) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, the config is a type error and throws. Put `prefixDefault: true` in the shared config.
 
 In the rewrite mode, `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected.
 
@@ -496,6 +511,7 @@ export const onRequest = defineMiddleware(
   create({
     ...config,
     routing: 'rewrite',
+    detectLanguage: true,
     excludePaths: ['/api']
   })
 )
@@ -600,7 +616,7 @@ export const { getMessages, getTranslations } = server
 export { Link }
 ```
 
-The proxy takes the shared config. On Next.js 16, the file is `proxy.ts` with the export `proxy`; on Next.js 15, it is `middleware.ts` with the export `middleware`, as in 1.x. The 2.0 example turns detection off for its language buttons (see [Link](#link)):
+The proxy takes the shared config. On Next.js 16, the file is `proxy.ts` with the export `proxy`; on Next.js 15, it is `middleware.ts` with the export `middleware`, as in 1.x. The 2.0 example has no detection, the default (see [Language detection](#language-detection)):
 
 ```typescript
 // 1.x: proxy.ts (examples/next)
@@ -618,7 +634,7 @@ export const proxy = create({
 import { create } from '@i18n-tiny/next/proxy'
 import { config as i18nConfig } from './i18n.config'
 
-export const proxy = create({ ...i18nConfig, detectLanguage: false })
+export const proxy = create({ ...i18nConfig })
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
@@ -630,7 +646,7 @@ export const config = {
 import { create } from '@i18n-tiny/next/proxy'
 import { config as i18nConfig } from './i18n.config'
 
-export const middleware = create({ ...i18nConfig, detectLanguage: false })
+export const middleware = create({ ...i18nConfig })
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
@@ -692,11 +708,12 @@ const pathname = usePathname()
 </Link>
 ```
 
-`i18n.alternatePath(pathname, 'en')` gives the same path. The 2.0 example has no "Auto" button, which linked to `/` for the detection: its proxy has `detectLanguage: false`, so `/` is English, the default locale.
+`i18n.alternatePath(pathname, 'en')` gives the same path. The 2.0 example has no "Auto" button, which linked to `/` for the detection: its proxy has no detection, so `/` is English, the default locale.
 
 ### Next.js: proxy
 
-- **Without detection, the default locale.** With `detectLanguage: false`, a URL without a locale prefix is rewritten to `/[defaultLocale]`, and `prefixDefault: true` redirects to it. In 1.x, both used `fallbackLocale`. `fallbackLocale` is now used only when detection finds no match.
+- **Detection is off by default.** Pass `detectLanguage: true` to keep it: see [Language detection](#language-detection).
+- **Without detection, the default locale.** Without detection, a URL without a locale prefix is rewritten to `/[defaultLocale]`, and `prefixDefault: true` redirects to it. In 1.x, both used `fallbackLocale` with `detectLanguage: false`. `fallbackLocale` is now used only when detection finds no match.
 - **`prefixDefault` goes in the shared config**, which `define()` takes too: see [One config for everything](#one-config-for-everything).
 - **The config is checked** as `define()` checks it: see [The config](#the-config).
 
@@ -704,7 +721,7 @@ const pathname = usePathname()
 
 The proxy now passes the locale to the pages as the `x-locale` **request** header, so Server Components read it with `headers()`. In 1.x, it was set on the response, which Server Components did not see. An `x-locale` header sent by the client is replaced.
 
-As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`, and detection (the default) needs `prefixDefault: true`: without it, the config is a type error and throws. Put it in the shared config. `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected. With `detectLanguage: false`, `prefixDefault` may be `false`.
+As in Astro, `detectLanguage` and `prefixDefault` are now accepted with `routing: 'rewrite'`. Detection is off by default; with `detectLanguage: true`, which the example uses for its "Auto" button, it needs `prefixDefault: true`: without it, the config is a type error and throws. Put it in the shared config. `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
 
 ```typescript
 // 1.x: proxy.ts (rewrite mode)
@@ -725,7 +742,7 @@ export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefaul
 import { create } from '@i18n-tiny/next/proxy'
 import { config as i18nConfig } from './i18n.config'
 
-export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
+export const proxy = create({ ...i18nConfig, routing: 'rewrite', detectLanguage: true })
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
@@ -768,7 +785,7 @@ See [examples/next-ssr](./examples/next-ssr) for the whole app.
 
 [examples/react](./examples/react) needs no change. The changes are in the types and the checks:
 
-- `define()` checks the config: see [The config](#the-config).
+- The config of `define()` is checked by type: see [The config](#the-config).
 - The `locale` of the `Provider` is one of `locales`; any other value is a type error and throws. `useLocale()` returns one of `locales`.
 - `I18nProviderProps` is removed from `@i18n-tiny/react/internal`. Use `ProviderProps`, the same type: the props of the internal `I18nProvider`, with `locales` and `defaultLocale`. It is also exported from `@i18n-tiny/react`. It is not the type of the props of the `Provider` that `define()` returns: for those, use `ComponentProps<typeof i18n.Provider>`.
 - `DefineConfig` is removed: see [Config types](#config-types).

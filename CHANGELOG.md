@@ -45,6 +45,9 @@ for how to update from 1.x.
   `i18n.getStaticPaths()`: the default locale is built without a prefix.
 - The Astro middleware serves the default locale through
   `src/pages/[...locale]/` instead of rewriting it to `/[defaultLocale]`.
+- The Astro middleware and the Next.js proxy no longer detect the language
+  by default: `detectLanguage` defaults to `false`, in the standard routing
+  and in the rewrite mode. Pass `detectLanguage: true` to detect it.
 - Without language detection, the Astro middleware and the Next.js proxy use
   `defaultLocale`; `fallbackLocale` is used only when detection finds no
   match.

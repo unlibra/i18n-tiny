@@ -14,7 +14,7 @@ const STATIC_FILE_EXTENSIONS = /\.(ico|png|jpg|jpeg|gif|svg|webp|avif|css|js|mjs
 const REWRITE_NEEDS_PREFIX_DEFAULT =
   '[i18n] The language detection of the rewrite mode needs prefixDefault: true. ' +
   'A URL without a locale prefix is the detected locale, so the links of the default locale need its prefix. ' +
-  'Set prefixDefault: true in the config shared with define(), or detectLanguage: false.'
+  'Set prefixDefault: true in the config shared with define(), or leave out detectLanguage: true.'
 
 // Astro internal paths to always exclude
 const DEFAULT_EXCLUDE_PATHS = ['/_astro', '/_image']
@@ -70,7 +70,7 @@ export function createMiddleware (config: MiddlewareConfig, getBase: () => strin
 
   const isRewriteMode = config.routing === 'rewrite'
   const prefixDefault = config.prefixDefault ?? false
-  const detectLanguage = config.detectLanguage ?? true
+  const detectLanguage = config.detectLanguage ?? false
   if (isRewriteMode && detectLanguage && prefixDefault !== true) {
     throw new Error(REWRITE_NEEDS_PREFIX_DEFAULT)
   }

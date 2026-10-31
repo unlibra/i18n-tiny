@@ -11,7 +11,7 @@ A dependency-free, type-safe, minimal i18n library for Next.js, with a `define()
 Simply prepare translation files and call the define function—usable in both Server and Client Components immediately.
 All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
 With the `app/[locale]` root layout, `generateStaticParams` is defined once there, and Next.js applies it to every page below.
-Routing, prefixes, and automatic language detection are all handled by a single `create()` call in the Next.js Proxy (formerly Middleware).
+Routing, prefixes, and optional language detection are all handled by a single `create()` call in the Next.js Proxy (formerly Middleware).
 
 ## Features
 
@@ -389,7 +389,7 @@ Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequ
 | `defaultLocale`  | one of `locales`    | -               | The locale of URLs without a locale prefix                                 |
 | `fallbackLocale` | one of `locales`    | `defaultLocale` | Used when the detection finds no match                                     |
 | `prefixDefault`  | `boolean`           | `false`         | Whether to prefix default locale in URLs. Put it in the config shared with `define()`. `true` for `routing: 'rewrite'` with detection |
-| `detectLanguage` | `boolean`           | `true`          | Whether to detect the language of URLs without a prefix from Accept-Language |
+| `detectLanguage` | `boolean`           | `false`         | Whether to detect the language of URLs without a prefix from Accept-Language |
 | `routing`        | `'rewrite'`         | -               | SSR rewrite mode                                                           |
 
 **Routing Behavior Matrix:**
@@ -410,14 +410,13 @@ Without the detection, a URL without a prefix is always the default locale; `fal
 ```typescript
 import { config as i18nConfig } from '@/i18n.config'
 
-// Default: detect language, redirect non-default, rewrite default
+// Default: no detection, URLs without a prefix are the default locale
 export const proxy = create({ ...i18nConfig })
 
-// No detection: URLs without a prefix are the default locale
-export const proxy = create({ ...i18nConfig, detectLanguage: false })
+// Detect language, redirect non-default, rewrite default
+export const proxy = create({ ...i18nConfig, detectLanguage: true })
 
-// SSR rewrite mode (locale in the x-locale request header). With detection,
-// the config has prefixDefault: true, see below
+// SSR rewrite mode (locale in the x-locale request header)
 export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
 ```
 
@@ -436,9 +435,9 @@ export const proxy = create({ ...config })
 
 #### Rewrite Mode
 
-In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale to the pages in the `x-locale` request header. For URLs without a prefix, the locale is detected from Accept-Language, or is the default locale with `detectLanguage: false`. An `x-locale` header sent by the client is replaced, and the other request headers, such as cookies, are passed on.
+In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale to the pages in the `x-locale` request header. For URLs without a prefix, the locale is the default locale, or with `detectLanguage: true` is detected from Accept-Language. An `x-locale` header sent by the client is replaced, and the other request headers, such as cookies, are passed on.
 
-With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the proxy share: with detection, the rewrite mode without it is a type error and throws. A URL without a prefix is still served, not redirected. With `detectLanguage: false`, `prefixDefault` may be `false`.
+With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the proxy share: with detection, the rewrite mode without it is a type error and throws. A URL without a prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
 
 ```typescript
 // i18n.config.ts
@@ -448,7 +447,7 @@ export const config = { locales: ['en', 'ja'], defaultLocale: 'en', prefixDefaul
 export const i18n = define({ ...config, messages: { en, ja } })
 
 // proxy.ts
-export const proxy = create({ ...config, routing: 'rewrite' })
+export const proxy = create({ ...config, routing: 'rewrite', detectLanguage: true })
 ```
 
 Put routes directly under `app/`, without `app/[locale]`, and read the locale in Server Components:
@@ -468,7 +467,7 @@ See [`examples/next-ssr`](../../examples/next-ssr) for a complete example.
 
 #### Language detection and caches
 
-A response that depends on the detection, such as the redirect of `/about` to `/ja/about` for a Japanese browser, gets `Vary: Accept-Language` from the proxy. Next.js keeps it on redirects, but sets its own `Vary` header on the pages it renders, so a page served without a prefix (the default locale, or any locale in rewrite mode) does not carry it. With the detection, do not let a shared cache (a CDN) store the pages without a locale prefix, or make it key them by `Accept-Language`; or use `detectLanguage: false`.
+A response that depends on the detection, such as the redirect of `/about` to `/ja/about` for a Japanese browser, gets `Vary: Accept-Language` from the proxy. Next.js keeps it on redirects, but sets its own `Vary` header on the pages it renders, so a page served without a prefix (the default locale, or any locale in rewrite mode) does not carry it. With the detection, do not let a shared cache (a CDN) store the pages without a locale prefix, or make it key them by `Accept-Language`; or leave the detection off.
 
 #### `ProxyConfig` (type)
 
@@ -591,10 +590,9 @@ export function LanguageSwitcher() {
 }
 ```
 
-With `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the proxy detects its language again, so a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`. With a language switcher, do one of these:
+If you turn on detection in the proxy with `detectLanguage: true`, also put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the proxy detects its language again, so a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/en/about`), and are not detected.
 
-- Pass `detectLanguage: false` to the proxy.
-- Put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). The URLs of the default locale then have the prefix too (`/en/about`).
+Without detection, the default, the language switcher works as it is.
 
 ## Examples
 
