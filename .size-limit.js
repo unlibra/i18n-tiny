@@ -1,5 +1,6 @@
-// Keeps the "under 1KB" claim in the README and the docs true: CI fails when
-// the browser bundle of a package grows past 1KB, minified and gzipped.
+// Keeps the browser bundle small: CI fails when the browser bundle of define()
+// grows past 2KB, minified and gzipped, the size the READMEs give. Only the
+// entry of define() is measured, not the Link of @i18n-tiny/next/router.
 // Framework packages are left out, as apps already ship them.
 export default [
   {
@@ -8,7 +9,7 @@ export default [
     import: '{ define }',
     ignore: ['react'],
     gzip: true,
-    limit: '1 kB'
+    limit: '2 kB'
   },
   {
     name: '@i18n-tiny/next (client)',
@@ -16,6 +17,6 @@ export default [
     import: '{ define }',
     ignore: ['react', 'next'],
     gzip: true,
-    limit: '1 kB'
+    limit: '2 kB'
   }
 ]

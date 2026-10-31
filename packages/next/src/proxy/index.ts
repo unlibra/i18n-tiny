@@ -6,15 +6,18 @@
  * @example
  * // proxy.ts (Next.js 16+)
  * import { create } from '@i18n-tiny/next/proxy'
- * import { i18n } from './i18n'
+ * import { config as i18nConfig } from './i18n.config'
  *
- * export const proxy = create(i18n)
+ * export const proxy = create({ ...i18nConfig })
  * export const config = { matcher: ['/((?!api|_next|.*\\..*).*)'] }
  */
 
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server.js'
+import type { NextRequest } from 'next/server.js'
 import { detectLocale } from '@i18n-tiny/core/middleware'
+import { pathLocale } from '@i18n-tiny/core/router'
+import { validateConfig } from '@i18n-tiny/core/internal'
+import type { ConfigCheck } from '@i18n-tiny/core/internal'
 
 // Re-export middleware utilities from @i18n-tiny/core/middleware
 export { detectLocale } from '@i18n-tiny/core/middleware'
@@ -24,184 +27,212 @@ export { detectLocale } from '@i18n-tiny/core/middleware'
  */
 interface BaseConfig {
   /** Array of supported locales (e.g., ['en', 'ja']) */
-  locales: readonly string[]
-  /** Default locale: decides whether a locale is served without a prefix (rewrite) or redirected */
-  defaultLocale: string
+  readonly locales: readonly string[]
+  /** The locale of URLs without a locale prefix */
+  readonly defaultLocale: string
   /**
-   * Locale used when detection finds no match or detectLanguage is false
+   * Locale used when language detection finds no match
    * @default defaultLocale
    */
-  fallbackLocale?: string
-}
-
-/**
- * Standard routing configuration using prefixDefault and detectLanguage.
- * The behavior applies to every URL without a locale prefix, not only /.
- *
- * | prefixDefault | detectLanguage | Behavior |
- * |---------------|----------------|----------|
- * | false | false | / serves fallbackLocale, no detection |
- * | false | true | / detects, redirects non-default, rewrites default |
- * | true | false | / redirects to /[fallbackLocale] |
- * | true | true | / detects and redirects to detected locale |
- */
-interface StandardRoutingConfig extends BaseConfig {
-  routing?: never
+  readonly fallbackLocale?: string
   /**
-   * Whether to prefix the default locale in URLs
-   * - true: / redirects to /[detected locale], or to /[fallbackLocale] without detection
-   * - false: / serves the default/detected locale without prefix
-   * @default false
-   */
-  prefixDefault?: boolean
-  /**
-   * Whether to detect language from Accept-Language header
-   * - true: Auto-detect and redirect/rewrite based on browser preference
-   * - false: Use fallbackLocale without detection
+   * Whether to detect the language of a URL without a locale prefix from the
+   * Accept-Language header
+   * - true: detect, and use fallbackLocale when nothing matches
+   * - false: a URL without a locale prefix is the default locale
    * @default true
    */
-  detectLanguage?: boolean
+  readonly detectLanguage?: boolean
 }
 
 /**
- * SSR rewrite routing configuration
- * Mutually exclusive with prefixDefault and detectLanguage
+ * Standard routing: the pages are under app/[locale]/, and URLs of the
+ * default locale have no prefix unless prefixDefault is true.
+ *
+ * | prefixDefault | detectLanguage | A URL without a locale prefix |
+ * |---------------|----------------|-------------------------------|
+ * | false | false | Rewritten to /[defaultLocale] |
+ * | false | true | Detects: redirects to another locale, or is rewritten to /[defaultLocale] |
+ * | true | false | Redirects to /[defaultLocale] |
+ * | true | true | Detects and redirects to the detected locale |
+ */
+interface StandardRoutingConfig extends BaseConfig {
+  readonly routing?: never
+  /**
+   * Whether URLs of the default locale also carry the locale prefix. Put it
+   * in the config shared with define(): the links read it from there
+   * @default false
+   */
+  readonly prefixDefault?: boolean
+}
+
+/**
+ * SSR rewrite routing: the pages are not under a locale folder. The locale
+ * is passed to the pages in the x-locale request header, and /ja/about is
+ * rewritten to /about. A URL without a locale prefix is the detected
+ * locale, or the default locale with detectLanguage: false.
+ *
+ * With the language detection, a URL without a locale prefix is not the
+ * default locale, so the links of the default locale need its prefix:
+ * prefixDefault must be true, in this config and in the one of define().
  */
 interface RewriteRoutingConfig extends BaseConfig {
+  readonly routing: 'rewrite'
   /**
-   * SSR rewrite mode: stores locale in x-locale header, rewrites to clean URLs
-   * - /ja/about → stores 'ja' in x-locale header, rewrites to /about
-   * - / → detects from Accept-Language, stores in x-locale header
+   * Whether the links of the default locale carry the locale prefix. Must
+   * be true unless detectLanguage is false. A URL without a locale prefix
+   * is served in the rewrite mode either way.
+   * @default false
    */
-  routing: 'rewrite'
-  prefixDefault?: never
-  detectLanguage?: never
+  readonly prefixDefault?: boolean
 }
 
 /**
  * Proxy configuration
- * Either use prefixDefault + detectLanguage OR routing: 'rewrite'
+ * Either the standard routing with prefixDefault, or routing: 'rewrite'
  */
 export type ProxyConfig = StandardRoutingConfig | RewriteRoutingConfig
+
+// The language detection of the rewrite mode needs prefixDefault: true. A
+// detectLanguage or a prefixDefault typed as boolean may break it, and fails.
+type RewriteCheck<C> = C extends { readonly routing: 'rewrite' }
+  ? C extends { readonly detectLanguage: false }
+    ? unknown
+    : C extends { readonly prefixDefault: true }
+      ? unknown
+      : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
+  : unknown
+
+// The type checks of the proxy config: those of define(), then those of the routing
+type ProxyConfigCheck<C extends ProxyConfig> = unknown extends ConfigCheck<C> ? RewriteCheck<C> : ConfigCheck<C>
+
+const REWRITE_NEEDS_PREFIX_DEFAULT =
+  '[i18n] The language detection of the rewrite mode needs prefixDefault: true. ' +
+  'A URL without a locale prefix is the detected locale, so the links of the default locale need its prefix. ' +
+  'Set prefixDefault: true in the config shared with define(), or detectLanguage: false.'
+
+/** The request header that passes the locale to the pages in the rewrite mode */
+const LOCALE_HEADER = 'x-locale'
+
+// "//host" and "/\host" lead to another host
+function startsWithAnotherHost (path: string): boolean {
+  return path.startsWith('//') || path.startsWith('/\\')
+}
+
+// The headers of the request, with the locale set, or removed when it is
+// undefined: an x-locale header sent by the client is never passed on
+function requestHeaders (request: NextRequest, locale: string | undefined): { request: { headers: Headers } } {
+  const headers = new Headers(request.headers)
+  if (locale === undefined) {
+    headers.delete(LOCALE_HEADER)
+  } else {
+    headers.set(LOCALE_HEADER, locale)
+  }
+  return { request: { headers } }
+}
+
+// Adds Accept-Language to the Vary header of a response that depends on it
+function varyOnAcceptLanguage (response: NextResponse): NextResponse {
+  const vary = response.headers.get('Vary')
+  if (vary !== null && vary.split(',').some(name => ['*', 'accept-language'].includes(name.trim().toLowerCase()))) {
+    return response
+  }
+  response.headers.set('Vary', vary === null || vary.trim() === '' ? 'Accept-Language' : `${vary}, Accept-Language`)
+  return response
+}
 
 /**
  * Creates a Next.js proxy (middleware) handler for i18n routing
  *
+ * The config is checked as define() checks it, and the rewrite mode with the
+ * language detection throws without prefixDefault: true. A pathname that
+ * starts with "//" or "/\", also once its locale prefix is removed, gets no
+ * i18n handling. Responses that depend on the language detection get
+ * `Vary: Accept-Language`.
+ *
  * @example
  * ```typescript
- * // Default: / detects language, redirects non-default, rewrites default
- * export const proxy = create({
- *   locales: ['en', 'ja'],
- *   defaultLocale: 'en'
- * })
+ * import { config as i18nConfig } from './i18n.config'
  *
- * // No detection, / serves fallbackLocale
- * export const proxy = create({
- *   locales: ['en', 'ja'],
- *   defaultLocale: 'en',
- *   detectLanguage: false
- * })
+ * // Detects the language of URLs without a locale prefix: redirects to
+ * // another locale, or serves the default locale
+ * export const proxy = create({ ...i18nConfig })
  *
- * // Always prefix default locale
- * export const proxy = create({
- *   locales: ['en', 'ja'],
- *   defaultLocale: 'en',
- *   prefixDefault: true
- * })
+ * // No detection: URLs without a locale prefix are the default locale
+ * export const proxy = create({ ...i18nConfig, detectLanguage: false })
  *
- * // SSR with rewrite (locale in x-locale header)
- * export const proxy = create({
- *   locales: ['en', 'ja'],
- *   defaultLocale: 'en',
- *   routing: 'rewrite'
- * })
+ * // Always prefix the default locale: prefixDefault: true goes in the
+ * // config shared with define(), whose Link and URL functions read it
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * export const proxy = create({ ...i18nConfig })
+ *
+ * // SSR with rewrite (clean URLs, locale in the x-locale request header).
+ * // With the language detection, the config has prefixDefault: true:
+ * // { locales: ['ja', 'en'], defaultLocale: 'ja', prefixDefault: true }
+ * export const proxy = create({ ...i18nConfig, routing: 'rewrite' })
  * ```
  */
-export function create(config: ProxyConfig) {
-  const {
-    locales,
-    defaultLocale,
-    fallbackLocale = defaultLocale
-  } = config
+export function create<const C extends ProxyConfig> (config: C & ProxyConfigCheck<C>) {
+  const { locales, defaultLocale, fallbackLocale = defaultLocale } = config as ProxyConfig
+  validateConfig({ locales, defaultLocale, fallbackLocale })
 
-  // Determine routing mode
-  const isRewriteMode = 'routing' in config && config.routing === 'rewrite'
-  const prefixDefault = isRewriteMode ? false : (config.prefixDefault ?? false)
-  const detectLanguage = isRewriteMode ? true : (config.detectLanguage ?? true)
+  const isRewriteMode = config.routing === 'rewrite'
+  const prefixDefault = config.prefixDefault ?? false
+  const detectLanguage = config.detectLanguage ?? true
+  if (isRewriteMode && detectLanguage && prefixDefault !== true) {
+    throw new Error(REWRITE_NEEDS_PREFIX_DEFAULT)
+  }
+  const urlConfig = { locales, defaultLocale, prefixDefault }
 
-  return function middleware(request: NextRequest) {
+  return function proxy (request: NextRequest): NextResponse {
     const { pathname } = request.nextUrl
 
-    // Find locale prefix in URL
-    const urlLocale = locales.find(
-      (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-    )
+    // A pathname that leads to another host, also once its locale prefix is
+    // removed, gets no i18n handling
+    const urlLocale = startsWithAnotherHost(pathname) ? undefined : pathLocale(pathname, urlConfig)
+    const rest = urlLocale === undefined ? pathname : (pathname.slice(urlLocale.length + 1) || '/')
+    if (startsWithAnotherHost(rest)) {
+      return isRewriteMode ? NextResponse.next(requestHeaders(request, undefined)) : NextResponse.next()
+    }
+
+    const detect = () => detectLocale(request.headers.get('accept-language'), locales) ?? fallbackLocale
+    const withLocale = (locale: string) => {
+      const url = request.nextUrl.clone()
+      url.pathname = pathname === '/' ? `/${locale}` : `/${locale}${pathname}`
+      return url
+    }
 
     // SSR rewrite mode
     if (isRewriteMode) {
-      if (urlLocale) {
-        // /ja/about → store 'ja' in header, rewrite to /about
-        const cleanPathname = pathname === `/${urlLocale}`
-          ? '/'
-          : pathname.slice(`/${urlLocale}`.length)
+      if (urlLocale !== undefined) {
+        // /ja/about → pass 'ja' in the x-locale header, rewrite to /about
         const url = request.nextUrl.clone()
-        url.pathname = cleanPathname
-        const response = NextResponse.rewrite(url)
-        response.headers.set('x-locale', urlLocale)
-        return response
-      } else {
-        // / → detect locale, store in header, no redirect
-        const acceptLanguage = request.headers.get('accept-language')
-        const detectedLocale = detectLocale(acceptLanguage, locales) || fallbackLocale
-        const response = NextResponse.next()
-        response.headers.set('x-locale', detectedLocale)
-        return response
+        url.pathname = rest
+        return NextResponse.rewrite(url, requestHeaders(request, urlLocale))
       }
+      if (!detectLanguage) {
+        return NextResponse.next(requestHeaders(request, defaultLocale))
+      }
+      // / → detect the locale and pass it in the x-locale header, no redirect
+      return varyOnAcceptLanguage(NextResponse.next(requestHeaders(request, detect())))
     }
 
-    // Standard routing modes
-    if (urlLocale) {
-      // URL has locale prefix, serve as-is
+    // Standard routing: a URL with a locale prefix is served as it is
+    if (urlLocale !== undefined) {
       return NextResponse.next()
     }
 
-    // URL has no locale prefix
-    if (detectLanguage) {
-      // Detect from Accept-Language
-      const acceptLanguage = request.headers.get('accept-language')
-      const detectedLocale = detectLocale(acceptLanguage, locales) || fallbackLocale
-
-      const url = request.nextUrl.clone()
-      url.pathname = pathname === '/'
-        ? `/${detectedLocale}`
-        : `/${detectedLocale}${pathname}`
-
-      if (prefixDefault) {
-        // Always redirect to prefixed URL
-        return NextResponse.redirect(url)
-      } else {
-        // Redirect non-default, rewrite default
-        if (detectedLocale !== defaultLocale) {
-          return NextResponse.redirect(url)
-        } else {
-          return NextResponse.rewrite(url)
-        }
-      }
-    } else {
-      // No detection
-      const url = request.nextUrl.clone()
-      url.pathname = pathname === '/'
-        ? `/${fallbackLocale}`
-        : `/${fallbackLocale}${pathname}`
-
-      if (prefixDefault) {
-        // Redirect to default locale prefix
-        return NextResponse.redirect(url)
-      } else {
-        // Rewrite to fallback locale
-        return NextResponse.rewrite(url)
-      }
+    if (!detectLanguage) {
+      return prefixDefault
+        ? NextResponse.redirect(withLocale(defaultLocale))
+        : NextResponse.rewrite(withLocale(defaultLocale))
     }
+
+    const detectedLocale = detect()
+    if (prefixDefault || detectedLocale !== defaultLocale) {
+      return varyOnAcceptLanguage(NextResponse.redirect(withLocale(detectedLocale)))
+    }
+    // The default locale is served without a prefix by app/[locale]
+    return varyOnAcceptLanguage(NextResponse.rewrite(withLocale(defaultLocale)))
   }
 }
-

@@ -9,16 +9,20 @@ import {
   useLocales as baseUseLocales,
   useDefaultLocale as baseUseDefaultLocale
 } from './components'
-import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import { validateConfig } from '@i18n-tiny/core/internal'
 
 // Re-export types for Provider
 export type { ProviderProps } from './components'
 
-// Re-export DefineConfig for users who want to type their config
-export type { DefineConfig } from '@i18n-tiny/core'
+export type { I18nConfig } from '@i18n-tiny/core'
 
 /**
  * Define i18n instance with automatic type inference
+ *
+ * `locales` and `defaultLocale` are required, and `messages` must have the
+ * messages of each locale. An invalid config throws, and with `as const` or
+ * an inline config it is a type error too.
  *
  * @example
  * import { define } from '@i18n-tiny/react'
@@ -28,14 +32,14 @@ export type { DefineConfig } from '@i18n-tiny/core'
  * export const messages = { ja: jaMessages, en: enMessages }
  *
  * export const i18n = define({
- *   locales: ['ja', 'en'] as const,
+ *   locales: ['ja', 'en'],
  *   defaultLocale: 'ja',
  *   messages
  * })
  *
  * // App.tsx
  * function App() {
- *   const [locale, setLocale] = useState<keyof typeof messages>('ja')
+ *   const [locale, setLocale] = useState(i18n.defaultLocale)
  *
  *   return (
  *     <i18n.Provider locale={locale} messages={messages[locale]}>
@@ -54,26 +58,50 @@ export type { DefineConfig } from '@i18n-tiny/core'
  * }
  */
 export function define<
-  L extends readonly string[],
-  M extends Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
-  Msgs extends Record<L[number], M>
-> (config: { locales: L; defaultLocale: L[number]; messages: Msgs }) {
-  const { locales, defaultLocale } = config
+  const L extends readonly string[],
+  Msgs extends Record<string, object>
+> (
+  config: {
+    /** Supported locales */
+    readonly locales: L
+    /** The default locale */
+    readonly defaultLocale: NoInfer<L[number]>
+    /** The messages of each locale */
+    readonly messages: Msgs
+  } & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
+) {
+  type Locale = L[number]
+  const { locales, defaultLocale, messages } = config
+  validateConfig({ locales, defaultLocale, messages })
 
   // Type aliases for automatic inference
-  type MessageType = Msgs[L[0]]
+  type MessageType = Msgs[L[0] & keyof Msgs]
   type Namespace = NamespaceKeys<MessageType>
 
-  // Provider wrapper
+  function isLocale (value: unknown): value is Locale {
+    return typeof value === 'string' && locales.includes(value)
+  }
+
+  /**
+   * Provider of the locale and its messages. A locale that is not one of
+   * `locales` throws.
+   */
   function Provider ({ locale, messages: msgs, children }: {
-    locale: string
+    locale: Locale
     messages: MessageType
     children: ReactNode
   }) {
+    if (!isLocale(locale)) {
+      throw new Error(
+        `[i18n] Unknown locale ${JSON.stringify(locale)}. ` +
+        `Expected one of ${locales.map(l => JSON.stringify(l)).join(', ')}.`
+      )
+    }
     return (
       <BaseProvider
         locale={locale}
-        messages={msgs}
+        // Messages typed with an interface have no index signature
+        messages={msgs as Record<string, unknown>}
         defaultLocale={defaultLocale}
         locales={locales}
       >
@@ -92,16 +120,16 @@ export function define<
     return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 
-  function useLocale (): string {
-    return baseUseLocale()
+  function useLocale (): Locale {
+    return baseUseLocale() as Locale
   }
 
   function useLocales (): L {
     return baseUseLocales() as L
   }
 
-  function useDefaultLocale (): L[number] {
-    return baseUseDefaultLocale() as L[number]
+  function useDefaultLocale (): Locale {
+    return baseUseDefaultLocale() as Locale
   }
 
   return {
@@ -111,7 +139,8 @@ export function define<
     useLocale,
     useLocales,
     useDefaultLocale,
+    isLocale,
     locales,
-    defaultLocale
+    defaultLocale: defaultLocale as Locale
   }
 }

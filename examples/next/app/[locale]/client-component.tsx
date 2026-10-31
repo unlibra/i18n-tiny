@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations, Link, useLocale, useMessages } from '@/i18n'
+import { usePathname } from 'next/navigation'
+import { useTranslations, Link, useLocale, useMessages, usePaths } from '@/i18n'
 
 export default function ClientComponent() {
   const t = useTranslations()
   const locale = useLocale()
   const messages = useMessages()
+  const pathname = usePathname()
+  const { alternatePath } = usePaths()
   const [count, setCount] = useState(0)
 
   const buttonStyle = (isActive: boolean) => ({
@@ -46,16 +49,16 @@ export default function ClientComponent() {
         </Link>
       </div>
 
-      {/* Language Buttons */}
+      {/* Language Buttons: this page in each locale */}
       <div style={{ marginTop: '2rem' }}>
         {/* Auto-detect: goes to / which redirects based on browser language */}
-        <Link href="/" locale='' style={buttonStyle(false)}>
+        <Link href="/" locale={false} style={buttonStyle(false)}>
           Auto
         </Link>
-        <Link href="/" locale="en" style={buttonStyle(locale === 'en')}>
+        <Link href={alternatePath(pathname, 'en')} locale={false} style={buttonStyle(locale === 'en')}>
           English
         </Link>
-        <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
+        <Link href={alternatePath(pathname, 'ja')} locale={false} style={buttonStyle(locale === 'ja')}>
           日本語
         </Link>
       </div>

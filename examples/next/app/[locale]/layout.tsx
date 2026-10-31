@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
-import { Link, Provider, getMessages, locales } from '@/i18n'
+import { notFound } from 'next/navigation'
+import { Link, Provider, getMessages, isLocale, locales } from '@/i18n'
 import { ReactNode } from 'react'
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params
+  if (!isLocale(locale)) notFound()
   const messages = await getMessages(locale)
 
   return {
@@ -27,6 +29,8 @@ export default async function Layout({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+  // [locale] also receives paths such as /favicon.ico: only the locales are pages
+  if (!isLocale(locale)) notFound()
   const messages = await getMessages(locale)
 
   return (

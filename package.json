@@ -15,7 +15,9 @@
     "type-check": "pnpm -r type-check",
     "lint": "eslint packages/*/src",
     "lint:fix": "eslint packages/*/src --fix",
-    "test": "pnpm -r test",
+    "aliases": "node scripts/generate-aliases.mjs",
+    "test": "pnpm -r test && pnpm test:scripts",
+    "test:scripts": "node --test scripts/test/*.test.mjs",
     "check:packages": "node scripts/check-packages.mjs",
     "size": "size-limit",
     "test:watch": "pnpm --filter @i18n-tiny/next test:watch"

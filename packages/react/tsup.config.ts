@@ -2,9 +2,11 @@ import { defineConfig } from 'tsup'
 
 export default defineConfig({
   entry: ['src/index.tsx', 'src/components.tsx'],
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
-  splitting: false,
+  // The entry points share one chunk with the React context, instead of a
+  // copy each: a Provider from one entry is then seen by the hooks of the other.
+  splitting: true,
   sourcemap: true,
   clean: true,
   external: ['react'],

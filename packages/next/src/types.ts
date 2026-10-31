@@ -1,2 +1,2 @@
-// Re-export DefineConfig for convenience (NestedKeys is internal only)
-export type { DefineConfig } from '@i18n-tiny/core'
+// The config type, for users who want to type their config
+export type { I18nConfig } from '@i18n-tiny/core'

@@ -4,13 +4,15 @@
 [![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/react.svg)](https://www.npmjs.com/package/@i18n-tiny/react)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/react/introduction)
 
-Type-safe i18n library for React in under 1KB, with automatic type inference and zero dependencies.
+Type-safe i18n library for React in under 2KB, with automatic type inference and zero dependencies.
 
 ## Installation
 
 ```bash
 npm install @i18n-tiny/react
 ```
+
+Requires React 18 or 19, and Node.js 22.12 or later when it runs on Node.js (for example in server rendering or tests). The package ships ES modules only. The types need TypeScript 5.9 or later.
 
 ## Quick Start
 
@@ -43,7 +45,7 @@ export const defaultLocale: Locale = 'en'
 export const messages = { en: enMessages, ja: jaMessages }
 
 // define() gives you everything
-export const { Provider, useMessages, useTranslations, useLocale } = define({
+export const { Provider, useMessages, useTranslations, useLocale, isLocale } = define({
   locales,
   defaultLocale,
   messages
@@ -100,10 +102,22 @@ Creates an i18n instance with type-safe hooks.
 
 ```typescript
 const { Provider, useMessages, useTranslations, useLocale } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en: {...}, ja: {...} }
 })
+```
+
+`locales` and `defaultLocale` are required, and `messages` must have the messages of each locale. `define()` throws when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors too.
+
+To write the locales in one place, keep them in an object of their own and spread it:
+
+```typescript
+// src/i18n.config.ts
+export const config = { locales: ['en', 'ja'], defaultLocale: 'en' } as const
+
+// src/i18n.ts
+export const i18n = define({ ...config, messages })
 ```
 
 Returns:
@@ -111,11 +125,12 @@ Returns:
 - `Provider` - React context provider component
 - `useMessages()` - Hook to access raw message object
 - `useTranslations(namespace?)` - Hook to get translation function
-- `useLocale()` - Hook to get current locale (`string`)
+- `useLocale()` - Hook to get current locale, typed as one of `locales`
 - `useLocales()` - Hook to get the `locales` array, with its tuple type
 - `useDefaultLocale()` - Hook to get the default locale, typed as one of `locales`
+- `isLocale(value)` - Whether a value is one of `locales`
 - `locales` - Array of supported locales
-- `defaultLocale` - Default locale string
+- `defaultLocale` - Default locale
 
 ### `Provider`
 
@@ -129,9 +144,18 @@ Wraps your app to provide i18n context.
 
 Props:
 
-- `locale: string` - Current locale
+- `locale` - Current locale, one of `locales`. Any other value is a type error and throws
 - `messages: Messages` - Message dictionary for current locale. `Messages` is the type of the first locale's messages; the other locales must have the same shape
 - `children: ReactNode` - Child components
+
+### `isLocale(value)`
+
+Narrows a value, such as a URL parameter or a saved setting, to one of `locales`:
+
+```tsx
+const saved = localStorage.getItem('locale')
+const [locale, setLocale] = useState(isLocale(saved) ? saved : defaultLocale)
+```
 
 ### `useMessages()`
 
@@ -159,10 +183,10 @@ The namespace must point to a nested object, such as `common`. With a namespace,
 
 ### `useLocale()`
 
-Returns the current locale string.
+Returns the current locale.
 
 ```tsx
-const locale = useLocale() // "en" (typed as string)
+const locale = useLocale() // "en" (typed as 'en' | 'ja')
 ```
 
 ## TypeScript

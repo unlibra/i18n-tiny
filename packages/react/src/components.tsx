@@ -9,8 +9,12 @@ interface I18nContextValue {
   messages: Record<string, unknown>
   defaultLocale: string
   locales: readonly string[]
+  prefixDefault: boolean
 }
 
+// The only context of the package: both entry points, the main one and
+// ./internal, use this module, so a Provider from one is seen by the hooks of
+// the other.
 const I18nContext = createContext<I18nContextValue | undefined>(undefined)
 
 function useI18n (hookName: string = 'useI18n') {
@@ -34,19 +38,21 @@ export interface ProviderProps {
   messages: Record<string, unknown>
   defaultLocale: string
   locales: readonly string[]
+  /**
+   * Whether URLs of the default locale also carry the locale prefix, for
+   * the URL functions of @i18n-tiny/next
+   * @default false
+   */
+  prefixDefault?: boolean
   children: ReactNode
 }
-
-/**
- * @deprecated Use ProviderProps instead
- */
-export type I18nProviderProps = ProviderProps
 
 export function I18nProvider ({
   locale,
   messages,
   defaultLocale,
   locales,
+  prefixDefault = false,
   children
 }: ProviderProps) {
   const value = useMemo(
@@ -54,9 +60,10 @@ export function I18nProvider ({
       locale,
       messages,
       defaultLocale,
-      locales
+      locales,
+      prefixDefault
     }),
-    [locale, messages, defaultLocale, locales]
+    [locale, messages, defaultLocale, locales, prefixDefault]
   )
 
   return (
@@ -91,4 +98,10 @@ export function useLocales (): readonly string[] {
 
 export function useDefaultLocale (): string {
   return useI18n('useDefaultLocale').defaultLocale
+}
+
+/** The locale settings of the Provider, for the URL functions of @i18n-tiny/next */
+export function useLocaleConfig (): { locales: readonly string[], defaultLocale: string, prefixDefault: boolean } {
+  const { locales, defaultLocale, prefixDefault } = useI18n('useLocaleConfig')
+  return useMemo(() => ({ locales, defaultLocale, prefixDefault }), [locales, defaultLocale, prefixDefault])
 }

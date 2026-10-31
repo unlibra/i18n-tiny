@@ -1,6 +1,9 @@
 ---
 // Alias of @i18n-tiny/astro/router/Link.astro: renders it unchanged.
-import Link from '@i18n-tiny/astro/router/Link.astro'
+import type { ComponentProps } from 'astro/types'
+import Component from '@i18n-tiny/astro/router/Link.astro'
+
+type Props = ComponentProps<typeof Component>
 ---
 
-<Link {...Astro.props}><slot /></Link>
+<Component {...Astro.props}><slot /></Component>

@@ -1,6 +1,6 @@
 {
   "name": "astro-i18n-tiny",
-  "version": "1.3.0",
+  "version": "2.0.0-beta.1",
   "type": "module",
   "description": "Alias package for @i18n-tiny/astro - Type-safe i18n for Astro that ships no client JavaScript",
   "keywords": [
@@ -19,58 +19,49 @@
     "directory": "packages/aliases/astro-i18n-tiny"
   },
   "homepage": "https://docs.unlibra.com/i18n-tiny/astro/introduction",
-  "main": "./index.cjs",
+  "main": "./index.js",
   "types": "./index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./index.d.ts",
-        "default": "./index.js"
-      },
-      "require": {
-        "types": "./index.d.cts",
-        "default": "./index.cjs"
-      }
+      "types": "./index.d.ts",
+      "default": "./index.js"
     },
     "./middleware": {
-      "import": {
-        "types": "./middleware.d.ts",
-        "default": "./middleware.js"
-      },
-      "require": {
-        "types": "./middleware.d.cts",
-        "default": "./middleware.cjs"
-      }
-    },
-    "./integration": {
-      "import": {
-        "types": "./integration.d.ts",
-        "default": "./integration.js"
-      },
-      "require": {
-        "types": "./integration.d.cts",
-        "default": "./integration.cjs"
-      }
+      "types": "./middleware.d.ts",
+      "default": "./middleware.js"
     },
     "./router": {
-      "import": {
-        "types": "./router.d.ts",
-        "default": "./router.js"
-      },
-      "require": {
-        "types": "./router.d.cts",
-        "default": "./router.cjs"
-      }
+      "types": "./router.d.ts",
+      "default": "./router.js"
     },
-    "./router/Link.astro": "./router/Link.astro",
+    "./internal": {
+      "types": "./internal.d.ts",
+      "default": "./internal.js"
+    },
+    "./router/*": "./router/*",
     "./locals": {
       "types": "./locals.d.ts"
     }
   },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "internal.d.ts",
+    "internal.js",
+    "locals.d.ts",
+    "middleware.d.ts",
+    "middleware.js",
+    "router",
+    "router.d.ts",
+    "router.js"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
   "dependencies": {
-    "@i18n-tiny/astro": "1.3.0"
+    "@i18n-tiny/astro": "2.0.0-beta.1"
   },
   "peerDependencies": {
-    "astro": "^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0"
+    "astro": "^6.0.0 || ^7.0.0"
   }
 }

@@ -1,24 +1,27 @@
 'use client'
 
-import type { ReactNode } from 'react'
-
+import { useMemo } from 'react'
 import {
-  I18nProvider as BaseProvider,
   useMessages as baseUseMessages,
   useTranslations as baseUseTranslations,
   useLocale as baseUseLocale,
   useLocales as baseUseLocales,
-  useDefaultLocale as baseUseDefaultLocale
+  useDefaultLocale as baseUseDefaultLocale,
+  useLocaleConfig
 } from '@i18n-tiny/react/internal'
-import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
-import { resolveMessage } from '@i18n-tiny/core/internal'
+import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import { defineBase, pathFunctions } from './shared'
+import type { DefineOptions, MessagesOf, PathFunctions } from './shared'
 
-// Re-export DefineConfig for users who want to type their config
-export type { DefineConfig } from '@i18n-tiny/core'
+export type { I18nConfig } from '@i18n-tiny/core'
 
 /**
  * Define i18n instance with automatic type inference
  * This is a pure function that creates a self-contained i18n runtime
+ *
+ * `locales` and `defaultLocale` are required, and `messages` must have the
+ * messages of each locale. An invalid config throws, and with `as const` or
+ * an inline config it is a type error too.
  *
  * @example
  * import { define } from '@i18n-tiny/next'
@@ -26,12 +29,13 @@ export type { DefineConfig } from '@i18n-tiny/core'
  * import enMessages from './messages/en'
  *
  * export const i18n = define({
- *   locales: ['ja', 'en'] as const,
+ *   locales: ['ja', 'en'],
  *   defaultLocale: 'ja',
  *   messages: { ja: jaMessages, en: enMessages }
  * })
  *
  * // Server Component - types are automatically inferred
+ * if (!i18n.isLocale(locale)) notFound()
  * const messages = await i18n.server.getMessages(locale)
  * const t = await i18n.server.getTranslations(locale)
  *
@@ -41,63 +45,17 @@ export type { DefineConfig } from '@i18n-tiny/core'
  * </i18n.Provider>
  */
 export function define<
-  L extends readonly string[],
-  M extends Record<string, any>, // eslint-disable-line @typescript-eslint/no-explicit-any
-  Msgs extends Record<L[number], M>
-> (config: { locales: L; defaultLocale: L[number]; messages: Msgs }) {
-  const { locales, defaultLocale, messages } = config
-
-  // Type aliases for automatic inference
-  // Use the default locale's message type for consistent typing
-  type MessageType = Msgs[L[0]]
+  const L extends readonly string[],
+  Msgs extends Record<string, object>
+> (
+  config: DefineOptions<L, Msgs> & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
+) {
+  type Locale = L[number]
+  // Use the first locale's message type for consistent typing
+  type MessageType = MessagesOf<L, Msgs>
   type Namespace = NamespaceKeys<MessageType>
 
-  // Server API
-  const server = {
-    /**
-     * Get messages object for server components
-     * Types are automatically inferred from the messages passed to define
-     */
-    getMessages: async (locale: string): Promise<MessageType> => {
-      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
-      // Convert ES module namespace to plain object (required for Client Components)
-      return structuredClone(moduleObj) as MessageType
-    },
-
-    /**
-     * Get translation function for server components
-     * Keys are automatically inferred and provide autocomplete
-     */
-    getTranslations: async <N extends Namespace | undefined = undefined>(
-      locale: string,
-      namespace?: N
-    ): Promise<(key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string> => {
-      const moduleObj = messages[locale as L[number]] ?? messages[defaultLocale]
-      const msgs = structuredClone(moduleObj)
-
-      return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {
-        return resolveMessage(msgs, key, namespace, locale, vars)
-      }
-    }
-  }
-
-  // Provider wrapper that only requires locale and messages
-  function Provider ({ locale, messages: msgs, children }: {
-    locale: string
-    messages: MessageType
-    children: ReactNode
-  }) {
-    return (
-      <BaseProvider
-        locale={locale}
-        messages={msgs}
-        defaultLocale={defaultLocale}
-        locales={locales}
-      >
-        {children}
-      </BaseProvider>
-    )
-  }
+  const base = defineBase<L, Msgs>(config)
 
   // Type-safe wrappers for client hooks with automatic inference
   function useMessages (): MessageType {
@@ -109,16 +67,29 @@ export function define<
     return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 
-  function useLocale (): string {
-    return baseUseLocale()
+  function useLocale (): Locale {
+    return baseUseLocale() as Locale
   }
 
   function useLocales (): L {
     return baseUseLocales() as L
   }
 
-  function useDefaultLocale (): L[number] {
-    return baseUseDefaultLocale() as L[number]
+  function useDefaultLocale (): Locale {
+    return baseUseDefaultLocale() as Locale
+  }
+
+  /**
+   * The URL functions with the locale settings of the Provider:
+   * localizedPath, alternatePath, removeLocalePrefix and pathLocale. They
+   * return paths without the basePath, as the functions of define() do.
+   */
+  function usePaths (): PathFunctions<Locale> {
+    const { locales, defaultLocale, prefixDefault } = useLocaleConfig()
+    return useMemo(
+      () => pathFunctions<Locale>({ locales, defaultLocale, prefixDefault }),
+      [locales, defaultLocale, prefixDefault]
+    )
   }
 
   // Client API (hooks only)
@@ -127,14 +98,12 @@ export function define<
     useTranslations,
     useLocale,
     useLocales,
-    useDefaultLocale
+    useDefaultLocale,
+    usePaths
   }
 
   return {
-    Provider,
-    locales,
-    defaultLocale,
-    server,
+    ...base,
     client
   }
 }

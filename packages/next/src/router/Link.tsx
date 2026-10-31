@@ -1,65 +1,107 @@
 'use client'
 
-import NextLink from 'next/link'
-import { usePathname } from 'next/navigation'
-import type { ComponentProps } from 'react'
+import NextLink from 'next/link.js'
+import type { LinkProps as NextLinkProps } from 'next/link.js'
+import type { AnchorHTMLAttributes, MouseEvent, ReactNode, RefAttributes } from 'react'
 
-import { useLocale, useLocales } from '@i18n-tiny/react/internal'
-import { getLinkHref } from '@i18n-tiny/core/router'
+import { useLocale, useLocaleConfig } from '@i18n-tiny/react/internal'
+import { getLinkHref, pathLocale } from '@i18n-tiny/core/router'
+import type { I18nConfig, LinkHrefOptions } from '@i18n-tiny/core/router'
 
-export interface LinkProps extends Omit<ComponentProps<typeof NextLink>, 'locale'> {
+// The props of next/link's Link, built from its named LinkProps type rather
+// than from the type of its default export: next/link is CommonJS, so under
+// moduleResolution nodenext the default import is typed as the whole module.
+type NextLinkComponentProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof NextLinkProps> &
+  NextLinkProps & { children?: ReactNode } & RefAttributes<HTMLAnchorElement>
+
+// The empty string is not a locale: locale="" was the 1.x way to write
+// locale={false}, and is a type error
+type LocaleProp<T extends string> = (T extends '' ? never : T) | false
+
+export interface LinkProps<T extends string = string> extends Omit<NextLinkComponentProps, 'locale'> {
   /**
-   * Override the locale for this link
-   * - undefined: auto-localize based on current locale (default)
-   * - string (e.g., 'en', 'ja'): generate path for specified locale with prefix
-   * - '' (empty string) or false: use href as-is without any localization (raw path)
+   * The locale of the link
+   * - undefined: the link for the locale of the current page (default)
+   * - a locale such as 'en': the link for that locale. The default locale
+   *   gets no prefix unless prefixDefault is true. Any other value throws
+   * - false: the path without a locale
    */
-  locale?: string | false
+  locale?: LocaleProp<T>
   /**
-   * Normalize href by removing any existing locale prefix before processing.
-   * When true, locales are read from I18nProvider context.
-   * Useful when href comes from usePathname() or similar.
+   * Remove a locale prefix from href first, such as when href comes from
+   * usePathname()
    * @default false
    */
   normalize?: boolean
 }
 
+// Whether the page of a link is shown in another locale than the current
+// one, or in a locale that only the server knows. Links that are not paths
+// on this site, such as '#top' or 'https://…', are not.
+function leadsToAnotherLocale (href: string | null | undefined, currentLocale: string, config: I18nConfig): boolean {
+  if (typeof href !== 'string' || !href.startsWith('/') || href.startsWith('//')) {
+    return false
+  }
+  const suffixStart = href.search(/[?#]/)
+  const path = suffixStart === -1 ? href : href.slice(0, suffixStart)
+  const locale = pathLocale(path, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
+  return locale !== currentLocale
+}
+
+// A click that the browser handles itself: a new tab or window, a download
+function isBrowserClick (event: MouseEvent<HTMLAnchorElement>): boolean {
+  const target = event.currentTarget.getAttribute('target')
+  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey ||
+    (target !== null && target !== '_self') || event.currentTarget.hasAttribute('download')
+}
+
 /**
  * Next.js Link component with automatic locale prefix
  *
- * Automatically detects whether locale prefix is needed based on current URL:
- * - If current URL has locale prefix → generated links have prefix
- * - If current URL has no prefix → generated links have no prefix
+ * The href is a path without a locale prefix and without the basePath, and
+ * must start with "/". Hrefs that are not paths on this site, such as
+ * 'https://…' or '#top', are left unchanged. The locale settings are read
+ * from the Provider returned by define().
+ *
+ * Without `locale`, the link is for the locale of the current page, as
+ * localizedPath() builds it: the default locale gets no prefix unless
+ * prefixDefault is true.
+ *
+ * A link to a page of another locale is loaded in full by the browser, not
+ * by the router of Next.js, and is not prefetched: in the rewrite mode the
+ * pages of all locales are the same route, and the router would show the
+ * page of the current locale from its cache. The locale of the page is read
+ * from the path, as the proxy reads it: the locale of its prefix, or for a
+ * path without a prefix, the default locale. With prefixDefault, a path
+ * without a prefix is the detected locale, which only the server knows, and
+ * is loaded in full too. Clicks that the browser handles, such as with a
+ * modifier key or with target="_blank", are left to it.
  *
  * @example
  * ```tsx
  * import { Link } from '@i18n-tiny/next/router'
  *
- * // Auto-localized link (uses current locale and URL pattern)
+ * // The link for the current locale
  * <Link href="/about">About</Link>
  *
- * // Language switch with explicit locale prefix
+ * // A link for another locale: the default locale gets no prefix
  * <Link href="/" locale="ja">日本語</Link>
  *
  * // Raw path (no localization)
- * <Link href="/" locale="">English</Link>
  * <Link href="/" locale={false}>English</Link>
- * <Link href="/" locale={condition && 'ja'}>Conditional</Link>
  *
- * // With href normalization (removes existing locale prefix before processing)
- * const pathname = usePathname() // '/ja/about'
+ * // The current page in another locale
+ * const pathname = usePathname() // '/ja/about', from next/navigation
  * <Link href={pathname} locale="en" normalize>English</Link>  // → /en/about
  * ```
  */
-export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
+export function Link<const T extends string = string>({ href, locale, normalize = false, ...props }: LinkProps<T>) {
   let currentLocale: string
-  let locales: readonly string[]
-  let pathname: string | null
+  let config: I18nConfig
 
   try {
     currentLocale = useLocale()
-    locales = useLocales()
-    pathname = usePathname()
+    config = useLocaleConfig()
   } catch {
     const error = new Error(
       'Link component must be used within i18n Provider. ' +
@@ -72,16 +114,43 @@ export function Link({ href, locale, normalize = false, ...props }: LinkProps) {
     throw error
   }
 
-  // Get locales for normalization if enabled
-  const normalizeLocales = normalize ? locales : undefined
+  // Without a locale, the link is for the locale of the current page
+  const linkLocale = locale ?? currentLocale
+  const options = { locale: linkLocale, normalize, config } as LinkHrefOptions
 
   // Handle both string and UrlObject. A UrlObject without pathname, such as
   // { query: { page: 2 } }, points at the current page and is left as is.
   const localizedHref = typeof href === 'string'
-    ? getLinkHref(href, pathname ?? '', currentLocale, { locale, locales: normalizeLocales })
+    ? getLinkHref(href, '', currentLocale, options)
     : href.pathname == null
       ? href
-      : { ...href, pathname: getLinkHref(href.pathname, pathname ?? '', currentLocale, { locale, locales: normalizeLocales }) }
+      : { ...href, pathname: getLinkHref(href.pathname, '', currentLocale, options) }
 
-  return <NextLink href={localizedHref} {...props} />
+  const path = typeof localizedHref === 'string' ? localizedHref : localizedHref.pathname
+  if (!leadsToAnotherLocale(path, currentLocale, config)) {
+    return <NextLink href={localizedHref} {...props} />
+  }
+
+  // Another locale: the browser loads the page. The href of the anchor has
+  // the basePath that NextLink adds.
+  const { onClick, replace } = props
+  return (
+    <NextLink
+      href={localizedHref}
+      {...props}
+      prefetch={false}
+      onClick={(event) => {
+        onClick?.(event)
+        if (event.defaultPrevented || isBrowserClick(event)) {
+          return
+        }
+        event.preventDefault()
+        if (replace) {
+          window.location.replace(event.currentTarget.href)
+        } else {
+          window.location.assign(event.currentTarget.href)
+        }
+      }}
+    />
+  )
 }

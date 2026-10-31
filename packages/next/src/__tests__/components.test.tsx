@@ -223,8 +223,9 @@ describe('Link', () => {
     expect(link.closest('a')).toHaveAttribute('href', '/about')
   })
 
-  it('should not add prefix for non-default locale when URL has no prefix', async () => {
-    // Mock pathname without locale prefix (Accept-Language detected locale)
+  it('should add the prefix of a non-default locale when URL has no prefix', async () => {
+    // Mock pathname without locale prefix: the link is built for the locale
+    // of the Provider, not from the pathname
     const { usePathname } = await import('next/navigation')
     vi.mocked(usePathname).mockReturnValue('/home')
 
@@ -236,8 +237,8 @@ describe('Link', () => {
       </i18n.Provider>
     )
 
-    // Even with ja locale, URL has no prefix → links have no prefix
+    // ja is not the default locale, so its links have its prefix
     const link = screen.getByText('About')
-    expect(link.closest('a')).toHaveAttribute('href', '/about')
+    expect(link.closest('a')).toHaveAttribute('href', '/ja/about')
   })
 })

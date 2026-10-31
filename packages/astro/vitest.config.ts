@@ -1,6 +1,8 @@
-import { defineConfig } from 'vitest/config'
+import { getViteConfig } from 'astro/config'
 
-export default defineConfig({
+// Astro's Vite config compiles the .astro components, which the tests render
+// with the container API
+export default getViteConfig({
   test: {
     globals: true,
     coverage: {

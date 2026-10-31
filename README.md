@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/)
 
-The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup, and under 1KB.
+The simplest i18n library for modern frameworks. Type-safe, zero-dependency, minimal setup, and under 2KB in the browser.
 
 One function for fully-typed translations.
 `define()` gives you complete autocomplete for every translation key.
@@ -15,6 +15,8 @@ One function for fully-typed translations.
 Currently supports: **Next.js** | **Astro** | **React**
 
 **[Documentation](https://docs.unlibra.com/i18n-tiny/)** · **[npm](https://www.npmjs.com/org/i18n-tiny)**
+
+Updating from 1.x? See the [migration guide](./MIGRATION.md).
 
 ## Quick Start
 
@@ -33,19 +35,20 @@ import { define } from '@i18n-tiny/next'
 import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
 import ja from './messages/ja'
 
-const { client, server, Provider } = define({
-  locales: ['en', 'ja'] as const,
+const { client, server, Provider, isLocale } = define({
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en, ja }
 })
 
-export { Provider }
+export { Provider, isLocale }
 export const { useMessages, useTranslations } = client
 export const { getMessages, getTranslations } = server
 ```
 
 ```tsx
 // Server Component (locale comes from the [locale] route params)
+if (!isLocale(locale)) notFound()  // ← Only the locales are pages
 const messages = await getMessages(locale)
 const t = await getTranslations(locale)
 return <h1>{messages.common.title}</h1>  // ← Typed! Full autocomplete
@@ -72,28 +75,30 @@ npm install @i18n-tiny/astro
 ```typescript
 // i18n.ts - define() gives you everything
 import { define } from '@i18n-tiny/astro'
-import en from './messages/en' // { common: { title: 'Hello', greeting: 'Hello, {name}!' } }
-import ja from './messages/ja'
+import ja from './messages/ja' // { common: { title: 'こんにちは', greeting: 'こんにちは、{name}さん' } }
+import en from './messages/en'
 
-export const { locales, getMessages, getTranslations } = define({
-  locales: ['en', 'ja'],
-  defaultLocale: 'en',
-  messages: { en, ja }
+export const i18n = define({
+  locales: ['ja', 'en'],
+  defaultLocale: 'ja',
+  messages: { ja, en }
 })
 ```
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getMessages, getTranslations } from '../../i18n'
+// src/pages/[...locale]/index.astro → / (ja) and /en (en)
+import type { InferGetStaticPropsType } from 'astro'
+import { i18n } from '../../i18n'
 
 export function getStaticPaths() {
-  return locales.map((locale) => ({ params: { locale } }))
+  return i18n.getStaticPaths()
 }
+type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
-const { locale } = Astro.params
-const messages = getMessages(locale)
-const t = getTranslations(locale)
+const { locale } = Astro.props // 'ja' | 'en'
+const messages = i18n.getMessages(locale)
+const t = i18n.getTranslations(locale)
 ---
 <h1>{messages.common.title}</h1>  <!-- ← Typed! Full autocomplete -->
 <p>{t('common.greeting', { name: 'Alice' })}</p>  <!-- ← Interpolation -->
@@ -119,7 +124,7 @@ import ja from './messages/ja'
 export const messages = { en, ja }
 
 export const { Provider, useMessages, useTranslations } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages
 })
@@ -146,7 +151,7 @@ return <p>{t('common.greeting', { name: 'Alice' })}</p>  // ← Interpolation
 - **Type-safe**: Full TypeScript support with automatic type inference
 - **Zero dependencies**: No external i18n libraries needed
 - **Framework support**: Next.js, Astro, React
-- **Minimal bundle**: under 1KB minified and gzipped in the browser (`@i18n-tiny/react`, `@i18n-tiny/next`); `@i18n-tiny/astro` adds no JavaScript to the browser
+- **Minimal bundle**: under 2KB minified and gzipped in the browser (`define()` of `@i18n-tiny/react` and `@i18n-tiny/next`, without the Next.js `Link`); `@i18n-tiny/astro` adds no JavaScript to the browser
 
 ## Security
 

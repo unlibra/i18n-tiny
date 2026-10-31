@@ -1,17 +1,12 @@
 import { defineConfig, type Options } from 'tsup'
 
 const sharedConfig: Options = {
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   sourcemap: true,
   external: ['astro', '@i18n-tiny/core'],
   splitting: false,
-  treeshake: true,
-  outExtension ({ format }) {
-    return {
-      js: format === 'esm' ? '.js' : '.cjs'
-    }
-  }
+  treeshake: true
 }
 
 // The configs run in parallel, so none of them cleans dist: one that did could
@@ -41,11 +36,11 @@ export default defineConfig([
     },
     clean: false
   },
-  // Integration for static file generation
+  // Shared by the components and the middleware
   {
     ...sharedConfig,
     entry: {
-      integration: 'src/integration.ts'
+      internal: 'src/internal.ts'
     },
     clean: false
   }
