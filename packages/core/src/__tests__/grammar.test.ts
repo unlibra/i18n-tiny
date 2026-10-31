@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { resolveMessage } from '../utils'
 import { grammarCases } from './grammar.cases'
 
-// Vars that have every name: each variable the runtime finds becomes <name>
+// Vars that have every name as an own property: each variable the runtime
+// finds becomes <name>
+const valueOf = (name: string | symbol) => typeof name === 'string' ? `<${name}>` : undefined
 const everyName = new Proxy({}, {
-  get: (_, name) => typeof name === 'string' ? `<${name}>` : undefined
+  get: (_, name) => valueOf(name),
+  has: (_, name) => typeof name === 'string',
+  getOwnPropertyDescriptor: (_, name) => typeof name === 'string'
+    ? { value: valueOf(name), writable: true, enumerable: true, configurable: true }
+    : undefined
 }) as Record<string, string>
 
 describe('the grammar of messages', () => {

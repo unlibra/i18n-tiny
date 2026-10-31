@@ -123,6 +123,9 @@ for how to update from 1.x.
   host, such as `/en//example.com`.
 - A missing key threw a `ReferenceError` where `process` is not defined and
   nothing replaces `process.env.NODE_ENV`.
+- A variable named after an inherited property, such as `{constructor}` or
+  `{toString}`, showed that property when the vars did not have it. Only the
+  own properties of the vars are used, and a missing variable stays as it is.
 
 ## [1.3.0] - 2026-10-23
 

@@ -6,8 +6,8 @@ const TOKENS = /\{\{|\}\}|\{(\w+)\}/g
 
 /**
  * Interpolates variables into a string.
- * Replaces {key} placeholders with values from the vars object, and "{{" and
- * "}}" with "{" and "}".
+ * Replaces {key} placeholders with the own properties of the vars object, and
+ * "{{" and "}}" with "{" and "}". A name the vars do not have stays as {key}.
  *
  * @param str - The string containing {key} placeholders
  * @param vars - Object with key-value pairs to interpolate
@@ -24,7 +24,8 @@ function interpolate (str: string, vars?: Record<string, string | number>): stri
       // "{{" or "}}"
       return match[0]
     }
-    const value = vars?.[key]
+    // Only the own properties: "{constructor}" is not Object.prototype.constructor
+    const value = vars && Object.hasOwn(vars, key) ? vars[key] : undefined
     return value !== undefined ? String(value) : match
   })
 }

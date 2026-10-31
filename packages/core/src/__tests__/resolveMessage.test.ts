@@ -58,6 +58,22 @@ describe('resolveMessage()', () => {
       expect(result).toBe('Hello, {name}!')
     })
 
+    it('keeps the placeholder of a name that the vars only inherit', () => {
+      const inherited = { text: '{constructor} {toString} {hasOwnProperty} {valueOf} {name}' }
+      expect(resolveMessage(inherited, 'text', undefined, undefined, { name: 'User' }))
+        .toBe('{constructor} {toString} {hasOwnProperty} {valueOf} User')
+      expect(resolveMessage(inherited, 'text', undefined, undefined, {}))
+        .toBe('{constructor} {toString} {hasOwnProperty} {valueOf} {name}')
+    })
+
+    it('interpolates own vars with the names of inherited properties', () => {
+      const inherited = { text: '{constructor} {toString}' }
+      expect(resolveMessage(inherited, 'text', undefined, undefined, { constructor: 'C', toString: 0 }))
+        .toBe('C 0')
+      const withoutPrototype = Object.assign(Object.create(null) as Record<string, string>, { constructor: 'C' })
+      expect(resolveMessage(inherited, 'text', undefined, undefined, withoutPrototype)).toBe('C {toString}')
+    })
+
     it('should handle number values', () => {
       const result = resolveMessage(messages, 'common.multiVar', undefined, undefined, {
         greeting: 'Hi',
