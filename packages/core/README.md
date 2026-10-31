@@ -34,12 +34,12 @@ export const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
 
 The config is checked on every call. An empty `locales`, a locale listed twice, a locale that cannot be a path segment (empty, `.`, `..`, or containing `/`, `\`, `?`, `#` or whitespace), and a `defaultLocale` that is not one of `locales` throw an error. With `as const`, they are type errors too.
 
-Use `I18nConfig` to type the config:
+Check the config with `I18nConfig`, using `satisfies` rather than a type annotation, so that `as const` keeps the literal types of the config:
 
 ```typescript
 import type { I18nConfig } from '@i18n-tiny/core/router'
 
-export const config: I18nConfig<'ja' | 'en'> = { locales: ['ja', 'en'], defaultLocale: 'ja' }
+export const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const satisfies I18nConfig
 ```
 
 ## URL functions
