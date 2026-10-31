@@ -17,7 +17,8 @@ Simply add the following code to your `app/[locale]/layout.tsx`:
 ```tsx
 // app/[locale]/layout.tsx
 import type { ReactNode } from 'react'
-import { locales } from '@/i18n'
+import { notFound } from 'next/navigation'
+import { isLocale, locales } from '@/i18n'
 
 // By adding this to the root layout once,
 // Next.js statically generates all child pages for every locale at build time.
@@ -32,6 +33,8 @@ export default async function Layout({
   children: ReactNode
   params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params
+  if (!isLocale(locale)) notFound()
   // ...
 }
 ```

@@ -6,6 +6,8 @@ description: "Add i18n to a React app with a Provider and hooks. i18n-tiny infer
 
 A tiny, type-safe i18n library for **React** with automatic type inference and zero dependencies.
 
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
+
 ## Features
 
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for message keys.
@@ -27,14 +29,14 @@ npm install @i18n-tiny/react
 ```typescript
 // src/i18n.ts
 import { define } from '@i18n-tiny/react'
-import enMessages from './messages/en'
-import jaMessages from './messages/ja'
+import en from './messages/en' // { common: { title: 'Hello', welcome: 'Welcome, {name}!' } }
+import ja from './messages/ja'
 
-export const messages = { en: enMessages, ja: jaMessages }
+export const messages = { en, ja }
 
 // define() gives you everything
 export const { Provider, useMessages, useTranslations, useLocale } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages
 })
@@ -44,12 +46,16 @@ export const { Provider, useMessages, useTranslations, useLocale } = define({
 
 ```tsx
 // src/App.tsx
+import { useState } from 'react'
 import { Provider, messages } from './i18n'
 
 export default function App() {
+  const [locale, setLocale] = useState<'en' | 'ja'>('en')
+
   return (
-    <Provider locale="en" messages={messages.en}>
+    <Provider locale={locale} messages={messages[locale]}>
       <YourApp />
+      <button onClick={() => setLocale(locale === 'en' ? 'ja' : 'en')}>Toggle Language</button>
     </Provider>
   )
 }

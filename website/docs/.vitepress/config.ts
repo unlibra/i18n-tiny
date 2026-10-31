@@ -191,6 +191,7 @@ export default defineConfig({
       { text: 'Astro', link: '/astro/introduction', activeMatch: '^/astro/' },
       { text: 'React', link: '/react/introduction', activeMatch: '^/react/' },
       { text: 'FAQ', link: '/faq' },
+      { text: 'Migrate from 1.x', link: 'https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md' },
       { text: 'Donate', link: 'https://unlibra.com/donate' },
       {
         text: 'NPM',
@@ -240,7 +241,6 @@ export default defineConfig({
           items: [
             { text: 'Core', link: '/astro/api-reference/core' },
             { text: 'Middleware', link: '/astro/api-reference/middleware' },
-            { text: 'Integration', link: '/astro/api-reference/integration' },
             { text: 'Router', link: '/astro/api-reference/router' }
           ]
         },

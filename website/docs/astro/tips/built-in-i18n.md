@@ -4,20 +4,20 @@ description: "Keep Astro's native i18n routing and add type-safe translations on
 
 # Typed Translations with Astro's Built-in i18n
 
-Astro 4.0+ has built-in routing support for i18n. You can combine it with i18n-tiny to get the best of both worlds: Astro's native routing and i18n-tiny's type-safe translations.
+Astro has built-in routing support for i18n. You can combine it with i18n-tiny to get the best of both worlds: Astro's native routing and i18n-tiny's type-safe translations.
 
 ## Configuration
 
 Set up your `astro.config.mjs` using Astro's native `i18n` configuration.
 
-```typescript
+```javascript
 // astro.config.mjs
 import { defineConfig } from 'astro/config'
 
 export default defineConfig({
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'ja'],
+    defaultLocale: 'ja',
+    locales: ['ja', 'en'],
     routing: {
       prefixDefaultLocale: false
     }
@@ -25,26 +25,29 @@ export default defineConfig({
 })
 ```
 
-## Integration
+## Translations
 
-Since Astro handles the routing, you only need i18n-tiny for message resolution.
+Since Astro handles the routing, you only need i18n-tiny for the messages. Astro's routing builds the pages of each locale, and `Astro.currentLocale` is a `string | undefined`, so narrow it with `isLocale()`:
 
 ```astro
 ---
-// src/pages/[locale]/index.astro
-import { locales, getTranslations } from '../../i18n'
+import { i18n } from '../i18n'
 
-// Static output: build one page per locale (leave this out with output: 'server')
-export function getStaticPaths() {
-  return locales.map((locale) => ({ params: { locale } }))
+const locale = Astro.currentLocale
+if (!i18n.isLocale(locale)) {
+  throw new Error(`Unknown locale: ${locale}`)
 }
-
-// Set by Astro's built-in i18n
-const t = getTranslations(Astro.currentLocale)
+const t = i18n.getTranslations(locale)
 ---
 
-<h1>{t('common.title')}</h1>
+<html lang={locale}>
+  <body>
+    <h1>{t('common.title')}</h1>
+  </body>
+</html>
 ```
+
+Use the same `locales` and `defaultLocale` in `define()` as in `astro.config.mjs`.
 
 ### Benefits of this approach
 

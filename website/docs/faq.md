@@ -6,7 +6,7 @@ description: "Answers to common i18n-tiny questions: type-safe keys, missing key
 
 ## How are translation keys type-checked?
 
-`define()` infers the key types from the messages you pass to it. Your editor autocompletes keys such as `t('common.title')`, and a key that does not exist fails the TypeScript type check.
+`define()` infers the key types from the messages of the default locale. Your editor autocompletes keys such as `t('common.title')`, and a key that does not exist fails the TypeScript type check. The messages of the other locales must have the same keys: a missing or extra key fails the type check of `define()`.
 
 With a namespace, such as `useTranslations('common')` or `getTranslations(locale, 'common')`, keys are relative to it: `t('title')` reads `common.title`, and the full path `t('common.title')` fails the type check. The namespace must point to a nested object. Without a namespace, use full paths.
 
@@ -25,7 +25,14 @@ Write placeholders in braces, and pass the values as the second argument:
 t('greeting', { name: 'Alice' }) // "Hello, Alice!"
 ```
 
-Values can be strings or numbers. A placeholder without a matching value is left as is.
+Values can be strings or numbers. A placeholder without a matching value is left as is. To show a brace, write it twice:
+
+```typescript
+// messages/en.ts: { syntax: 'Write {{name}} in messages' }
+t('syntax') // "Write {name} in messages"
+```
+
+With the messages of the default locale written `as const`, the values are type-checked too: a missing or misspelled value fails the type check.
 
 ## Are interpolated values HTML-escaped?
 
@@ -43,7 +50,7 @@ There are no built-in plural rules; messages support placeholders only. To choos
 
 ## How do I detect the visitor's language?
 
-Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering. By default, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header. If it is another locale, they redirect to its prefixed URL, such as `/ja/about`. If it is the default locale, they rewrite the request internally and keep the URL unchanged. Set `detectLanguage: false` to turn this off. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
+Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering, with `detectLanguage: true`. Detection is off by default. With it, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header. If it is another locale, they redirect to its prefixed URL, such as `/ja/about`. If it is the default locale, they serve it and keep the URL unchanged. With detection, also set `prefixDefault: true` in the config shared with `define()`, so that the links to the default locale have a prefix and are not detected again. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
 
 ## Can the default locale have no URL prefix?
 
@@ -56,9 +63,9 @@ Use `proxy.ts`. Next.js 16 deprecated the Middleware file convention and renamed
 ```typescript
 // proxy.ts
 import { create } from '@i18n-tiny/next/proxy'
-import { locales, defaultLocale } from './i18n'
+import { config } from './i18n.config' // { locales: ['en', 'ja'], defaultLocale: 'en' }
 
-export const proxy = create({ locales, defaultLocale })
+export const proxy = create({ ...config })
 ```
 
 If your project still has a `middleware.ts`, run the [Next.js codemod](https://nextjs.org/docs/app/api-reference/file-conventions/proxy#migration-to-proxy), which renames the file and the export: `npx @next/codemod@canary middleware-to-proxy .`. For the full setup, including the `matcher`, see [How to Add i18n to a Next.js App Router Project](./next/usage).
@@ -75,4 +82,8 @@ Yes. Keep Astro's `i18n` configuration for routing, and use i18n-tiny for type-s
 
 ## What is the difference between `@i18n-tiny/next` and `next-i18n-tiny`?
 
-Nothing but the name. `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` are aliases that re-export `@i18n-tiny/next`, `@i18n-tiny/astro` and `@i18n-tiny/react`. Use version 1.3.0 or later of the aliases: versions before 1.2.1 could not be imported, and astro-i18n-tiny 1.2.1 lacked `astro-i18n-tiny/locals`.
+Nothing but the name. `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` are aliases that re-export `@i18n-tiny/next`, `@i18n-tiny/astro` and `@i18n-tiny/react`, with the same version and the same entry points.
+
+## How do I update from 1.x?
+
+2.0 has breaking changes. See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md), which shows the 1.x code and the 2.0 code for each change.

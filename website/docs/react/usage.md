@@ -38,26 +38,29 @@ import { define } from '@i18n-tiny/react'
 import en from './messages/en'
 import ja from './messages/ja'
 
+export const messages = { en, ja }
+
 export const { Provider, useTranslations, useLocale } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
-  messages: { en, ja }
+  messages
 })
 ```
 
+`locales` and `defaultLocale` are required, and `messages` must have the messages of each locale. Every locale must have the keys of the default locale: a missing or extra key is a type error in `define()`. See the [API Reference](./api-reference) for the checks of the config and the types of the messages.
+
 ## 3. Wrap Your App
 
-Use the `Provider` to wrap your application and pass the current locale and messages.
+Use the `Provider` to wrap your application and pass the current locale and its messages. The `locale` is one of `locales`: any other value is a type error and throws.
 
 ```tsx
 // main.tsx
 import ReactDOM from 'react-dom/client'
 import App from './App'
-import { Provider } from './i18n'
-import enMessages from './messages/en'
+import { Provider, messages } from './i18n'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <Provider locale="en" messages={enMessages}>
+  <Provider locale="en" messages={messages.en}>
     <App />
   </Provider>
 )

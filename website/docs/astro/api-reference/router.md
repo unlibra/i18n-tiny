@@ -1,129 +1,83 @@
 ---
-description: "API reference for i18n-tiny router utilities in Astro: a localized Link component and helpers for locale-aware navigation."
+description: "API reference for i18n-tiny router utilities in Astro: a localized Link component and URL functions for localized paths."
 ---
 
 # Router
 
-Router utilities for localized navigation.
+The `Link` component and the URL functions of `@i18n-tiny/astro/router`.
 
 ## `Link`
 
-A localized Link component that automatically detects the locale from the current URL.
+A link that keeps the locale of the current page, or points to another locale.
 
 **Props:**
 
-| Prop | Type | Required | Default | Description |
-| --- | --- | :---: | --- | --- |
-| `href` | `string` | Required | - | Destination path |
-| `locale` | `string` \| `false` | | - | Explicitly set locale. `false` or `''` disables localization (raw path). |
-| `normalize` | `boolean` | | `false` | If true, removes existing locale prefix from `href` before processing. Reads the locales from `Astro.locals.locales`, which only the i18n-tiny [middleware](./middleware) sets. |
-| Others | `HTMLAttributes<'a'>` | | - | Attributes for standard HTML anchor tag |
+| Prop | Type | Required | Description |
+| --- | --- | :---: | --- |
+| `href` | `string` | Required | The path of the page, starting with `/`, without the base and without a locale prefix |
+| `locale` | `string` \| `false` | | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
+| `i18n` | `define()` result | With a locale | Required with a locale (other than `false`). The link is built with its `localizedPath()`, and so with its `prefixDefault` |
+| Others | `HTMLAttributes<'a'>` | | Attributes of the `<a>` element, such as `hreflang` or `class` |
 
 **Example:**
 
 ```astro
 ---
 import Link from '@i18n-tiny/astro/router/Link.astro'
+import { i18n } from '../i18n'
 ---
 
-<!-- Auto-localized (maintains current URL pattern) -->
+<!-- Keeps the locale of the current URL: /about on /, /en/about on /en -->
 <Link href="/about">About</Link>
 
-<!-- Explicit locale override -->
-<Link href="/" locale="ja">日本語</Link>
+<!-- A link for a locale: /en, and / for the default locale -->
+<Link href="/" locale="en" i18n={i18n}>English</Link>
+<Link href="/" locale="ja" i18n={i18n}>日本語</Link>
 
-<!-- Raw path (no localization) -->
-<Link href="/" locale="">English</Link>
-<Link href="/" locale={false}>English</Link>
-
-<!-- Path normalization (requires the i18n-tiny middleware) -->
-<Link href="/ja/about" locale="en" normalize>English</Link>
+<!-- The path without a locale -->
+<Link href="/" locale={false}>Top</Link>
 ```
 
-"Maintains current URL pattern" means the link gets a locale prefix only when the current URL has one. With the SSG [integration](./integration), the root pages are copies of the `/[defaultLocale]/` pages, so their links still point to `/[defaultLocale]/...` (e.g., `/en/about`).
+- Without `locale`, the link keeps the form of the current URL: it gets the prefix of the current locale only when the current URL has one. The current locale is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. The `Link` of `@i18n-tiny/next` builds this link from the config instead.
+- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
+- `locale` without `i18n` is a type error, and throws.
+- An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
+- The links have no trailing slash, except for the top page `/`.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
 
-Without the middleware, `normalize` does nothing, because `Astro.locals.locales` is not set. Remove the prefix yourself instead:
+For links to the current page in each locale, see the [language switcher](../tips/language-switcher).
 
-```astro
----
-import Link from '@i18n-tiny/astro/router/Link.astro'
-import { removeLocalePrefix } from '@i18n-tiny/astro/router'
-import { locales } from '../i18n'
----
+## URL functions
 
-{locales.map((loc) => (
-  <Link href={removeLocalePrefix(Astro.url.pathname, locales)} locale={loc}>{loc}</Link>
-))}
-```
-
-## `getLocalizedPath(path, locale, defaultLocale, prefixDefault?)`
-
-Generates a localized path with a locale prefix.
-Can be imported from `@i18n-tiny/astro/router`.
-
-**Parameters:**
-
-| Parameter | Type | Required | Default | Description |
-| --- | --- | :---: | --- | --- |
-| `path` | `string` | Required | - | The path to localize |
-| `locale` | `string` | Required | - | Target locale |
-| `defaultLocale` | `string` | Required | - | Default locale |
-| `prefixDefault` | `boolean` | | `false` | Whether to prefix the default locale |
-
-**Returns:**
-- `string`: The localized path.
-
-**Example:**
+The functions of `@i18n-tiny/core/router`, for places where the messages are not loaded, such as `astro.config` or build scripts. They take the config object `{ locales, defaultLocale, prefixDefault? }`. In pages, [`localizedPath` and `alternatePath` of `define()`](./core#url-functions) need no config.
 
 ```typescript
-import { getLocalizedPath } from '@i18n-tiny/astro/router'
+import { localizedPath, alternatePath, removeLocalePrefix, pathLocale } from '@i18n-tiny/astro/router'
 
-getLocalizedPath('/about', 'ja', 'en')        // '/ja/about'
+const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
+
+localizedPath('/about', 'en', config)    // '/en/about': the path of a page in a locale
+localizedPath('/about', 'ja', config)    // '/about'
+localizedPath('/', 'en', config)         // '/en'
+alternatePath('/en/about', 'ja', config) // '/about': the current page in another locale
+removeLocalePrefix('/en/about', config)  // '/about'
+pathLocale('/en/about', config)          // 'en'
+pathLocale('/about', config)             // undefined
 ```
 
-## `removeLocalePrefix(pathname, locales)`
+| Function | Returns |
+| --- | --- |
+| `localizedPath(path, locale, config)` | The path of a page in `locale`. `path` has no locale prefix |
+| `alternatePath(pathname, locale, config)` | The current page in another locale: removes the locale prefix of `pathname`, if it has one, and adds the prefix of `locale` |
+| `removeLocalePrefix(pathname, config)` | `pathname` without its locale prefix |
+| `pathLocale(pathname, config)` | The locale of the prefix of `pathname`, or `undefined`. Only whole path segments match |
 
-Removes the locale prefix from a pathname.
-Can be imported from `@i18n-tiny/astro/router`.
+- The results have no trailing slash, except for the top page `/`.
+- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`. Add the query and the hash after building the path.
+- A locale that is not one of `locales` throws. With `as const`, it is a type error too.
+- `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
+- The config is checked on every call, as `define()` checks it.
 
-**Parameters:**
+## `I18nConfig` (type)
 
-| Parameter | Type | Required | Description |
-| --- | --- | :---: | --- |
-| `pathname` | `string` | Required | The pathname to process |
-| `locales` | `readonly string[]` | Required | Array of supported locales |
-
-**Returns:**
-- `string`: Pathname without prefix.
-
-**Example:**
-
-```typescript
-import { removeLocalePrefix } from '@i18n-tiny/astro/router'
-
-removeLocalePrefix('/ja/about', ['en', 'ja'])  // '/about'
-```
-
-## `hasLocalePrefix(pathname, locale)`
-
-Checks if a pathname starts with the given locale prefix.
-Can be imported from `@i18n-tiny/astro/router`.
-
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-| --- | --- | :---: | --- |
-| `pathname` | `string` | Required | The pathname to check |
-| `locale` | `string` | Required | The locale to check for |
-
-**Returns:**
-- `boolean`: `true` if the pathname starts with `/[locale]/` or equals `/[locale]`.
-
-**Example:**
-
-```typescript
-import { hasLocalePrefix } from '@i18n-tiny/astro/router'
-
-hasLocalePrefix('/ja/about', 'ja')  // true
-hasLocalePrefix('/about', 'ja')     // false
-```
+The type of the locale settings, also exported from `@i18n-tiny/astro`: see [Core](./core#i18nconfig-type).

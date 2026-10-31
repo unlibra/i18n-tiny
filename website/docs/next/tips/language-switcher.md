@@ -4,9 +4,9 @@ description: "Switch languages in Next.js without sending users back to the home
 
 # Next.js Language Switcher That Keeps the Page
 
-To create a language switcher that maintains the current page, use the `normalize` prop of the `Link` component.
+To create a language switcher that keeps the current page, pass the current pathname to the `Link` with the `normalize` prop.
 
-The `normalize` prop removes any existing locale prefix from the `href` before applying the new locale, which is perfect when used with `usePathname()`.
+`normalize` removes the locale prefix of the `href` before the link for the new locale is built, which is what `usePathname()` returns.
 
 ## Implementation Example
 
@@ -14,12 +14,11 @@ The `normalize` prop removes any existing locale prefix from the `href` before a
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Link } from '@i18n-tiny/next/router'
-import { locales, client } from '@/i18n'
+import { Link, locales, useLocale } from '@/i18n'
 
 export function LanguageSwitcher() {
   const pathname = usePathname()
-  const currentLocale = client.useLocale()
+  const currentLocale = useLocale()
 
   return (
     <div className="flex gap-4">
@@ -41,6 +40,16 @@ export function LanguageSwitcher() {
 
 ### How it works
 
-1.  `usePathname()` returns the current path (e.g., `/ja/about`).
+With `defaultLocale: 'en'`:
+
+1.  `usePathname()` returns the current path, such as `/ja/about`.
 2.  `Link` receives `/ja/about` as `href` and `en` as `locale`.
-3.  Because `normalize` is set to `true`, the `Link` component removes `/ja` and then applies `/en`, resulting in `/en/about`.
+3.  `normalize` removes `/ja`, and the link is built for `en`: `/about`, as the default locale has no prefix.
+
+`i18n.alternatePath(pathname, locale)` gives the same paths, for example for `router.push()`.
+
+## With language detection
+
+If you turn on detection in the proxy with `detectLanguage: true`, also put `prefixDefault: true` in the [config shared with `define()`](../api-reference/proxy#prefixdefault). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the proxy detects its language again, so a browser that prefers Japanese follows the English link to `/about` and is redirected back to `/ja/about`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/en/about`), and are not detected.
+
+Without detection, the default, the language switcher works as it is.
