@@ -1,7 +1,7 @@
 {
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "i18n-tiny",
-  "description": "Type-safe i18n for Next.js, Astro and React with one define() call and zero dependencies. define() is under 2KB minified and gzipped in the browser, without the Next.js Link.",
+  "description": "Type-safe i18n for Next.js, Astro and React with one define() call and zero dependencies. define() is under 1KB in React and under 1.5KB in Next.js, minified and gzipped in the browser, without the Next.js Link.",
   "folders": ["website/docs"],
   "rules": [
     "Call define() once in a shared module, such as i18n.ts, and import the helpers it returns from that module.",

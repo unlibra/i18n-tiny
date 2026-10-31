@@ -4,13 +4,15 @@
 [![npm downloads](https://img.shields.io/npm/dm/@i18n-tiny/react.svg)](https://www.npmjs.com/package/@i18n-tiny/react)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/react/introduction)
 
-Type-safe i18n library for React in under 2KB, with automatic type inference and zero dependencies.
+Type-safe i18n library for React in under 1KB, with automatic type inference and zero dependencies.
 
 ## Installation
 
 ```bash
 npm install @i18n-tiny/react
 ```
+
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
 
 Requires React 18 or 19, and Node.js 22.12 or later when it runs on Node.js (for example in server rendering or tests). The package ships ES modules only. The types need TypeScript 5.9 or later.
 

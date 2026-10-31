@@ -18,7 +18,7 @@ npm install react-i18n-tiny
 npm install @i18n-tiny/react
 ```
 
-Use version 1.2.1 or later of `react-i18n-tiny`: earlier versions could not be imported.
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
 
 ## Documentation
 
@@ -35,7 +35,7 @@ import jaMessages from './messages/ja'
 export const messages = { en: enMessages, ja: jaMessages }
 
 export const i18n = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages
 })

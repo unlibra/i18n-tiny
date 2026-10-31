@@ -13,6 +13,8 @@ Use it directly to build localized URLs where the messages are not loaded, such 
 npm install @i18n-tiny/core
 ```
 
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
+
 Requires Node.js 22.12 or later when it runs on Node.js. The package ships ES modules only. The types need TypeScript 5.9 or later.
 
 `@i18n-tiny/core/router` and `@i18n-tiny/core/middleware` use no Node.js APIs, so they also run outside Node.js, such as in edge runtimes and workers.

@@ -7,8 +7,6 @@
 Alternative package name for [`@i18n-tiny/astro`](https://www.npmjs.com/package/@i18n-tiny/astro).
 
 > **Note**: This is an alias package. Both `astro-i18n-tiny` and `@i18n-tiny/astro` provide the exact same functionality, including `astro-i18n-tiny/locals` for the `Astro.locals` types.
->
-> Use `astro-i18n-tiny` 1.2.1 or later. Earlier versions of the alias could not be imported.
 
 ## Installation
 
@@ -19,6 +17,8 @@ npm install astro-i18n-tiny
 # Scoped name (recommended for monorepo consistency)
 npm install @i18n-tiny/astro
 ```
+
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
 
 ## Documentation
 

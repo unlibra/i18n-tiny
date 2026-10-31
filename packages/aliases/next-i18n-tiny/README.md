@@ -18,6 +18,8 @@ npm install next-i18n-tiny
 npm install @i18n-tiny/next
 ```
 
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
+
 ## Documentation
 
 See the full documentation at [@i18n-tiny/next](https://github.com/unlibra/i18n-tiny/tree/main/packages/next).
@@ -29,7 +31,7 @@ See the full documentation at [@i18n-tiny/next](https://github.com/unlibra/i18n-
 import { define } from 'next-i18n-tiny'
 
 const { client, server, Provider } = define({
-  locales: ['en', 'ja'] as const,
+  locales: ['en', 'ja'],
   defaultLocale: 'en',
   messages: { en: enMessages, ja: jaMessages }
 })

@@ -33,6 +33,8 @@ pnpm add @i18n-tiny/astro
 yarn add @i18n-tiny/astro
 ```
 
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
+
 Requires Astro 6 or 7. The package itself runs on Node.js 22.12 or later, but Astro may need a newer one: Astro 7.4.4, for example, requires Node.js 22.23.4 or later. Use the Node.js version your Astro version requires.
 
 The package ships ES modules only. The types need TypeScript 5.9 or later.
@@ -305,7 +307,7 @@ import type { I18nConfig } from '@i18n-tiny/astro'
 export const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const satisfies I18nConfig
 ```
 
-Check the config with `satisfies` rather than with a type annotation: `const config: I18nConfig<'ja' | 'en'>` widens `prefixDefault: true` to `boolean`, which the rewrite mode with detection rejects.
+Check the config with `satisfies` rather than with a type annotation, which widens the config to its type: with `const config: I18nConfig<'ja' | 'en'>`, `prefixDefault` is a `boolean`, and the rewrite mode with detection is checked only when `create()` runs, not by type.
 
 ### `@i18n-tiny/astro/middleware` (SSR only)
 
@@ -411,7 +413,7 @@ const messages = i18n.getMessages(locale)
 
 Without detection, a URL without a prefix is the default locale, and `prefixDefault` may be `false`.
 
-With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
+With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
 
 ```typescript
 // src/i18n.config.ts
@@ -562,11 +564,31 @@ const names = { ja: '日本語', en: 'English' }
 </nav>
 ```
 
-For a page in some locales only, map over its locales instead of `i18n.locales`. Without a `base`, `i18n.alternatePath(Astro.url.pathname, locale)` gives the same paths from the current URL.
+For a page in some locales only, map over its locales instead of `i18n.locales`.
+
+To build the links from the current URL instead, pass `i18n.alternatePath(Astro.url.pathname, locale)` to a `Link` with `locale={false}`, or to a plain `<a>`. A `Link` without `locale` adds the prefix of the current page to its `href`, so on `/en/about` the link to Japanese would be `/en/about` again. `Astro.url.pathname` includes the [`base`](https://docs.astro.build/en/reference/configuration-reference/#base): with a `base`, pass the path of the page, as above.
 
 If you turn on detection in the [middleware](#i18n-tinyastromiddleware-ssr-only) with `detectLanguage: true`, also put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/ja/about`), and are not detected.
 
 Without detection, the default, the language switcher works as it is. A static build has no middleware and no detection.
+
+### Alternate Links (hreflang)
+
+The current page in each locale, in the `<head>` of a layout:
+
+```astro
+---
+import { i18n } from '../i18n'
+
+const site = 'https://example.com'
+---
+
+{i18n.locales.map((locale) => (
+  <link rel="alternate" hreflang={locale} href={site + i18n.alternatePath(Astro.url.pathname, locale)} />
+))}
+```
+
+On `/en/about`, this gives `https://example.com/about` for `ja` and `https://example.com/en/about` for `en`. For a page in some locales only, map over its locales. With a `base`, build the paths from the path of the page instead, `localizedPath(path, locale)`, and add the base to them. In the rewrite mode, use `Astro.locals.originalPathname`, the URL before the rewrite.
 
 ### With Astro's Built-in i18n
 

@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Documentation](https://img.shields.io/badge/docs-website-blue.svg)](https://docs.unlibra.com/i18n-tiny/next/introduction)
 
-A dependency-free, type-safe, minimal i18n library for Next.js, with a `define()` under 2KB in the browser.
+A dependency-free, type-safe, minimal i18n library for Next.js, with a `define()` under 1.5KB in the browser.
 Simply prepare translation files and call the define function—usable in both Server and Client Components immediately.
 All key paths such as `messages.site.title` and `t("site.title")` are fully typed and auto-suggested, eliminating typos.
 With the `app/[locale]` root layout, `generateStaticParams` is defined once there, and Next.js applies it to every page below.
@@ -20,7 +20,7 @@ Routing, prefixes, and optional language detection are all handled by a single `
 - **Server Components**: Native RSC support
 - **Minimal SSG**: With the `app/[locale]` root layout, define `generateStaticParams` once there; Next.js applies it to every page below. No per-page configuration needed.
 - **Simple API**: Single configuration, minimal boilerplate
-- **Small**: `define()` is under 2KB minified and gzipped in the browser. The `Link` of `@i18n-tiny/next/router` is not counted in this size
+- **Small**: `define()` is under 1.5KB minified and gzipped in the browser. The `Link` of `@i18n-tiny/next/router` is not counted in this size
 - **No global state**: Pure function factory pattern
 
 ## Installation
@@ -32,6 +32,8 @@ pnpm add @i18n-tiny/next
 # or
 yarn add @i18n-tiny/next
 ```
+
+Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tiny/blob/main/MIGRATION.md).
 
 Requires Next.js 15 or 16, React 18 or 19, and Node.js 22.12 or later. The package ships ES modules only. The types need TypeScript 5.9 or later.
 
@@ -386,22 +388,7 @@ const basePath = '/docs' // the basePath of next.config.ts
 window.location.href = basePath + i18n.localizedPath('/about', 'ja')
 ```
 
-For metadata, keep the URLs relative and put the `basePath` in `metadataBase`: Next.js joins relative URLs to `metadataBase`, and does not add the `basePath` to metadata.
-
-```typescript
-// app/[locale]/about/page.tsx
-import type { Metadata } from 'next'
-import { i18n } from '@/i18n'
-
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    metadataBase: new URL('https://example.com/docs'), // the site and the basePath
-    alternates: {
-      languages: Object.fromEntries(i18n.locales.map((locale) => [locale, i18n.localizedPath('/about', locale)]))
-    }
-  }
-}
-```
+For metadata, keep the URLs relative and put the `basePath` in `metadataBase`: Next.js joins relative URLs to `metadataBase`, and does not add the `basePath` to metadata. See [Alternate links (hreflang)](#alternate-links-hreflang) for an example.
 
 A sitemap needs absolute URLs: build them from the site, the `basePath` and the path. The router functions take only the locale settings, so the sitemap does not load the messages:
 
@@ -420,6 +407,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
 }
 ```
 
+#### Alternate links (hreflang)
+
+A page knows its own path, so build its alternate links in `generateMetadata()` with `localizedPath()`:
+
+```typescript
+// app/[locale]/about/page.tsx
+import type { Metadata } from 'next'
+import { i18n } from '@/i18n'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    metadataBase: new URL('https://example.com'), // with a basePath: 'https://example.com/docs'
+    alternates: {
+      languages: Object.fromEntries(i18n.locales.map((locale) => [locale, i18n.localizedPath('/about', locale)]))
+    }
+  }
+}
+```
+
+This gives `https://example.com/about` for `en` and `https://example.com/ja/about` for `ja`. Where you have the current pathname instead, such as from `usePathname()`, `i18n.alternatePath(pathname, locale)` gives the same paths.
+
 #### `I18nConfig` (type)
 
 The type of the locale settings `{ locales, defaultLocale, prefixDefault? }`, which `define()`, the proxy and the URL functions share:
@@ -436,7 +444,7 @@ It is also exported from `@i18n-tiny/next/types` and `@i18n-tiny/next/router`.
 
 #### `create(config)`
 
-Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequest) => NextResponse`. The config is checked as `define()` checks it, and the rewrite mode with detection without `prefixDefault: true` is a type error and throws.
+Creates a Next.js Proxy handler for i18n routing. It returns `(request: NextRequest) => NextResponse`. The config is checked as `define()` checks it, and the rewrite mode with detection without `prefixDefault: true` throws: see [Rewrite Mode](#rewrite-mode).
 
 **Parameters:**
 
@@ -494,7 +502,7 @@ export const proxy = create({ ...config })
 
 In rewrite mode, the proxy rewrites `/ja/about` to `/about` and passes the locale to the pages in the `x-locale` request header. For URLs without a prefix, the locale is the default locale, or with `detectLanguage: true` is detected from Accept-Language. An `x-locale` header sent by the client is replaced, and the other request headers, such as cookies, are passed on.
 
-With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the proxy share: with detection, the rewrite mode without it is a type error and throws. A URL without a prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
+With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the proxy share: with detection, `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too. A URL without a prefix is still served, not redirected. Without detection, `prefixDefault` may be `false`.
 
 ```typescript
 // i18n.config.ts
