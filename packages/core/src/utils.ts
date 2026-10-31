@@ -73,9 +73,11 @@ export function resolveMessage (
 
   if (obj === undefined) {
     const fullKey = getFullKey()
-    // Bundlers replace process.env.NODE_ENV with a string at build time. Only
-    // a missing key reads it, so a runtime without process fails only there.
-    // eslint-disable-next-line no-restricted-globals -- replaced at build time, see above
+    // Many bundlers replace process.env.NODE_ENV with a string at build time,
+    // but not all do, and code that is not bundled keeps it. Then it is read
+    // at run time: only a missing key, or a key that points to an object,
+    // reads it, so a runtime without process fails only there.
+    // eslint-disable-next-line no-restricted-globals -- often replaced at build time, see above
     if (process.env.NODE_ENV === 'development' && locale) {
       console.warn(`[i18n] Missing key: "${fullKey}" in locale "${locale}"`)
     }
@@ -85,7 +87,7 @@ export function resolveMessage (
   // Prevent returning "[object Object]" if the key points to a nested object
   if (typeof obj === 'object' && obj !== null) {
     const fullKey = getFullKey()
-    // eslint-disable-next-line no-restricted-globals -- replaced at build time, as above
+    // eslint-disable-next-line no-restricted-globals -- often replaced at build time, as above
     if (process.env.NODE_ENV === 'development' && locale) {
       console.warn(`[i18n] Key "${fullKey}" points to an object in locale "${locale}". Returning key instead.`)
     }
