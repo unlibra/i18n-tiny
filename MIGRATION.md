@@ -591,7 +591,7 @@ export const { getMessages, getTranslations } = server
 export { Link }
 ```
 
-The proxy takes the shared config. On Next.js 16, the file is `proxy.ts` with the export `proxy`; on Next.js 15, it is `middleware.ts` with the export `middleware`, as in 1.x:
+The proxy takes the shared config. On Next.js 16, the file is `proxy.ts` with the export `proxy`; on Next.js 15, it is `middleware.ts` with the export `middleware`, as in 1.x. The 2.0 example turns detection off for its language buttons (see [Link](#link)):
 
 ```typescript
 // 1.x: proxy.ts (examples/next)
@@ -609,7 +609,7 @@ export const proxy = create({
 import { create } from '@i18n-tiny/next/proxy'
 import { config as i18nConfig } from './i18n.config'
 
-export const proxy = create({ ...i18nConfig })
+export const proxy = create({ ...i18nConfig, detectLanguage: false })
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
@@ -621,7 +621,7 @@ export const config = {
 import { create } from '@i18n-tiny/next/proxy'
 import { config as i18nConfig } from './i18n.config'
 
-export const middleware = create({ ...i18nConfig })
+export const middleware = create({ ...i18nConfig, detectLanguage: false })
 
 export const config = {
   matcher: ['/((?!api|_next|.*\\..*).*)']
@@ -679,15 +679,12 @@ Language buttons in [examples/next](./examples/next/app/[locale]/client-componen
 const pathname = usePathname()
 const { alternatePath } = usePaths()
 
-<Link href="/" locale={false} style={buttonStyle(false)}>
-  Auto
-</Link>
 <Link href={alternatePath(pathname, 'en')} locale={false} style={buttonStyle(locale === 'en')}>
   English
 </Link>
 ```
 
-`<Link href={pathname} locale="en" normalize>` gives the same link.
+`<Link href={pathname} locale="en" normalize>` gives the same link. The 2.0 example has no "Auto" button, which linked to `/` for the detection: its proxy has `detectLanguage: false`, so `/` is English, the default locale.
 
 ### Next.js: proxy
 

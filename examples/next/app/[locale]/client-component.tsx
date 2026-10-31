@@ -51,10 +51,6 @@ export default function ClientComponent() {
 
       {/* Language Buttons: this page in each locale */}
       <div style={{ marginTop: '2rem' }}>
-        {/* Auto-detect: goes to / which redirects based on browser language */}
-        <Link href="/" locale={false} style={buttonStyle(false)}>
-          Auto
-        </Link>
         <Link href={alternatePath(pathname, 'en')} locale={false} style={buttonStyle(locale === 'en')}>
           English
         </Link>
