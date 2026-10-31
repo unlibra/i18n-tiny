@@ -165,13 +165,23 @@ export function useDefaultLocaleKeys () {
   byDefault.useTranslations()('greeting', { other: 'x' })
 }
 
-// A defaultLocale typed as the union of the locales, as in examples/react
-const unionDefault: 'en' | 'ja' = 'en'
+// A defaultLocale typed as the union of the locales. A const with such a type
+// annotation is narrowed to the value it is given, so it is declared here
+declare const unionDefault: 'en' | 'ja'
+type IsUnionDefault<T> = ['en' | 'ja'] extends [T] ? ([T] extends ['en' | 'ja'] ? true : false) : false
+const unionDefaultIsUnion: IsUnionDefault<typeof unionDefault> = true
+export { unionDefaultIsUnion }
 const withUnionDefault = define({ locales: ['en', 'ja'], defaultLocale: unionDefault, messages: { en: enTyped, ja: jaTyped } })
 export function useUnionDefault () {
   withUnionDefault.useTranslations()('greeting', { name: 'Ann' })
+  withUnionDefault.useTranslations()('common.stats', { count: 1, total: 2 })
   // @ts-expect-error unknown key
   withUnionDefault.useTranslations()('missing')
+  // The messages of either locale may be the default ones, and those typed as
+  // strings take any vars: the vars are not checked
+  withUnionDefault.useTranslations()('greeting')
+  withUnionDefault.useTranslations()('greeting', { other: 'x' })
+  withUnionDefault.useTranslations()('title', { name: 'Ann' })
 }
 // @ts-expect-error the keys of each locale are still compared
 define({ locales: ['en', 'ja'], defaultLocale: unionDefault, messages: { en: enMissing, ja: jaPlain } })

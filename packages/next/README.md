@@ -270,6 +270,7 @@ export default ja
 ```
 
 - Without `as const`, a message is typed as `string`, and its vars are `Record<string, string | number>`, not checked.
+- With a `defaultLocale` typed as the union of the locales, such as `'en' | 'ja'`, the vars come from the messages of every locale, and a message typed as `string` in any of them takes any vars, not checked. Write `defaultLocale` as a literal, such as `'en'`.
 - For a key typed as a union, such as `t(isNew ? 'welcome' : 'goodbye', vars)`, the vars need the variables of every key.
 - An extra variable is a type error only in an object literal in the call, as TypeScript checks extra properties only there.
 - The variables of the other locales are not compared with those of the default locale: a translation without `{name}` is not an error.
