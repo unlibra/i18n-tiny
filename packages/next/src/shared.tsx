@@ -5,13 +5,7 @@ import type { ReactNode } from 'react'
 import { I18nProvider as BaseProvider } from '@i18n-tiny/react/internal'
 import type { I18nConfig } from '@i18n-tiny/core'
 import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
-import { resolveMessage, validateConfig } from '@i18n-tiny/core/internal'
-import {
-  alternatePath as coreAlternatePath,
-  localizedPath as coreLocalizedPath,
-  pathLocale as corePathLocale,
-  removeLocalePrefix as coreRemoveLocalePrefix
-} from '@i18n-tiny/core/router'
+import { alternatePathOf, localizedPathOf, resolveMessage } from '@i18n-tiny/core/internal'
 
 /** A path on the site, such as '/about' */
 export type Path = `/${string}`
@@ -34,28 +28,6 @@ export interface DefineOptions<L extends readonly string[], Msgs> {
 /** The type of the messages: those of the first locale */
 export type MessagesOf<L extends readonly string[], Msgs> = Msgs[L[0] & keyof Msgs]
 
-/** The URL functions, with the locale settings given */
-export interface PathFunctions<Locale extends string> {
-  /** The URL path of a page in a locale, as localizedPath() of @i18n-tiny/core/router */
-  localizedPath: (path: string, locale: Locale) => Path
-  /** The URL path of the current page in another locale, as alternatePath() of @i18n-tiny/core/router */
-  alternatePath: (pathname: string, locale: Locale) => Path
-  /** The pathname without its locale prefix, as removeLocalePrefix() of @i18n-tiny/core/router */
-  removeLocalePrefix: (pathname: string) => Path
-  /** The locale of the prefix of the pathname, or undefined, as pathLocale() of @i18n-tiny/core/router */
-  pathLocale: (pathname: string) => Locale | undefined
-}
-
-/** The URL functions of @i18n-tiny/core/router with a config */
-export function pathFunctions<Locale extends string> (config: I18nConfig): PathFunctions<Locale> {
-  return {
-    localizedPath: (path, locale) => coreLocalizedPath(path, locale, config),
-    alternatePath: (pathname, locale) => coreAlternatePath(pathname, locale, config),
-    removeLocalePrefix: pathname => coreRemoveLocalePrefix(pathname, config),
-    pathLocale: pathname => corePathLocale(pathname, config) as Locale | undefined
-  }
-}
-
 function unknownLocale (locale: unknown, locales: readonly string[]): Error {
   return new Error(
     `[i18n] Unknown locale ${JSON.stringify(locale)}. ` +
@@ -64,9 +36,10 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
 }
 
 /**
- * Checks the config and builds what both versions of define() return: the
- * locale settings, isLocale(), the Provider, the server API and the URL
- * functions
+ * Builds what both versions of define() return: the locale settings,
+ * isLocale(), the Provider, the server API and the URL functions. The config
+ * is not checked here: the Server Components version checks it, and the
+ * Client Components version leaves it out of the browser bundle.
  */
 export function defineBase<
   const L extends readonly string[],
@@ -77,7 +50,7 @@ export function defineBase<
   type Namespace = NamespaceKeys<MessageType>
 
   const { locales, defaultLocale, prefixDefault = false, messages } = config
-  validateConfig({ locales, defaultLocale, messages })
+  const urlConfig: I18nConfig = { locales, defaultLocale, prefixDefault }
 
   function isLocale (value: unknown): value is Locale {
     return typeof value === 'string' && locales.includes(value)
@@ -147,9 +120,11 @@ export function defineBase<
     Provider,
     locales,
     defaultLocale: defaultLocale as Locale,
-    prefixDefault,
     isLocale,
     server,
-    ...pathFunctions<Locale>({ locales, defaultLocale, prefixDefault })
+    /** The URL path of a page in a locale, as localizedPath() of @i18n-tiny/core/router does with this config */
+    localizedPath: (path: string, locale: Locale): Path => localizedPathOf(path, locale, urlConfig),
+    /** The URL path of the current page in another locale, as alternatePath() of @i18n-tiny/core/router does with this config */
+    alternatePath: (pathname: string, locale: Locale): Path => alternatePathOf(pathname, locale, urlConfig)
   }
 }

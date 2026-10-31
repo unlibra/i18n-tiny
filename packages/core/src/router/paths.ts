@@ -56,7 +56,7 @@ function startsWithAnotherHost (path: string): boolean {
 }
 
 // The locale whose prefix the pathname starts with, if any
-function findPrefixLocale (pathname: Path, config: I18nConfig): string | undefined {
+export function findPrefixLocale (pathname: Path, config: I18nConfig): string | undefined {
   return config.locales.find(locale => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`))
 }
 
@@ -81,6 +81,21 @@ export function removePrefix (pathname: Path, config: I18nConfig): Path {
     )
   }
   return result
+}
+
+// localizedPath() and alternatePath() without the check of the config, for
+// a config that is checked once instead, such as the one of define(). The
+// path and the locale are still checked on each call.
+export function localizedPathOf (path: string, locale: string, config: I18nConfig): Path {
+  assertPathname(path, 'path')
+  assertLocale(locale, config)
+  return addPrefix(path, locale, config)
+}
+
+export function alternatePathOf (pathname: string, locale: string, config: I18nConfig): Path {
+  assertPathname(pathname, 'pathname')
+  assertLocale(locale, config)
+  return addPrefix(removePrefix(pathname, config), locale, config)
 }
 
 /**
@@ -111,9 +126,7 @@ export function localizedPath<const C extends I18nConfig> (
   config: CheckedConfig<C>
 ): Path {
   validateConfig(config)
-  assertPathname(path, 'path')
-  assertLocale(locale, config)
-  return addPrefix(path, locale, config)
+  return localizedPathOf(path, locale, config)
 }
 
 /**
@@ -139,9 +152,7 @@ export function alternatePath<const C extends I18nConfig> (
   config: CheckedConfig<C>
 ): Path {
   validateConfig(config)
-  assertPathname(pathname, 'pathname')
-  assertLocale(locale, config)
-  return addPrefix(removePrefix(pathname, config), locale, config)
+  return alternatePathOf(pathname, locale, config)
 }
 
 /**

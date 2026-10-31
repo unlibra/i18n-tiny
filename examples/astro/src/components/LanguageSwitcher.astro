@@ -5,10 +5,11 @@ import type { Locale } from '../i18n'
 
 interface Props {
   locale: Locale
-  pageLocales: readonly Locale[]
+  /** The path of the page, without a locale prefix, such as '/about' */
+  path: string
 }
 
-const { locale, pageLocales } = Astro.props
+const { locale, path } = Astro.props
 
 const names: Record<Locale, string> = { ja: '日本語', en: 'English' }
 
@@ -27,18 +28,17 @@ const buttonStyle = (isActive: boolean) => `
 `
 ---
 
-<!-- The current page in each locale it is built in -->
+<!-- The current page in each locale -->
 <div>
-  {pageLocales.map((pageLocale) => (
+  {i18n.locales.map((linkLocale) => (
     <Link
-      href={Astro.url.pathname}
-      locale={pageLocale}
-      normalize
+      href={path}
+      locale={linkLocale}
       i18n={i18n}
-      hreflang={pageLocale}
-      style={buttonStyle(pageLocale === locale)}
+      hreflang={linkLocale}
+      style={buttonStyle(linkLocale === locale)}
     >
-      {names[pageLocale]}
+      {names[linkLocale]}
     </Link>
   ))}
 </div>

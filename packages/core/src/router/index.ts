@@ -4,6 +4,7 @@
  * Core routing utilities for i18n - framework agnostic
  */
 
+import { validateConfig } from '../config'
 import type { I18nConfig } from '../config'
 import { stripLocalePrefix } from './paths'
 import type { CheckedConfig, Path } from './paths'
@@ -92,5 +93,5 @@ export function getLinkHref<const C extends I18nConfig>(
   currentLocale: string | undefined,
   options: LinkHrefOptions<C>
 ): string {
-  return linkHref(href, currentPathname, currentLocale, options)
+  return linkHref(href, currentPathname, currentLocale, options, validateConfig)
 }

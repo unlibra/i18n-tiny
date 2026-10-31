@@ -1,17 +1,15 @@
 'use client'
 
-import { useMemo } from 'react'
 import {
   useMessages as baseUseMessages,
   useTranslations as baseUseTranslations,
   useLocale as baseUseLocale,
   useLocales as baseUseLocales,
-  useDefaultLocale as baseUseDefaultLocale,
-  useLocaleConfig
+  useDefaultLocale as baseUseDefaultLocale
 } from '@i18n-tiny/react/internal'
 import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
-import { defineBase, pathFunctions } from './shared'
-import type { DefineOptions, MessagesOf, PathFunctions } from './shared'
+import { defineBase } from './shared'
+import type { DefineOptions, MessagesOf } from './shared'
 
 export type { I18nConfig } from '@i18n-tiny/core'
 
@@ -20,8 +18,10 @@ export type { I18nConfig } from '@i18n-tiny/core'
  * This is a pure function that creates a self-contained i18n runtime
  *
  * `locales` and `defaultLocale` are required, and `messages` must have the
- * messages of each locale. An invalid config throws, and with `as const` or
- * an inline config it is a type error too.
+ * messages of each locale. With `as const` or an inline config, an invalid
+ * config is a type error. At run time it throws in the Server Components
+ * version of define(), which checks it: this version, for the browser, does
+ * not check it, to keep the bundle small.
  *
  * @example
  * import { define } from '@i18n-tiny/next'
@@ -79,27 +79,13 @@ export function define<
     return baseUseDefaultLocale() as Locale
   }
 
-  /**
-   * The URL functions with the locale settings of the Provider:
-   * localizedPath, alternatePath, removeLocalePrefix and pathLocale. They
-   * return paths without the basePath, as the functions of define() do.
-   */
-  function usePaths (): PathFunctions<Locale> {
-    const { locales, defaultLocale, prefixDefault } = useLocaleConfig()
-    return useMemo(
-      () => pathFunctions<Locale>({ locales, defaultLocale, prefixDefault }),
-      [locales, defaultLocale, prefixDefault]
-    )
-  }
-
   // Client API (hooks only)
   const client = {
     useMessages,
     useTranslations,
     useLocale,
     useLocales,
-    useDefaultLocale,
-    usePaths
+    useDefaultLocale
   }
 
   return {

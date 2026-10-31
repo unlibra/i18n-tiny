@@ -18,32 +18,12 @@ describe('define config', () => {
     expect(i18n.defaultLocale).toBe('en')
   })
 
-  it('requires locales and defaultLocale', () => {
-    expect(() => untyped(define)({ messages })).toThrow('[i18n] locales must be a non-empty array')
-    expect(() => untyped(define)({ locales: ['en', 'ja'], messages })).toThrow('defaultLocale undefined is not one of locales')
-  })
-
-  it('throws when defaultLocale is not one of locales', () => {
-    expect(() => untyped(define)({ locales: ['en', 'ja'], defaultLocale: 'fr', messages }))
-      .toThrow('[i18n] defaultLocale "fr" is not one of locales ("en", "ja").')
-  })
-
-  it('throws when locales is empty, lists a locale twice or has an invalid locale', () => {
-    expect(() => untyped(define)({ locales: [], defaultLocale: 'en', messages: {} }))
-      .toThrow('[i18n] locales must be a non-empty array')
-    expect(() => untyped(define)({ locales: ['en', 'ja', 'en'], defaultLocale: 'en', messages }))
-      .toThrow('[i18n] Locale "en" is listed more than once in locales.')
-    for (const locale of ['', '.', '..', 'en/us', 'en us']) {
-      expect(() => untyped(define)({ locales: ['en', locale], defaultLocale: 'en', messages: { en: enMessages, [locale]: jaMessages } }))
-        .toThrow('cannot be used as a path segment')
-    }
-  })
-
-  it('throws when messages is missing a locale or has one that is not in locales', () => {
-    expect(() => untyped(define)({ ...config, messages: { en: enMessages } }))
-      .toThrow('[i18n] messages is missing locales: "ja".')
-    expect(() => untyped(define)({ ...config, messages: { ...messages, fr: enMessages } }))
-      .toThrow('[i18n] messages has locales that are not in locales: "fr".')
+  // The browser bundle leaves the check out: an invalid config with literal
+  // types is a type error instead (types.typecheck.tsx)
+  it('does not check the config at run time', () => {
+    expect(() => untyped(define)({ locales: ['en', 'ja'], defaultLocale: 'fr', messages })).not.toThrow()
+    expect(() => untyped(define)({ locales: ['en', 'ja', 'en'], defaultLocale: 'en', messages })).not.toThrow()
+    expect(() => untyped(define)({ ...config, messages: { en: enMessages } })).not.toThrow()
   })
 })
 

@@ -44,6 +44,7 @@ define({ locales: wideLocales, defaultLocale: 'en', messages })
 // The returned config keeps the locale types
 const locales: readonly ['en', 'ja'] = i18n.locales
 const defaultLocale: 'en' | 'ja' = i18n.defaultLocale
+// @ts-expect-error define() does not return prefixDefault: it is in the config
 const prefixDefault: boolean = prefixed.prefixDefault
 
 // Keys are typed from the messages
@@ -82,6 +83,7 @@ type Params = InferGetStaticParamsType<typeof getStaticPaths>
 declare const props: Props
 declare const params: Params
 const pageLocale: 'en' | 'ja' = props.locale
+// @ts-expect-error the props have the locale of the page only
 const pageLocales: readonly ('en' | 'ja')[] = props.pageLocales
 const urlLocale: 'en' | 'ja' | undefined = params.locale
 // @ts-expect-error params.locale is undefined for the default locale
@@ -93,12 +95,13 @@ i18n.getStaticPaths({ locales: ['ja'] })
 // @ts-expect-error unknown locale
 i18n.getStaticPaths({ locales: ['fr'] })
 
-// With other dynamic parameters, their params and props are kept
+// @ts-expect-error getStaticPaths() takes the locales only
+i18n.getStaticPaths({ paths: [{ params: { tool: 'color' } }] })
+
+// Other dynamic parameters are combined with the paths of the locales
 const tools = ['color', 'hex'] as const
-const getToolPaths = () => i18n.getStaticPaths({
-  locales: ['en'],
-  paths: tools.map(tool => ({ params: { tool }, props: { label: tool.toUpperCase() } }))
-})
+const getToolPaths = () => tools.flatMap(tool => i18n.getStaticPaths({ locales: ['en'] })
+  .map(({ params, props }) => ({ params: { ...params, tool }, props: { ...props, label: tool.toUpperCase() } })))
 type ToolProps = InferGetStaticPropsType<typeof getToolPaths>
 type ToolParams = InferGetStaticParamsType<typeof getToolPaths>
 declare const toolProps: ToolProps
@@ -107,27 +110,13 @@ const toolLocale: 'en' | 'ja' = toolProps.locale
 const label: string = toolProps.label
 const tool: 'color' | 'hex' = toolParams.tool
 const toolUrlLocale: 'en' | 'ja' | undefined = toolParams.locale
-// Paths with and without props: the props of each path stay as they are
-const getMixedPaths = () => i18n.getStaticPaths({
-  paths: [{ params: { tool: 'a' }, props: { label: 'A' } }, { params: { tool: 'b' } }]
-})
-type MixedProps = InferGetStaticPropsType<typeof getMixedPaths>
-declare const mixedProps: MixedProps
-const mixedLocale: 'en' | 'ja' = mixedProps.locale
-// @ts-expect-error the path without props has no label
-const mixedLabel: string = mixedProps.label
-const maybeLabel: string | undefined = 'label' in mixedProps ? mixedProps.label : undefined
-// @ts-expect-error getStaticPaths() sets params.locale
-i18n.getStaticPaths({ paths: [{ params: { locale: 'en' } }] })
-// @ts-expect-error getStaticPaths() sets props.locale
-i18n.getStaticPaths({ paths: [{ params: { tool: 'color' }, props: { locale: 'en' } }] })
-// @ts-expect-error getStaticPaths() sets props.pageLocales
-i18n.getStaticPaths({ paths: [{ params: { tool: 'color' }, props: { pageLocales: [] } }] })
 
 // URL functions of define()
 const localized: `/${string}` = i18n.localizedPath('/about', 'ja')
 const alternate: `/${string}` = i18n.alternatePath('/ja/about', 'en')
+// @ts-expect-error define() has localizedPath and alternatePath only: use removeLocalePrefix() of the router entry
 const removed: `/${string}` = i18n.removeLocalePrefix('/ja/about')
+// @ts-expect-error define() has localizedPath and alternatePath only: use pathLocale() of the router entry
 const prefix: 'en' | 'ja' | undefined = i18n.pathLocale('/ja/about')
 // @ts-expect-error unknown locale
 i18n.localizedPath('/about', 'fr')
@@ -148,21 +137,26 @@ localizedPath('/about', 'fr', config)
 // @ts-expect-error defaultLocale is not one of locales
 removeLocalePrefix('/ja/about', { locales: ['en', 'ja'], defaultLocale: 'fr' })
 
-// Props of the Link component: locale and normalize need the define() result
-const keepLocale: LinkProps = { href: '/about' }
+// Props of the Link component: the define() result, unless locale is false
+const currentLocale: LinkProps = { href: '/about', i18n }
 const withoutLocale: LinkProps = { href: '/about', locale: false }
+const withoutLocaleWithI18n: LinkProps = { href: '/about', locale: false, i18n }
 const forLocale: LinkProps = { href: '/about', locale: 'en', i18n }
-const normalized: LinkProps = { href: '/en/about', locale: 'ja', normalize: true, i18n }
+const forPrefixed: LinkProps = { href: '/about', locale: 'en', i18n: prefixed }
 const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current': 'page', i18n }
+// @ts-expect-error a link for the locale of the current page needs i18n
+const keepLocale: LinkProps = { href: '/about' }
 // @ts-expect-error a locale needs i18n
 const localeWithoutI18n: LinkProps = { href: '/about', locale: 'en' }
-// @ts-expect-error normalize needs i18n
-const normalizeWithoutI18n: LinkProps = { href: '/about', normalize: true }
+// @ts-expect-error normalize is gone: use alternatePath() of define() for the current page
+const normalized: LinkProps = { href: '/en/about', locale: 'ja', normalize: true, i18n }
 // @ts-expect-error locale="" without i18n, the 1.x way to leave the path without a locale: use locale={false}.
 // With i18n, locale="" passes the type check and throws as an unknown locale.
 const emptyLocale: LinkProps = { href: '/about', locale: '' }
 // @ts-expect-error i18n is the define() result, not the locales
 const localesAsI18n: LinkProps = { href: '/about', locale: 'en', i18n: ['ja', 'en'] }
+// @ts-expect-error i18n is the define() result, not the config
+const configAsI18n: LinkProps = { href: '/about', locale: 'en', i18n: config }
 
 // create() takes the same config, checked by type too
 create({ ...config })
@@ -217,10 +211,10 @@ const interfaceTitle: string = withInterface.getMessages('ja').common.title
 
 export {
   interfaceTitle,
-  keepLocale, withoutLocale, forLocale, normalized, withAttributes, localeWithoutI18n, normalizeWithoutI18n,
-  emptyLocale, localesAsI18n,
+  currentLocale, keepLocale, withoutLocale, withoutLocaleWithI18n, forLocale, forPrefixed, normalized, withAttributes,
+  localeWithoutI18n, emptyLocale, localesAsI18n, configAsI18n,
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,
   toolLocale, label, tool, toolUrlLocale, localized, alternate, removed, prefix, sameAsInput, routed,
-  routedLocale, routedRemoved, getStaticPaths, getToolPaths, getMixedPaths, mixedLocale, mixedLabel, maybeLabel
+  routedLocale, routedRemoved, getStaticPaths, getToolPaths
 }
 export type { DefineConfig, getLocalizedPath, hasLocalePrefix }

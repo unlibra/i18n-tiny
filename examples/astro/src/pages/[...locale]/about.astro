@@ -10,7 +10,7 @@ export function getStaticPaths() {
 }
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
-const { locale, pageLocales } = Astro.props
+const { locale } = Astro.props
 const messages = i18n.getMessages(locale)
 ---
 
@@ -27,6 +27,6 @@ const messages = i18n.getMessages(locale)
 
     <hr style="margin: 2rem 0;" />
 
-    <LanguageSwitcher locale={locale} pageLocales={pageLocales} />
+    <LanguageSwitcher locale={locale} path="/about" />
   </body>
 </html>

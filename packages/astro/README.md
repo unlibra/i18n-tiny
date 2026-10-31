@@ -172,15 +172,12 @@ With a namespace, keys are relative to it: `getTranslations(locale, 'common')` t
 {
   locales: readonly Locale[]
   defaultLocale: Locale
-  prefixDefault: boolean
   isLocale: (value: unknown) => value is Locale
   getMessages: (locale: Locale) => Messages
   getTranslations: (locale: Locale, namespace?: string) => TranslationFunction
-  getStaticPaths: (options?: { locales?: Locale[], paths?: StaticPath[] }) => LocalizedStaticPath[]
+  getStaticPaths: (options?: { locales?: Locale[] }) => { params: { locale: Locale | undefined }, props: { locale: Locale } }[]
   localizedPath: (path: string, locale: Locale) => string
   alternatePath: (pathname: string, locale: Locale) => string
-  removeLocalePrefix: (pathname: string) => string
-  pathLocale: (pathname: string) => Locale | undefined
 }
 ```
 
@@ -215,38 +212,25 @@ const messages = i18n.getMessages(locale)
 
 - `params.locale` is `undefined` for the default locale, so its page has no prefix (`/about`), and the locale for the others (`/en/about`). With `prefixDefault: true`, the default locale gets its prefix too.
 - `props.locale` is the locale of the page, typed as one of `locales`. Use it rather than `Astro.params.locale`, which is `undefined` for the default locale.
-- `props.pageLocales` is the locales the page is built in.
 - Write `getStaticPaths` as a function declaration, as above: on Astro 6, `export const getStaticPaths = () => …` fails the build.
 
-| Option    | Type                                              | Description                                                                        |
-| --------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `locales` | `Locale[]`                                        | The locales the page is built in, such as `['ja']` for a page in Japanese only. Default: all `locales` |
-| `paths`   | `{ params: Record<string, string>, props?: object }[]` | The other dynamic parameters of the route. Each one is built in each locale, keeping its params and props |
+| Option    | Type       | Description                                                                                             |
+| --------- | ---------- | ------------------------------------------------------------------------------------------------------- |
+| `locales` | `Locale[]` | The locales the page is built in, such as `['ja']` for a page in Japanese only. Default: all `locales` |
 
-```astro
----
-// src/pages/[...locale]/lab/[tool].astro
-export function getStaticPaths() {
-  return i18n.getStaticPaths({
-    paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
-  })
-}
----
-```
-
-An empty `locales`, a locale listed twice or not one of `locales`, and a path that sets `locale` or `pageLocales` itself throw an error.
+An empty `locales`, and a locale listed twice or not one of `locales`, throw an error. For the other dynamic parameters of a route, see [Other Dynamic Parameters](#other-dynamic-parameters).
 
 #### URL functions
 
-`localizedPath`, `alternatePath`, `removeLocalePrefix` and `pathLocale` are the functions of [`@i18n-tiny/astro/router`](#i18n-tinyastrorouter) with the config of `define()`, and return the same results:
+`localizedPath` and `alternatePath` are the functions of [`@i18n-tiny/astro/router`](#i18n-tinyastrorouter) with the config of `define()`, and return the same results:
 
 ```typescript
 i18n.localizedPath('/about', 'en')    // '/en/about'
 i18n.localizedPath('/about', 'ja')    // '/about' (the default locale has no prefix)
-i18n.alternatePath('/en/about', 'ja') // '/about'
-i18n.removeLocalePrefix('/en/about')  // '/about'
-i18n.pathLocale('/en/about')          // 'en'
+i18n.alternatePath('/en/about', 'ja') // '/about': the current page in another locale
 ```
+
+For `removeLocalePrefix` and `pathLocale`, use the functions of [`@i18n-tiny/astro/router`](#i18n-tinyastrorouter) with the config.
 
 #### `I18nConfig` (type)
 
@@ -315,7 +299,7 @@ The config is checked as `define()` checks it: an invalid config, an `excludePat
 | `routing: 'rewrite'`, detection, `prefixDefault: true` in the shared config | `src/pages/about.astro` | Rewritten to `/about`, the locale in `Astro.locals.locale` | The detected locale in `Astro.locals.locale` |
 | `routing: 'rewrite'`, `detectLanguage: false` | `src/pages/about.astro`     | Rewritten to `/about`, the locale in `Astro.locals.locale` | The default locale in `Astro.locals.locale`               |
 
-The shared config is the one that `define()` and the middleware both take, such as `src/i18n.config.ts`. `Link` and the URL functions read `prefixDefault` from `define()`, not from the middleware: with `prefixDefault: true` in `create()` only, a link to the default locale has no prefix, so the middleware redirects it, and with detection to the detected locale, which may not be the default one.
+The shared config is the one that `define()` and the middleware both take, such as `src/i18n.config.ts`. `Link` and the URL functions read `prefixDefault` from the config of `define()`, not from the middleware: with `prefixDefault: true` in `create()` only, a link to the default locale has no prefix, so the middleware redirects it, and with detection to the detected locale, which may not be the default one.
 
 ```typescript
 // src/i18n.config.ts
@@ -370,7 +354,7 @@ const messages = i18n.getMessages(locale)
 </html>
 ```
 
-With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
+With detection, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, `<Link href="/" i18n={i18n}>` has the prefix of the current locale, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
 
 ```typescript
 // src/i18n.config.ts
@@ -405,7 +389,7 @@ const locale = detectLocale(acceptLanguage, ['en', 'ja'])
 
 #### `Link` Component
 
-A link that keeps the locale of the current page, or points to another locale.
+A link for the locale of the current page, or for another locale. It takes the `define()` result as `i18n`, and builds the link with its config.
 
 ```astro
 ---
@@ -413,37 +397,33 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 import { i18n } from '../i18n'
 ---
 
-<!-- Keeps the locale of the current URL: /about on /, /en/about on /en -->
-<Link href="/about">About</Link>
+<!-- The locale of the current page: /about on a Japanese page, /en/about on an English one -->
+<Link href="/about" i18n={i18n}>About</Link>
 
 <!-- A link for a locale: /en, and / for the default locale -->
 <Link href="/" locale="en" i18n={i18n}>English</Link>
 <Link href="/" locale="ja" i18n={i18n}>日本語</Link>
 
-<!-- The current page in another locale -->
-<Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
-
 <!-- The path without a locale -->
 <Link href="/" locale={false}>Top</Link>
 ```
 
-| Prop        | Type              | Description                                                                                                   |
-| ----------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| `href`      | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
-| `locale`    | `string \| false` | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
-| `normalize` | `boolean`         | Removes the base and a locale prefix from `href` first, for `href={Astro.url.pathname}`                       |
-| `i18n`      | `define()` result | Required with `locale` (other than `false`) and `normalize`, from which the link reads `locales`, `defaultLocale` and `prefixDefault` |
+| Prop     | Type              | Description                                                                                                   |
+| -------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `href`   | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
+| `locale` | `string \| false` | Without it, the link is for the locale of the current page. A locale builds the link for it, and `false` leaves the path without a locale |
+| `i18n`   | `define()` result | Required unless `locale` is `false`. The link is built with its `localizedPath()`, and so with its `prefixDefault` |
 
-- Without `locale`, the link gets the prefix of the current locale only when the current URL has one.
-- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
-- `locale` or `normalize` without `i18n` is a type error, and throws.
+- The link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true, whatever the current URL is. A locale that is not one of `locales` throws.
+- Without `locale`, the locale of the current page is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. A page without either, such as one of the default locale without a prefix, is of the default locale.
+- Without `i18n`, a `Link` other than `locale={false}` is a type error, and throws.
 - An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
 - The links have no trailing slash, except for the top page `/`.
-- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link adds it to the result: with the base `/docs`, `<Link href="/about" i18n={i18n}>` on an English page is `/docs/en/about`. Write `href` without the base.
 
 #### URL functions
 
-The functions of [`@i18n-tiny/core/router`](https://www.npmjs.com/package/@i18n-tiny/core), for places where the messages are not loaded, such as `astro.config` or build scripts. They take the config object `{ locales, defaultLocale, prefixDefault? }`. In pages, the same functions of `define()` need no config.
+The functions of [`@i18n-tiny/core/router`](https://www.npmjs.com/package/@i18n-tiny/core), for places where the messages are not loaded, such as `astro.config` or build scripts. They take the config object `{ locales, defaultLocale, prefixDefault? }`. In pages, `localizedPath` and `alternatePath` of `define()` need no config.
 
 ```typescript
 import { localizedPath, alternatePath, removeLocalePrefix, pathLocale } from '@i18n-tiny/astro/router'
@@ -468,7 +448,7 @@ pathLocale('/about', config)             // undefined
 
 ### Pages in Some Locales Only
 
-Pass the locales of the page to `getStaticPaths()`. `Astro.props.pageLocales` has them, for a language switcher:
+Pass the locales of the page to `getStaticPaths()`:
 
 ```astro
 ---
@@ -481,7 +461,7 @@ export function getStaticPaths() {
 
 ### Other Dynamic Parameters
 
-Pass the other parameters of the route as `paths`. Each one is built in each locale:
+`getStaticPaths()` returns the paths of the locales only. Combine them with the other parameters of the route:
 
 ```astro
 ---
@@ -491,9 +471,9 @@ import { i18n } from '../../../i18n'
 import { tools } from '../../../tools'
 
 export function getStaticPaths() {
-  return i18n.getStaticPaths({
-    paths: tools.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }))
-  })
+  return tools.flatMap((tool) =>
+    i18n.getStaticPaths().map(({ params, props }) => ({ params: { ...params, tool: tool.slug }, props: { ...props, tool } }))
+  )
 }
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
 
@@ -503,6 +483,8 @@ const { locale, tool } = Astro.props
 
 ### Language Switcher
 
+The current page in each locale. The page passes its path, without a locale prefix:
+
 ```astro
 ---
 // src/components/LanguageSwitcher.astro
@@ -510,22 +492,22 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 import { i18n } from '../i18n'
 
 interface Props {
-  pageLocales: readonly (typeof i18n.locales)[number][]
+  path: string // such as '/about'
 }
 
 const names = { ja: '日本語', en: 'English' }
 ---
 
 <nav>
-  {Astro.props.pageLocales.map((locale) => (
-    <Link href={Astro.url.pathname} locale={locale} normalize i18n={i18n}>
+  {i18n.locales.map((locale) => (
+    <Link href={Astro.props.path} locale={locale} i18n={i18n}>
       {names[locale]}
     </Link>
   ))}
 </nav>
 ```
 
-Pass it `Astro.props.pageLocales` from the page, so that it only links to the locales the page is built in.
+For a page in some locales only, map over its locales instead of `i18n.locales`. Without a `base`, `i18n.alternatePath(Astro.url.pathname, locale)` gives the same paths from the current URL.
 
 With the [middleware](#i18n-tinyastromiddleware-ssr-only), `prefixDefault: false` and detection, the default, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With a language switcher, do one of these:
 

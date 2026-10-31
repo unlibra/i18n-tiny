@@ -4,8 +4,9 @@
  */
 
 import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import { validateConfig } from '@i18n-tiny/core/internal'
 import { defineBase } from './shared'
-import type { DefineOptions, MessagesOf, PathFunctions } from './shared'
+import type { DefineOptions, MessagesOf } from './shared'
 
 export type { I18nConfig } from '@i18n-tiny/core'
 
@@ -19,6 +20,8 @@ function clientOnlyError (name: string): never {
 
 /**
  * Define i18n instance with automatic type inference (Server Components version)
+ *
+ * An invalid config throws, as the checks of validateConfig() describe.
  */
 export function define<
   const L extends readonly string[],
@@ -30,6 +33,8 @@ export function define<
   type MessageType = MessagesOf<L, Msgs>
   type Namespace = NamespaceKeys<MessageType>
 
+  const { locales, defaultLocale, messages } = config
+  validateConfig({ locales, defaultLocale, messages })
   const base = defineBase<L, Msgs>(config)
 
   // Client API - all throw errors on server
@@ -39,8 +44,7 @@ export function define<
     useTranslations: <N extends Namespace | undefined = undefined>(_namespace?: N): ((key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string) => clientOnlyError('useTranslations'),
     useLocale: (): Locale => clientOnlyError('useLocale'),
     useLocales: (): L => clientOnlyError('useLocales'),
-    useDefaultLocale: (): Locale => clientOnlyError('useDefaultLocale'),
-    usePaths: (): PathFunctions<Locale> => clientOnlyError('usePaths')
+    useDefaultLocale: (): Locale => clientOnlyError('useDefaultLocale')
   }
 
   return {

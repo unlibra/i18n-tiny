@@ -7,58 +7,29 @@
 
 import type { I18nConfig } from '@i18n-tiny/core'
 import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
-import { resolveMessage, validateConfig } from '@i18n-tiny/core/internal'
-import {
-  alternatePath as coreAlternatePath,
-  localizedPath as coreLocalizedPath,
-  pathLocale as corePathLocale,
-  removeLocalePrefix as coreRemoveLocalePrefix
-} from '@i18n-tiny/core/router'
+import { alternatePathOf, localizedPathOf, resolveMessage, validateConfig } from '@i18n-tiny/core/internal'
 
 export type { I18nConfig } from '@i18n-tiny/core'
 
 /** A path on the site, such as '/about' */
 type Path = `/${string}`
 
-/**
- * A page that getStaticPaths() builds in each locale: the other dynamic
- * parameters of the route and the props of the page. `locale` is set by
- * getStaticPaths(), in the params and in the props, as is `pageLocales`.
- */
-export interface StaticPathInput {
-  readonly params: Readonly<Record<string, string | undefined>> & { readonly locale?: never }
-  readonly props?: Readonly<Record<string, unknown>> & { readonly locale?: never, readonly pageLocales?: never }
-}
-
 /** Options of getStaticPaths() */
-export interface StaticPathsOptions<L extends string, P extends StaticPathInput = StaticPathInput> {
+export interface StaticPathsOptions<L extends string> {
   /** The locales the page is built in. Default: all locales */
   readonly locales?: readonly L[]
-  /** The other dynamic parameters of the route, such as `[{ params: { tool: 'color' } }]` */
-  readonly paths?: readonly P[]
 }
 
 /** A path returned by getStaticPaths(), for one page in one locale */
-export type LocalizedStaticPath<L extends string, P extends StaticPathInput = { params: Record<never, never> }> =
-  P extends unknown
-    ? {
-        params: P['params'] & {
-          /** The locale of the URL: undefined for the default locale without a prefix */
-          locale: L | undefined
-        }
-        // A path without props, also when an array literal gives it
-        // `props?: undefined`, gets only the props below
-        props: ([NonNullable<P['props']>] extends [never] ? unknown : NonNullable<P['props']>) & {
-          /** The locale of the page */
-          locale: L
-          /** The locales the page is built in */
-          pageLocales: readonly L[]
-        }
-      }
-    : never
-
-function hasOwn (object: object, key: string): boolean {
-  return Object.prototype.hasOwnProperty.call(object, key)
+export interface LocalizedStaticPath<L extends string> {
+  params: {
+    /** The locale of the URL: undefined for the default locale without a prefix */
+    locale: L | undefined
+  }
+  props: {
+    /** The locale of the page */
+    locale: L
+  }
 }
 
 function unknownLocale (locale: unknown, locales: readonly string[]): Error {
@@ -166,40 +137,21 @@ export function define<
    * getStaticPaths()
    *
    * `params.locale` is undefined for the default locale, unless
-   * `prefixDefault` is true. `props.locale` is the locale of the page, and
-   * `props.pageLocales` the locales it is built in. With `paths`, each path
-   * is built in each locale.
+   * `prefixDefault` is true. `props.locale` is the locale of the page.
+   * `locales` builds the page in these locales only.
    *
    * Throws when `locales` is empty, lists a locale twice or has an unknown
-   * locale, or when a path sets `locale` or `pageLocales` itself.
+   * locale.
    */
-  function getStaticPaths (options?: StaticPathsOptions<Locale, never>): LocalizedStaticPath<Locale>[]
-  function getStaticPaths<P extends StaticPathInput> (
-    options: StaticPathsOptions<Locale, P> & { readonly paths: readonly P[] }
-  ): LocalizedStaticPath<Locale, P>[]
-  function getStaticPaths (
-    options: StaticPathsOptions<Locale> = {}
-  ): { params: Record<string, string | undefined>, props: Record<string, unknown> }[] {
-    const pageLocales = options.locales === undefined ? [...locales] : checkPageLocales(options.locales)
-    const paths = options.paths ?? [{ params: {} }]
-    for (const path of paths) {
-      if (hasOwn(path.params, 'locale')) {
-        throw new Error('[i18n] getStaticPaths() sets params.locale: leave it out of the params of paths.')
-      }
-      for (const name of ['locale', 'pageLocales']) {
-        if (path.props !== undefined && hasOwn(path.props, name)) {
-          throw new Error(`[i18n] getStaticPaths() sets props.${name}: leave it out of the props of paths.`)
-        }
-      }
-    }
-
-    return pageLocales.flatMap(locale => paths.map(path => ({
-      params: { ...path.params, locale: locale === defaultLocale && !prefixDefault ? undefined : locale },
-      props: { ...path.props, locale, pageLocales }
-    })))
+  function getStaticPaths (options: StaticPathsOptions<Locale> = {}): LocalizedStaticPath<Locale>[] {
+    const pageLocales = options.locales === undefined ? locales : checkPageLocales(options.locales)
+    return pageLocales.map(locale => ({
+      params: { locale: locale === defaultLocale && !prefixDefault ? undefined : locale },
+      props: { locale }
+    }))
   }
 
-  function checkPageLocales (pageLocales: readonly string[]): Locale[] {
+  function checkPageLocales (pageLocales: readonly string[]): readonly Locale[] {
     if (!Array.isArray(pageLocales) || pageLocales.length === 0) {
       throw new Error('[i18n] The locales of getStaticPaths() must be a non-empty array of locales.')
     }
@@ -213,7 +165,7 @@ export function define<
       }
       seen.add(locale)
     }
-    return [...pageLocales]
+    return pageLocales
   }
 
   /**
@@ -221,7 +173,7 @@ export function define<
    * @i18n-tiny/core/router does with this config
    */
   function localizedPath (path: string, locale: Locale): Path {
-    return coreLocalizedPath(path, locale, urlConfig)
+    return localizedPathOf(path, locale, urlConfig)
   }
 
   /**
@@ -229,36 +181,17 @@ export function define<
    * of @i18n-tiny/core/router does with this config
    */
   function alternatePath (pathname: string, locale: Locale): Path {
-    return coreAlternatePath(pathname, locale, urlConfig)
-  }
-
-  /**
-   * The pathname without its locale prefix, as removeLocalePrefix() of
-   * @i18n-tiny/core/router does with this config
-   */
-  function removeLocalePrefix (pathname: string): Path {
-    return coreRemoveLocalePrefix(pathname, urlConfig)
-  }
-
-  /**
-   * The locale of the prefix of the pathname, or undefined, as pathLocale()
-   * of @i18n-tiny/core/router does with this config
-   */
-  function pathLocale (pathname: string): Locale | undefined {
-    return corePathLocale(pathname, urlConfig) as Locale | undefined
+    return alternatePathOf(pathname, locale, urlConfig)
   }
 
   return {
     locales,
     defaultLocale: defaultLocale as Locale,
-    prefixDefault,
     isLocale,
     getMessages,
     getTranslations,
     getStaticPaths,
     localizedPath,
-    alternatePath,
-    removeLocalePrefix,
-    pathLocale
+    alternatePath
   }
 }

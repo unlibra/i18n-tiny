@@ -33,8 +33,8 @@ const buttonStyle = (isActive: boolean) => `
     </div>
 
     <nav style="margin-bottom: 2rem;">
-      <Link href="/" style="margin-right: 1rem;">{t('nav.home')}</Link>
-      <Link href="/about">{t('nav.about')}</Link>
+      <Link href="/" i18n={i18n} style="margin-right: 1rem;">{t('nav.home')}</Link>
+      <Link href="/about" i18n={i18n}>{t('nav.about')}</Link>
     </nav>
 
     <h1>{t('home.welcome')}</h1>

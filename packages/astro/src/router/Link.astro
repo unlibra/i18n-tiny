@@ -2,25 +2,27 @@
 /**
  * Localized Link component for Astro
  *
- * Without `locale`, the link keeps the locale of the current URL: it gets
- * the prefix of the current locale only when the current URL has one.
- * `locale` and `normalize` need the define() result as the `i18n` prop.
- * The base of the site is removed from the current URL and added to the
- * link, so href is a path without the base.
+ * Takes the define() result as the `i18n` prop, and builds the link with
+ * its config, as localizedPath() does: the default locale gets no prefix
+ * unless prefixDefault is true. Without `locale`, the link is for the
+ * locale of the current page, read from its params or, in the SSR rewrite
+ * mode, from Astro.locals.locale. A page without a locale there is of the
+ * default locale. The base of the site is added to the link, so href is a
+ * path without the base and without a locale prefix.
  *
  * @example
  * ```astro
  * import Link from '@i18n-tiny/astro/router/Link.astro'
  * import { i18n } from '../i18n'
  *
- * // Keeps the locale of the current URL
- * <Link href="/about">About</Link>
+ * // The link for the locale of the current page
+ * <Link href="/about" i18n={i18n}>About</Link>
  *
  * // A link for a locale: the default locale gets no prefix
  * <Link href="/" locale="en" i18n={i18n}>English</Link>
  *
  * // The current page in another locale
- * <Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
+ * <a href={i18n.alternatePath(Astro.url.pathname, 'en')}>English</a>
  *
  * // The path without a locale
  * <Link href="/" locale={false}>Top</Link>
@@ -31,7 +33,7 @@ import { linkHref } from '@i18n-tiny/astro/internal'
 
 type Props = LinkProps
 
-const { href, locale, normalize, i18n, ...attrs } = Astro.props
+const { href, locale, i18n, ...attrs } = Astro.props
 
 const locals = Astro.locals as Record<string, unknown>
 
@@ -40,15 +42,10 @@ const locals = Astro.locals as Record<string, unknown>
 const currentLocale = (Astro.params.locale as string | undefined) ||
   (locals.locale as string | undefined)
 
-// The URL before the rewrite in the SSR rewrite mode
-const currentPathname = (locals.originalPathname as string | undefined) ?? Astro.url.pathname
-
 const localizedHref = linkHref({
   href,
-  currentPathname,
   currentLocale,
   locale,
-  normalize,
   i18n,
   base: import.meta.env.BASE_URL
 })

@@ -108,7 +108,7 @@ const { Provider, useMessages, useTranslations, useLocale } = define({
 })
 ```
 
-`locales` and `defaultLocale` are required, and `messages` must have the messages of each locale. `define()` throws when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors too.
+`locales` and `defaultLocale` are required, and `messages` must have the messages of each locale. The config is invalid when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors. `define()` does not check the config at run time, which keeps the check out of the browser bundle, so a config typed as `string[]` is not checked.
 
 To write the locales in one place, keep them in an object of their own and spread it:
 

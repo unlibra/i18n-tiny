@@ -1,4 +1,3 @@
-import { validateConfig } from '../config'
 import type { I18nConfig } from '../config'
 import { addPrefix, assertLocale, assertPathname, removePrefix, withoutTrailingSlash } from './paths'
 import type { CheckedConfig, ConfigLocale } from './paths'
@@ -32,11 +31,15 @@ function hasPrefix (pathname: string, locale: string): boolean {
   return pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
 }
 
+// getLinkHref() with the check of the config given: validateConfig() for
+// getLinkHref(), none for a config that is checked once instead, such as the
+// one of the Provider of define(). The config is checked only for a path.
 export function linkHref (
   href: string,
   currentPathname: string,
   currentLocale: string | undefined,
-  options: { locale?: string | false, normalize?: boolean, config?: I18nConfig }
+  options: { locale?: string | false, normalize?: boolean, config?: I18nConfig },
+  checkConfig?: (config: I18nConfig) => void
 ): string {
   // Refuses the fourth argument of 1.x, a locale string, from JavaScript
   if (typeof options !== 'object' || options === null) {
@@ -51,7 +54,7 @@ export function linkHref (
     throw new Error('[i18n] A link with normalize needs the config option.')
   }
   if (config !== undefined) {
-    validateConfig(config)
+    checkConfig?.(config)
   }
 
   // Keep the query and the hash aside and build the path only

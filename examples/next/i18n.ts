@@ -15,6 +15,6 @@ export const i18n = define({
 export type Locale = (typeof i18n.locales)[number]
 
 export const { client, server, Provider, isLocale, locales } = i18n
-export const { useMessages, useTranslations, useLocale, usePaths } = client
+export const { useMessages, useTranslations, useLocale } = client
 export const { getMessages, getTranslations } = server
 export { Link }

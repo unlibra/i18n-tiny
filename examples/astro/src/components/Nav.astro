@@ -10,9 +10,9 @@ interface Props {
 const t = i18n.getTranslations(Astro.props.locale, 'nav')
 ---
 
-<!-- Links keep the locale of the current page -->
+<!-- Links for the locale of the current page -->
 <nav style="margin-bottom: 2rem;">
-  <Link href="/" style="margin-right: 1rem;">{t('home')}</Link>
-  <Link href="/about" style="margin-right: 1rem;">{t('about')}</Link>
-  <Link href="/lab/color">{t('lab')}</Link>
+  <Link href="/" i18n={i18n} style="margin-right: 1rem;">{t('home')}</Link>
+  <Link href="/about" i18n={i18n} style="margin-right: 1rem;">{t('about')}</Link>
+  <Link href="/lab/color" i18n={i18n}>{t('lab')}</Link>
 </nav>

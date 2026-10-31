@@ -10,7 +10,6 @@ import {
   useDefaultLocale as baseUseDefaultLocale
 } from './components'
 import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
-import { validateConfig } from '@i18n-tiny/core/internal'
 
 // Re-export types for Provider
 export type { ProviderProps } from './components'
@@ -21,8 +20,9 @@ export type { I18nConfig } from '@i18n-tiny/core'
  * Define i18n instance with automatic type inference
  *
  * `locales` and `defaultLocale` are required, and `messages` must have the
- * messages of each locale. An invalid config throws, and with `as const` or
- * an inline config it is a type error too.
+ * messages of each locale. With `as const` or an inline config, an invalid
+ * config is a type error. The config is not checked at run time, to keep the
+ * browser bundle small.
  *
  * @example
  * import { define } from '@i18n-tiny/react'
@@ -71,8 +71,7 @@ export function define<
   } & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
 ) {
   type Locale = L[number]
-  const { locales, defaultLocale, messages } = config
-  validateConfig({ locales, defaultLocale, messages })
+  const { locales, defaultLocale } = config
 
   // Type aliases for automatic inference
   type MessageType = Msgs[L[0] & keyof Msgs]

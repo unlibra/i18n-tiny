@@ -49,8 +49,12 @@ describe('define', () => {
     it('returns the locale settings', () => {
       expect(i18n.locales).toEqual(['ja', 'en'])
       expect(i18n.defaultLocale).toBe('ja')
-      expect(i18n.prefixDefault).toBe(false)
-      expect(define({ ...config, prefixDefault: true, messages }).prefixDefault).toBe(true)
+    })
+
+    it('returns localizedPath and alternatePath as its only URL functions', () => {
+      const expected = ['alternatePath', 'defaultLocale', 'getMessages', 'getStaticPaths', 'getTranslations', 'isLocale', 'locales', 'localizedPath']
+      expect(Object.keys(i18n).sort()).toEqual(expected)
+      expect(Object.keys(define({ ...config, prefixDefault: true, messages })).sort()).toEqual(expected)
     })
 
     it('requires locales and defaultLocale', () => {
@@ -150,10 +154,6 @@ describe('define', () => {
             expect(outcome(() => untyped(bound.alternatePath)(pathname, locale)))
               .toEqual(outcome(() => untyped(core.alternatePath)(pathname, locale, settings)))
           }
-          expect(outcome(() => bound.removeLocalePrefix(pathname)))
-            .toEqual(outcome(() => core.removeLocalePrefix(pathname, settings)))
-          expect(outcome(() => bound.pathLocale(pathname)))
-            .toEqual(outcome(() => core.pathLocale(pathname, settings)))
         }
       })
     }
@@ -164,9 +164,6 @@ describe('define', () => {
       expect(i18n.localizedPath('/', 'en')).toBe('/en')
       expect(i18n.alternatePath('/en/about', 'ja')).toBe('/about')
       expect(i18n.alternatePath('/about', 'en')).toBe('/en/about')
-      expect(i18n.removeLocalePrefix('/en/about')).toBe('/about')
-      expect(i18n.pathLocale('/en/about')).toBe('en')
-      expect(i18n.pathLocale('/about')).toBeUndefined()
 
       const prefixed = define({ ...config, prefixDefault: true, messages })
       expect(prefixed.localizedPath('/about', 'ja')).toBe('/ja/about')
@@ -182,44 +179,37 @@ describe('define', () => {
   describe('getStaticPaths', () => {
     it('builds each locale, without a locale param for the default locale', () => {
       expect(i18n.getStaticPaths()).toEqual([
-        { params: { locale: undefined }, props: { locale: 'ja', pageLocales: ['ja', 'en'] } },
-        { params: { locale: 'en' }, props: { locale: 'en', pageLocales: ['ja', 'en'] } }
+        { params: { locale: undefined }, props: { locale: 'ja' } },
+        { params: { locale: 'en' }, props: { locale: 'en' } }
       ])
     })
 
     it('sets the locale param of the default locale with prefixDefault', () => {
       const prefixed = define({ ...config, prefixDefault: true, messages })
       expect(prefixed.getStaticPaths()).toEqual([
-        { params: { locale: 'ja' }, props: { locale: 'ja', pageLocales: ['ja', 'en'] } },
-        { params: { locale: 'en' }, props: { locale: 'en', pageLocales: ['ja', 'en'] } }
+        { params: { locale: 'ja' }, props: { locale: 'ja' } },
+        { params: { locale: 'en' }, props: { locale: 'en' } }
       ])
     })
 
     it('builds only the locales of the page', () => {
       expect(i18n.getStaticPaths({ locales: ['ja'] })).toEqual([
-        { params: { locale: undefined }, props: { locale: 'ja', pageLocales: ['ja'] } }
+        { params: { locale: undefined }, props: { locale: 'ja' } }
       ])
       expect(i18n.getStaticPaths({ locales: ['en'] })).toEqual([
-        { params: { locale: 'en' }, props: { locale: 'en', pageLocales: ['en'] } }
+        { params: { locale: 'en' }, props: { locale: 'en' } }
       ])
     })
 
-    it('builds each path in each locale, keeping its params and props', () => {
-      const paths = [
-        { params: { tool: 'color' }, props: { label: 'Color' } },
-        { params: { tool: 'hex' } }
-      ]
-      expect(i18n.getStaticPaths({ paths })).toEqual([
-        { params: { tool: 'color', locale: undefined }, props: { label: 'Color', locale: 'ja', pageLocales: ['ja', 'en'] } },
-        { params: { tool: 'hex', locale: undefined }, props: { locale: 'ja', pageLocales: ['ja', 'en'] } },
-        { params: { tool: 'color', locale: 'en' }, props: { label: 'Color', locale: 'en', pageLocales: ['ja', 'en'] } },
-        { params: { tool: 'hex', locale: 'en' }, props: { locale: 'en', pageLocales: ['ja', 'en'] } }
+    it('combines with the other dynamic parameters of the route', () => {
+      const tools = ['color', 'hex']
+      const paths = tools.flatMap((tool) => i18n.getStaticPaths().map(({ params, props }) => ({ params: { ...params, tool }, props: { ...props, tool } })))
+      expect(paths).toEqual([
+        { params: { locale: undefined, tool: 'color' }, props: { locale: 'ja', tool: 'color' } },
+        { params: { locale: 'en', tool: 'color' }, props: { locale: 'en', tool: 'color' } },
+        { params: { locale: undefined, tool: 'hex' }, props: { locale: 'ja', tool: 'hex' } },
+        { params: { locale: 'en', tool: 'hex' }, props: { locale: 'en', tool: 'hex' } }
       ])
-      expect(i18n.getStaticPaths({ locales: ['en'], paths })).toEqual([
-        { params: { tool: 'color', locale: 'en' }, props: { label: 'Color', locale: 'en', pageLocales: ['en'] } },
-        { params: { tool: 'hex', locale: 'en' }, props: { locale: 'en', pageLocales: ['en'] } }
-      ])
-      expect(i18n.getStaticPaths({ paths: [] })).toEqual([])
     })
 
     it('throws for invalid locales of the page', () => {
@@ -228,13 +218,11 @@ describe('define', () => {
       expect(() => i18n.getStaticPaths({ locales: ['en', 'en'] })).toThrow('[i18n] Locale "en" is listed more than once in the locales of getStaticPaths().')
     })
 
-    it('throws when a path sets the locale itself', () => {
-      expect(() => untyped(i18n.getStaticPaths)({ paths: [{ params: { locale: 'en' } }] }))
-        .toThrow('[i18n] getStaticPaths() sets params.locale')
-      expect(() => untyped(i18n.getStaticPaths)({ paths: [{ params: { tool: 'a' }, props: { locale: 'en' } }] }))
-        .toThrow('[i18n] getStaticPaths() sets props.locale')
-      expect(() => untyped(i18n.getStaticPaths)({ paths: [{ params: { tool: 'a' }, props: { pageLocales: [] } }] }))
-        .toThrow('[i18n] getStaticPaths() sets props.pageLocales')
+    it('returns paths that the caller can change without changing define()', () => {
+      const first = i18n.getStaticPaths()
+      first[0].props.locale = 'en'
+      expect(i18n.getStaticPaths()[0].props.locale).toBe('ja')
+      expect(i18n.locales).toEqual(['ja', 'en'])
     })
   })
 })

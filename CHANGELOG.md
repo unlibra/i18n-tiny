@@ -20,7 +20,9 @@ for how to update from 1.x.
   segment, a `defaultLocale` that is not one of `locales`, and `messages`
   with a missing or extra locale throw. With `as const` or an inline config
   they are type errors too. The Astro middleware, the Next.js proxy and the
-  URL functions check the same config.
+  URL functions check the same config. In the browser, the `define()` of
+  `@i18n-tiny/react` and of `@i18n-tiny/next` in Client Components check it
+  by type only, which keeps the check out of the client bundle.
 - `getMessages()`, `getTranslations()` and the `Provider` take one of
   `locales`; any other value throws instead of falling back to the default
   locale. `useLocale()` returns one of `locales`.
@@ -34,9 +36,11 @@ for how to update from 1.x.
   argument.
 - `Link` (Astro and Next.js): a link for the default locale gets no prefix
   unless `prefixDefault` is true, a relative `href` throws, and
-  `locale={false}` replaces `locale=""`. The Astro `Link` needs the
-  `define()` result as the `i18n` prop with `locale` or `normalize`, and
-  handles the `base`.
+  `locale={false}` replaces `locale=""`.
+- The Astro `Link` needs the `define()` result as the `i18n` prop, except
+  with `locale={false}`. Without `locale`, it builds the link for the locale
+  of the current page from the config, as the Next.js `Link` does, instead of
+  following the current URL. It handles the `base`.
 - Astro static builds put the pages under `src/pages/[...locale]/` and return
   `i18n.getStaticPaths()`: the default locale is built without a prefix.
 - The Astro middleware serves the default locale through
@@ -70,12 +74,10 @@ for how to update from 1.x.
 
 - `isLocale()` in the result of `define()`, to narrow a `string` to one of
   `locales`.
-- `i18n.getStaticPaths()` in `@i18n-tiny/astro`, which sets `params.locale`,
-  `props.locale` and `props.pageLocales`, and takes the locales of the page
-  and the other parameters of the route.
-- `localizedPath()`, `alternatePath()`, `removeLocalePrefix()`,
-  `pathLocale()` and `prefixDefault` in the result of `define()` in Astro and
-  Next.js, and `client.usePaths()` in Next.js.
+- `i18n.getStaticPaths()` in `@i18n-tiny/astro`, which sets `params.locale`
+  and `props.locale`, and takes the locales of the page.
+- `localizedPath()` and `alternatePath()` in the result of `define()` in
+  Astro and Next.js.
 - The URL functions of `@i18n-tiny/next/router` work in Server Components.
 - The middleware and the proxy add `Vary: Accept-Language` to responses that
   depend on language detection.
@@ -85,6 +87,8 @@ for how to update from 1.x.
 - `@i18n-tiny/astro/integration` (and `astro-i18n-tiny/integration`).
 - `getLocalizedPath()` and `hasLocalePrefix()`.
 - `Astro.locals.locales`.
+- The `normalize` prop of the Astro `Link`; use `i18n.alternatePath()`, or
+  the path of the page with `locale`.
 - `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`, the
   same props of the internal provider (not those of the `Provider` of
   `define()`).

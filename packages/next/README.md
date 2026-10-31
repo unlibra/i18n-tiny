@@ -113,7 +113,7 @@ export type Locale = (typeof i18n.locales)[number]
 
 export { Link }
 export const { Provider, isLocale, locales } = i18n
-export const { useMessages, useTranslations, useLocale, usePaths } = i18n.client
+export const { useMessages, useTranslations, useLocale } = i18n.client
 export const { getMessages, getTranslations } = i18n.server
 ```
 
@@ -237,7 +237,7 @@ Defines an i18n instance with automatic type inference.
 | `prefixDefault` | `boolean`                  | Whether URLs of the default locale also carry the prefix (default `false`) |
 | `messages`      | `Record<Locale, Messages>` | Messages object keyed by locale                                      |
 
-`locales` and `defaultLocale` are required, and `locales` needs no `as const`. `define()` throws when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors too.
+`locales` and `defaultLocale` are required, and `locales` needs no `as const`. The config is invalid when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors. At run time, `define()` throws for them on the server, in Server Components and in the proxy. In the browser it does not check the config, which keeps the check out of the client bundle.
 
 **Returns:**
 
@@ -246,12 +246,9 @@ Defines an i18n instance with automatic type inference.
   Provider: React.FC<{ locale: Locale; messages: Messages; children: ReactNode }>
   locales: readonly Locale[]
   defaultLocale: Locale
-  prefixDefault: boolean
   isLocale: (value: unknown) => value is Locale
   localizedPath: (path: string, locale: Locale) => string
   alternatePath: (pathname: string, locale: Locale) => string
-  removeLocalePrefix: (pathname: string) => string
-  pathLocale: (pathname: string) => Locale | undefined
   server: {
     getMessages: (locale: Locale) => Promise<Messages>
     getTranslations: (locale: Locale, namespace?: Namespace) => Promise<TranslationFunction>
@@ -262,7 +259,6 @@ Defines an i18n instance with automatic type inference.
     useLocale: () => Locale
     useLocales: () => readonly Locale[]
     useDefaultLocale: () => Locale
-    usePaths: () => { localizedPath, alternatePath, removeLocalePrefix, pathLocale }
   }
 }
 ```
@@ -291,30 +287,27 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
 
 #### URL functions
 
-`localizedPath`, `alternatePath`, `removeLocalePrefix` and `pathLocale` are the functions of [`@i18n-tiny/next/router`](#i18n-tinynextrouter) with the config of `define()`, and return the same results:
+`localizedPath` and `alternatePath` are the functions of [`@i18n-tiny/next/router`](#i18n-tinynextrouter) with the config of `define()`, and return the same results. They work in Server and Client Components:
 
 ```typescript
 i18n.localizedPath('/about', 'ja')    // '/ja/about'
 i18n.localizedPath('/about', 'en')    // '/about' (the default locale has no prefix)
 i18n.alternatePath('/ja/about', 'en') // '/about': the current page in another locale
-i18n.removeLocalePrefix('/ja/about')  // '/about'
-i18n.pathLocale('/ja/about')          // 'ja'
 ```
-
-In Client Components, `client.usePaths()` gives the same functions with the config of the `Provider`:
 
 ```typescript
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
-import { usePaths } from '@/i18n'
+import { i18n } from '@/i18n'
 
 export function SwitchToJapanese() {
   const pathname = usePathname()
   const router = useRouter()
-  const { alternatePath } = usePaths()
-  return <button onClick={() => router.push(alternatePath(pathname, 'ja'))}>日本語</button>
+  return <button onClick={() => router.push(i18n.alternatePath(pathname, 'ja'))}>日本語</button>
 }
 ```
+
+For `removeLocalePrefix` and `pathLocale`, use the functions of [`@i18n-tiny/next/router`](#i18n-tinynextrouter) with the config.
 
 #### Paths and the `basePath`
 
@@ -324,7 +317,7 @@ The URL functions, and the `Link`, work on paths without the [`basePath`](https:
 import { redirect } from 'next/navigation'
 
 redirect(i18n.localizedPath('/about', 'ja'))       // Next.js adds the basePath
-router.push(alternatePath(pathname, 'ja'))         // the same
+router.push(i18n.alternatePath(pathname, 'ja'))    // the same
 ```
 
 Anywhere else, add the `basePath` yourself:

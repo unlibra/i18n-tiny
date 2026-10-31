@@ -5,8 +5,8 @@ import type { LinkProps as NextLinkProps } from 'next/link.js'
 import type { AnchorHTMLAttributes, MouseEvent, ReactNode, RefAttributes } from 'react'
 
 import { useLocale, useLocaleConfig } from '@i18n-tiny/react/internal'
-import { getLinkHref, pathLocale } from '@i18n-tiny/core/router'
-import type { I18nConfig, LinkHrefOptions } from '@i18n-tiny/core/router'
+import { findPrefixLocale, linkHref } from '@i18n-tiny/core/internal'
+import type { I18nConfig } from '@i18n-tiny/core/router'
 
 // The props of next/link's Link, built from its named LinkProps type rather
 // than from the type of its default export: next/link is CommonJS, so under
@@ -44,7 +44,7 @@ function leadsToAnotherLocale (href: string | null | undefined, currentLocale: s
   }
   const suffixStart = href.search(/[?#]/)
   const path = suffixStart === -1 ? href : href.slice(0, suffixStart)
-  const locale = pathLocale(path, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
+  const locale = findPrefixLocale(path as `/${string}`, config) ?? (config.prefixDefault ? undefined : config.defaultLocale)
   return locale !== currentLocale
 }
 
@@ -114,17 +114,18 @@ export function Link<const T extends string = string>({ href, locale, normalize 
     throw error
   }
 
-  // Without a locale, the link is for the locale of the current page
+  // Without a locale, the link is for the locale of the current page. The
+  // config of the Provider comes from define() and is not checked again.
   const linkLocale = locale ?? currentLocale
-  const options = { locale: linkLocale, normalize, config } as LinkHrefOptions
+  const options = { locale: linkLocale, normalize, config }
 
   // Handle both string and UrlObject. A UrlObject without pathname, such as
   // { query: { page: 2 } }, points at the current page and is left as is.
   const localizedHref = typeof href === 'string'
-    ? getLinkHref(href, '', currentLocale, options)
+    ? linkHref(href, '', currentLocale, options)
     : href.pathname == null
       ? href
-      : { ...href, pathname: getLinkHref(href.pathname, '', currentLocale, options) }
+      : { ...href, pathname: linkHref(href.pathname, '', currentLocale, options) }
 
   const path = typeof localizedHref === 'string' ? localizedHref : localizedHref.pathname
   if (!leadsToAnotherLocale(path, currentLocale, config)) {

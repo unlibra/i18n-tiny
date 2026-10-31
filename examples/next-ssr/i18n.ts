@@ -13,7 +13,7 @@ export const i18n = define({
 })
 
 export const { client, server, Provider, isLocale } = i18n
-export const { useMessages, useTranslations, useLocale, usePaths } = client
+export const { useMessages, useTranslations, useLocale } = client
 export const { getMessages, getTranslations } = server
 export { Link }
 

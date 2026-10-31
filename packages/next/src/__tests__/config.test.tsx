@@ -5,7 +5,6 @@ import { define as defineClient } from '../index.react-client'
 import { define as defineServer } from '../index.react-server'
 import { Link } from '../router'
 import * as router from '../router'
-import { I18nProvider as BaseProvider } from '@i18n-tiny/react/internal'
 
 vi.mock('next/navigation', () => ({
   usePathname: vi.fn(() => '/')
@@ -39,39 +38,65 @@ for (const [name, define] of [['client', defineClient], ['server', defineServer]
         const i18n = define({ ...config, messages })
         expect(i18n.locales).toEqual(['ja', 'en'])
         expect(i18n.defaultLocale).toBe('ja')
-        expect(i18n.prefixDefault).toBe(false)
-        expect(define({ ...config, prefixDefault: true, messages }).prefixDefault).toBe(true)
       })
 
-      it('requires locales and defaultLocale', () => {
-        expect(() => untyped(define)({ messages })).toThrow('[i18n] locales must be a non-empty array')
-        expect(() => untyped(define)({ locales: ['ja', 'en'], messages })).toThrow('defaultLocale undefined is not one of locales')
-      })
-
-      it('throws when defaultLocale is not one of locales', () => {
-        expect(() => untyped(define)({ locales: ['ja', 'en'], defaultLocale: 'fr', messages }))
-          .toThrow('[i18n] defaultLocale "fr" is not one of locales ("ja", "en").')
-      })
-
-      it('throws when locales is empty, lists a locale twice or has an invalid locale', () => {
-        expect(() => untyped(define)({ locales: [], defaultLocale: 'ja', messages: {} }))
-          .toThrow('[i18n] locales must be a non-empty array')
-        expect(() => untyped(define)({ locales: ['ja', 'en', 'ja'], defaultLocale: 'ja', messages }))
-          .toThrow('[i18n] Locale "ja" is listed more than once in locales.')
-        for (const locale of ['', '.', '..', 'en/us', 'en us']) {
-          expect(() => untyped(define)({ locales: ['ja', locale], defaultLocale: 'ja', messages: { ja: jaMessages, [locale]: enMessages } }))
-            .toThrow('cannot be used as a path segment')
+      it('returns localizedPath and alternatePath as its only URL functions, and no usePaths()', () => {
+        for (const i18n of [define({ ...config, messages }), define({ ...config, prefixDefault: true, messages })]) {
+          expect(Object.keys(i18n).sort())
+            .toEqual(['Provider', 'alternatePath', 'client', 'defaultLocale', 'isLocale', 'locales', 'localizedPath', 'server'])
+          expect(Object.keys(i18n.client).sort())
+            .toEqual(['useDefaultLocale', 'useLocale', 'useLocales', 'useMessages', 'useTranslations'])
         }
       })
-
-      it('throws when messages is missing a locale or has one that is not in locales', () => {
-        expect(() => untyped(define)({ ...config, messages: { ja: jaMessages } }))
-          .toThrow('[i18n] messages is missing locales: "en".')
-        expect(() => untyped(define)({ ...config, messages: { ...messages, fr: enMessages } }))
-          .toThrow('[i18n] messages has locales that are not in locales: "fr".')
-      })
     })
+  })
+}
 
+// The Server Components version checks the config at run time. The Client
+// Components version, which goes to the browser, leaves the check out: the
+// same config goes through the Server Components version on the server.
+describe('define (server version) checks the config', () => {
+  const define = defineServer
+
+  it('requires locales and defaultLocale', () => {
+    expect(() => untyped(define)({ messages })).toThrow('[i18n] locales must be a non-empty array')
+    expect(() => untyped(define)({ locales: ['ja', 'en'], messages })).toThrow('defaultLocale undefined is not one of locales')
+  })
+
+  it('throws when defaultLocale is not one of locales', () => {
+    expect(() => untyped(define)({ locales: ['ja', 'en'], defaultLocale: 'fr', messages }))
+      .toThrow('[i18n] defaultLocale "fr" is not one of locales ("ja", "en").')
+  })
+
+  it('throws when locales is empty, lists a locale twice or has an invalid locale', () => {
+    expect(() => untyped(define)({ locales: [], defaultLocale: 'ja', messages: {} }))
+      .toThrow('[i18n] locales must be a non-empty array')
+    expect(() => untyped(define)({ locales: ['ja', 'en', 'ja'], defaultLocale: 'ja', messages }))
+      .toThrow('[i18n] Locale "ja" is listed more than once in locales.')
+    for (const locale of ['', '.', '..', 'en/us', 'en us']) {
+      expect(() => untyped(define)({ locales: ['ja', locale], defaultLocale: 'ja', messages: { ja: jaMessages, [locale]: enMessages } }))
+        .toThrow('cannot be used as a path segment')
+    }
+  })
+
+  it('throws when messages is missing a locale or has one that is not in locales', () => {
+    expect(() => untyped(define)({ ...config, messages: { ja: jaMessages } }))
+      .toThrow('[i18n] messages is missing locales: "en".')
+    expect(() => untyped(define)({ ...config, messages: { ...messages, fr: enMessages } }))
+      .toThrow('[i18n] messages has locales that are not in locales: "fr".')
+  })
+})
+
+describe('define (client version)', () => {
+  it('does not check the config at run time', () => {
+    expect(() => untyped(defineClient)({ locales: ['ja', 'en'], defaultLocale: 'fr', messages })).not.toThrow()
+    expect(() => untyped(defineClient)({ locales: ['ja', 'ja'], defaultLocale: 'ja', messages })).not.toThrow()
+    expect(() => untyped(defineClient)({ ...config, messages: { ja: jaMessages } })).not.toThrow()
+  })
+})
+
+for (const [name, define] of [['client', defineClient], ['server', defineServer]] as const) {
+  describe(`define (${name} version)`, () => {
     describe('locales', () => {
       const i18n = define({ ...config, messages })
 
@@ -114,10 +139,6 @@ for (const [name, define] of [['client', defineClient], ['server', defineServer]
               expect(outcome(() => untyped(i18n.alternatePath)(pathname, locale)))
                 .toEqual(outcome(() => untyped(core.alternatePath)(pathname, locale, settings)))
             }
-            expect(outcome(() => i18n.removeLocalePrefix(pathname)))
-              .toEqual(outcome(() => core.removeLocalePrefix(pathname, settings)))
-            expect(outcome(() => i18n.pathLocale(pathname)))
-              .toEqual(outcome(() => core.pathLocale(pathname, settings)))
           }
         })
       }
@@ -127,9 +148,6 @@ for (const [name, define] of [['client', defineClient], ['server', defineServer]
         expect(i18n.localizedPath('/about', 'en')).toBe('/en/about')
         expect(i18n.localizedPath('/about', 'ja')).toBe('/about')
         expect(i18n.alternatePath('/en/about', 'ja')).toBe('/about')
-        expect(i18n.removeLocalePrefix('/en')).toBe('/')
-        expect(i18n.pathLocale('/en/about')).toBe('en')
-        expect(i18n.pathLocale('/about')).toBe(undefined)
         const prefixed = define({ ...config, prefixDefault: true, messages })
         expect(prefixed.localizedPath('/about', 'ja')).toBe('/ja/about')
         expect(prefixed.alternatePath('/en/about', 'ja')).toBe('/ja/about')
@@ -145,90 +163,6 @@ describe('@i18n-tiny/next/router', () => {
     expect(router.removeLocalePrefix).toBe(core.removeLocalePrefix)
     expect(router.pathLocale).toBe(core.pathLocale)
     expect(router.localizedPath('/about', 'en', config)).toBe('/en/about')
-  })
-})
-
-describe('client.usePaths()', () => {
-  for (const prefixDefault of [false, true]) {
-    it(`returns the URL functions with the config of the Provider (prefixDefault: ${prefixDefault})`, () => {
-      const i18n = defineClient({ ...config, prefixDefault, messages })
-      const settings = { ...config, prefixDefault }
-      let paths: ReturnType<typeof i18n.client.usePaths> | undefined
-      function Read () {
-        paths = i18n.client.usePaths()
-        return null
-      }
-      render(<i18n.Provider locale="en" messages={enMessages}><Read /></i18n.Provider>)
-      if (paths === undefined) throw new Error('not rendered')
-      const result = paths
-      for (const pathname of pathnames) {
-        for (const locale of ['ja', 'en', 'fr']) {
-          expect(outcome(() => untyped(result.localizedPath)(pathname, locale)))
-            .toEqual(outcome(() => untyped(core.localizedPath)(pathname, locale, settings)))
-          expect(outcome(() => untyped(result.alternatePath)(pathname, locale)))
-            .toEqual(outcome(() => untyped(core.alternatePath)(pathname, locale, settings)))
-        }
-        expect(outcome(() => result.removeLocalePrefix(pathname)))
-          .toEqual(outcome(() => core.removeLocalePrefix(pathname, settings)))
-        expect(outcome(() => result.pathLocale(pathname)))
-          .toEqual(outcome(() => core.pathLocale(pathname, settings)))
-      }
-    })
-  }
-
-  // A Provider with other locale settings than define(), such as one from
-  // another define() or the Provider of @i18n-tiny/react/internal: the
-  // settings of the Provider are the ones that count
-  for (const [defined, provided] of [[false, true], [true, false]]) {
-    it(`reads prefixDefault from the Provider, not from define() (define: ${defined}, Provider: ${provided})`, () => {
-      const i18n = defineClient({ ...config, prefixDefault: defined, messages })
-      let paths: ReturnType<typeof i18n.client.usePaths> | undefined
-      function Read () {
-        paths = i18n.client.usePaths()
-        return null
-      }
-      render(
-        <BaseProvider locale="en" messages={enMessages} locales={config.locales} defaultLocale="ja" prefixDefault={provided}>
-          <Read />
-        </BaseProvider>
-      )
-      if (paths === undefined) throw new Error('not rendered')
-      expect(paths.localizedPath('/about', 'ja')).toBe(provided ? '/ja/about' : '/about')
-      expect(paths.alternatePath('/en/about', 'ja')).toBe(provided ? '/ja/about' : '/about')
-      expect(paths.localizedPath('/about', 'en')).toBe('/en/about')
-    })
-  }
-
-  it('reads the locales and the default locale from the Provider', () => {
-    const i18n = defineClient({ ...config, messages })
-    let paths: ReturnType<typeof i18n.client.usePaths> | undefined
-    function Read () {
-      paths = i18n.client.usePaths()
-      return null
-    }
-    render(
-      <BaseProvider locale="en" messages={enMessages} locales={['en', 'fr']} defaultLocale="en">
-        <Read />
-      </BaseProvider>
-    )
-    if (paths === undefined) throw new Error('not rendered')
-    expect(untyped(paths.localizedPath)('/about', 'fr')).toBe('/fr/about')
-    expect(paths.localizedPath('/about', 'en')).toBe('/about')
-    expect(() => paths?.localizedPath('/about', 'ja')).toThrow('[i18n] Unknown locale "ja"')
-  })
-
-  it('needs the Provider', () => {
-    const i18n = defineClient({ ...config, messages })
-    function Read () {
-      i18n.client.usePaths()
-      return null
-    }
-    expect(() => render(<Read />)).toThrow('must be used within i18n Provider')
-  })
-
-  it('throws in Server Components', () => {
-    const i18n = defineServer({ ...config, messages })
-    expect(() => i18n.client.usePaths()).toThrow('usePaths is not available in Server Components')
   })
 })
 

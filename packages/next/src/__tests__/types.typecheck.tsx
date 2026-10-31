@@ -97,6 +97,7 @@ for (const define of [defineClient, defineServer]) {
   // The config can be spread from an object of its own
   const i18n = define({ ...routerConfig, prefixDefault: true, messages })
   const defaultLocale: 'en' | 'ja' = i18n.defaultLocale
+  // @ts-expect-error define() does not return prefixDefault: it is in the config
   const prefixDefault: boolean = i18n.prefixDefault
   void defaultLocale
   void prefixDefault
@@ -120,7 +121,9 @@ for (const define of [defineClient, defineServer]) {
   // The URL functions
   const path: `/${string}` = i18n.localizedPath('/about', 'en')
   i18n.alternatePath('/en/about', 'ja')
+  // @ts-expect-error define() has localizedPath and alternatePath only: use removeLocalePrefix() of the router entry
   i18n.removeLocalePrefix('/en/about')
+  // @ts-expect-error define() has localizedPath and alternatePath only: use pathLocale() of the router entry
   const prefixLocale: 'en' | 'ja' | undefined = i18n.pathLocale('/en/about')
   // @ts-expect-error unknown locale
   i18n.localizedPath('/about', 'fr')
@@ -128,16 +131,14 @@ for (const define of [defineClient, defineServer]) {
   void prefixLocale
 }
 
-export function usePathsTypeChecks () {
+export function clientTypeChecks () {
   const i18n = defineClient({ ...routerConfig, messages })
   const locale: 'en' | 'ja' = i18n.client.useLocale()
+  // @ts-expect-error usePaths() is gone: use the URL functions of define(), or Link with normalize
   const paths = i18n.client.usePaths()
-  const path: `/${string}` = paths.localizedPath('/about', locale)
-  paths.alternatePath('/en/about', 'ja')
-  const prefixLocale: 'en' | 'ja' | undefined = paths.pathLocale('/en/about')
-  // @ts-expect-error unknown locale
-  paths.localizedPath('/about', 'fr')
-  return [path, prefixLocale]
+  // The URL functions of define() work in Client Components too
+  const path: `/${string}` = i18n.localizedPath('/about', locale)
+  return [path, paths]
 }
 
 // The proxy config is checked as define() checks it
