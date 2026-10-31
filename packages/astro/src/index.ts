@@ -6,10 +6,10 @@
  */
 
 import type { I18nConfig } from '@i18n-tiny/core'
-import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import type { ConfigCheck, LocaleMessages, NamespaceKeys, Translate, TranslationKeys } from '@i18n-tiny/core/internal'
 import { alternatePathOf, localizedPathOf, resolveMessage, validateConfig } from '@i18n-tiny/core/internal'
 
-export type { I18nConfig } from '@i18n-tiny/core'
+export type { I18nConfig, LocaleMessages } from '@i18n-tiny/core'
 
 /** A path on the site, such as '/about' */
 type Path = `/${string}`
@@ -68,13 +68,14 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
  */
 export function define<
   const L extends readonly string[],
+  const D extends L[number],
   Msgs extends Record<string, object>
 > (
   config: {
     /** Supported locales. Each one is used as a path segment, such as /en */
     readonly locales: L
     /** The locale of URLs without a locale prefix */
-    readonly defaultLocale: NoInfer<L[number]>
+    readonly defaultLocale: D
     /**
      * Whether URLs of the default locale also carry the locale prefix
      * @default false
@@ -82,7 +83,7 @@ export function define<
     readonly prefixDefault?: boolean
     /** The messages of each locale */
     readonly messages: Msgs
-  } & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
+  } & ConfigCheck<{ locales: L, defaultLocale: D, messages: Msgs }>
 ) {
   type Locale = L[number]
   const { locales, defaultLocale, prefixDefault = false, messages } = config
@@ -91,27 +92,29 @@ export function define<
   // The URL functions get the locale settings only
   const urlConfig: I18nConfig = { locales, defaultLocale, prefixDefault }
 
-  // Typed from the messages of all locales
-  type MessageType = Msgs[keyof Msgs & string]
+  // The keys, and the vars of `as const` messages, come from the messages of
+  // the default locale. The messages of a locale have its keys, with strings.
+  type MessageType = Msgs[D & keyof Msgs]
+  type Messages = LocaleMessages<MessageType>
   type Namespace = NamespaceKeys<MessageType>
 
   function isLocale (value: unknown): value is Locale {
     return typeof value === 'string' && locales.includes(value)
   }
 
-  function messagesOf (locale: Locale): MessageType {
+  function messagesOf (locale: Locale): Messages {
     if (!isLocale(locale)) {
       throw unknownLocale(locale, locales)
     }
     // Convert ES module namespace to plain object
-    return structuredClone(messages[locale as keyof Msgs]) as MessageType
+    return structuredClone(messages[locale as keyof Msgs]) as Messages
   }
 
   /**
    * Get messages object for a given locale
    * Types are automatically inferred from the messages passed to define
    */
-  function getMessages (locale: Locale): MessageType {
+  function getMessages (locale: Locale): Messages {
     return messagesOf(locale)
   }
 
@@ -124,7 +127,7 @@ export function define<
   function getTranslations<N extends Namespace | undefined = undefined> (
     locale: Locale,
     namespace?: N
-  ): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
+  ): Translate<MessageType, N> {
     const msgs = messagesOf(locale)
 
     return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {

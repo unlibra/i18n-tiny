@@ -220,3 +220,55 @@ export {
   routedLocale, routedRemoved, getStaticPaths, getToolPaths
 }
 export type { DefineConfig, getLocalizedPath, hasLocalePrefix }
+
+// Messages with `as const`: the default locale gives the keys and the vars,
+// and the other locales are typed with LocaleMessages
+import type { LocaleMessages } from '../index'
+const jaTyped = {
+  greeting: 'こんにちは、{name}さん',
+  title: 'タイトル',
+  common: { stats: '{count} / {total}' }
+} as const
+const enTyped: LocaleMessages<typeof jaTyped> = {
+  greeting: 'Hello, {name}',
+  title: 'Title',
+  common: { stats: '{count} of {total}' }
+}
+const typed = define({ locales: ['ja', 'en'], defaultLocale: 'ja', messages: { ja: jaTyped, en: enTyped } })
+const typedT = typed.getTranslations('en')
+typedT('greeting', { name: 'Ann' })
+typedT('title')
+typedT('common.stats', { count: 1, total: 2 })
+// @ts-expect-error vars is missing
+typedT('greeting')
+// @ts-expect-error a variable is missing
+typedT('common.stats', { count: 1 })
+// @ts-expect-error an extra variable
+typedT('greeting', { name: 'Ann', extra: 1 })
+// @ts-expect-error a message without variables takes no vars
+typedT('title', { name: 'Ann' })
+const typedCommon = typed.getTranslations('ja', 'common')
+typedCommon('stats', { count: 1, total: 2 })
+// @ts-expect-error vars is missing
+typedCommon('stats')
+// The messages of a locale are strings, not the literal types of the default locale
+const typedGreeting: string = typed.getMessages('en').greeting
+// @ts-expect-error not the literal type of the default locale
+const typedLiteral: 'こんにちは、{name}さん' = typed.getMessages('en').greeting
+export { typedGreeting, typedLiteral }
+
+// Messages typed as string take any vars, as in 1.x
+const wideT = i18n.getTranslations('en')
+wideT('common.title')
+wideT('common.title', { any: 1 })
+
+// The keys come from the default locale, not from all locales
+const enOnly = { common: { title: 'Hello' }, extra: 'Extra' }
+const jaBase = { common: { title: 'こんにちは' } }
+// @ts-expect-error en has a key that ja, the default locale, does not have
+define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enOnly, ja: jaBase } })
+// @ts-expect-error ja misses the key "extra" of en, the default locale
+define({ locales: ['en', 'ja'], defaultLocale: 'en', messages: { en: enOnly, ja: jaBase } })
+const enMissing = { common: {} }
+// @ts-expect-error en misses common.title
+define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enMissing, ja: jaBase } })

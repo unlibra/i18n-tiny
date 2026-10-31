@@ -9,12 +9,12 @@ import {
   useLocales as baseUseLocales,
   useDefaultLocale as baseUseDefaultLocale
 } from './components'
-import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import type { ConfigCheck, LocaleMessages, NamespaceKeys, Translate, TranslationKeys } from '@i18n-tiny/core/internal'
 
 // Re-export types for Provider
 export type { ProviderProps } from './components'
 
-export type { I18nConfig } from '@i18n-tiny/core'
+export type { I18nConfig, LocaleMessages } from '@i18n-tiny/core'
 
 /**
  * Define i18n instance with automatic type inference
@@ -59,22 +59,25 @@ export type { I18nConfig } from '@i18n-tiny/core'
  */
 export function define<
   const L extends readonly string[],
+  const D extends L[number],
   Msgs extends Record<string, object>
 > (
   config: {
     /** Supported locales */
     readonly locales: L
     /** The default locale */
-    readonly defaultLocale: NoInfer<L[number]>
+    readonly defaultLocale: D
     /** The messages of each locale */
     readonly messages: Msgs
-  } & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
+  } & ConfigCheck<{ locales: L, defaultLocale: D, messages: Msgs }>
 ) {
   type Locale = L[number]
   const { locales, defaultLocale } = config
 
-  // Type aliases for automatic inference
-  type MessageType = Msgs[L[0] & keyof Msgs]
+  // The keys, and the vars of `as const` messages, come from the messages of
+  // the default locale. The messages of a locale have its keys, with strings.
+  type MessageType = Msgs[D & keyof Msgs]
+  type Messages = LocaleMessages<MessageType>
   type Namespace = NamespaceKeys<MessageType>
 
   function isLocale (value: unknown): value is Locale {
@@ -87,7 +90,7 @@ export function define<
    */
   function Provider ({ locale, messages: msgs, children }: {
     locale: Locale
-    messages: MessageType
+    messages: Messages
     children: ReactNode
   }) {
     if (!isLocale(locale)) {
@@ -110,12 +113,12 @@ export function define<
   }
 
   // Type-safe hooks with automatic inference
-  function useMessages (): MessageType {
-    return baseUseMessages<MessageType>()
+  function useMessages (): Messages {
+    return baseUseMessages<Messages>()
   }
 
   // With a namespace, keys are relative to it: useTranslations('common') takes 'title' for 'common.title'
-  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
+  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): Translate<MessageType, N> {
     return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 

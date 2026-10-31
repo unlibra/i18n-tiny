@@ -76,10 +76,37 @@ type MessagesError<C> = C extends { readonly messages: infer M }
     : never
   : never
 
+// The keys that the messages O of a locale miss or add, compared with the
+// messages B of the default locale, one level at a time
+type ShapeDiff<B, O, P extends string> = string extends keyof O
+  // Messages typed with string keys are left alone
+  ? never
+  :
+    | `is missing key "${P}${Exclude<keyof B & string, keyof O>}"`
+    | `has key "${P}${Exclude<keyof O & string, keyof B>}" that the default locale does not have`
+    | {
+        [K in keyof B & keyof O & string]: B[K] extends string
+          ? O[K] extends object ? `has an object at key "${P}${K}", where the default locale has a string` : never
+          : B[K] extends object
+            ? O[K] extends string ? `has a string at key "${P}${K}", where the default locale has an object` : ShapeDiff<B[K], O[K], `${P}${K}.`>
+            : never
+      }[keyof B & keyof O & string]
+
+// Compared with each default locale, when defaultLocale is typed as a union
+type ShapeErrorOf<L extends string, B, O> = B extends unknown ? `messages of locale "${L}" ${ShapeDiff<B, O, ''>}` : never
+
+type ShapeError<C> = C extends { readonly messages: infer M, readonly defaultLocale: infer D extends string }
+  ? string extends D
+    ? never
+    : { [L in keyof M & string]: ShapeErrorOf<L, M[D & keyof M], M[L]> }[keyof M & string]
+  : never
+
 type ConfigError<C extends ValidatableConfig> = [LocalesError<C['locales']>] extends [never]
   ? C['defaultLocale'] extends C['locales'][number]
     ? [FallbackLocaleError<C>] extends [never]
-        ? MessagesError<C>
+        ? [MessagesError<C>] extends [never]
+            ? ShapeError<C>
+            : MessagesError<C>
         : FallbackLocaleError<C>
     : `defaultLocale "${C['defaultLocale']}" is not one of locales`
   : LocalesError<C['locales']>
@@ -90,6 +117,9 @@ type ConfigError<C extends ValidatableConfig> = [LocalesError<C['locales']>] ext
  * `config: C & ConfigCheck<C>`: a valid config is unchanged, an invalid one
  * fails with the reason in the error. Configs typed as plain `string[]`
  * cannot be checked here and are left to validateConfig() at runtime.
+ *
+ * With messages, the messages of each locale must have the keys of those of
+ * the default locale, no more and no fewer. This is checked by type only.
  */
 export type ConfigCheck<C extends ValidatableConfig> = [ConfigError<C>] extends [never]
   ? unknown

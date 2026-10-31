@@ -146,3 +146,146 @@ import type { GetLinkHrefOptions } from '../router'
 // @ts-expect-error DefineConfig is replaced by I18nConfig
 import type { DefineConfig } from '../index'
 export type { getLocalizedPath, hasLocalePrefix, GetLinkHrefOptions, DefineConfig }
+
+// Messages
+
+import type { LocaleMessages, Translate, VariableNames } from '../internal'
+import type { LocaleMessages as PublicLocaleMessages } from '../index'
+import { grammarCases } from './grammar.cases'
+
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+
+// The variable names of each message of the grammar table, which
+// grammar.test.ts runs: the messages whose names differ, or never
+type GrammarCase = (typeof grammarCases)[number]
+type GrammarMismatch = GrammarCase extends infer C
+  ? C extends GrammarCase
+    ? Equal<VariableNames<C['message']>, C['names'][number]> extends true ? never : C['message']
+    : never
+  : never
+const grammarMatches: [GrammarMismatch] extends [never] ? true : GrammarMismatch = true
+// A message typed as string has no names to find
+const wideNames: Equal<VariableNames<string>, never> = true
+export { grammarMatches, wideNames }
+
+// The vars of t() are typed from messages with literal types
+const typedMessages = {
+  title: 'Title',
+  greeting: 'Hello, {name}!',
+  stats: '{count} of {total}',
+  braces: 'Use {{name}} for {name}',
+  escaped: 'Write {{name}}',
+  common: { welcome: 'Welcome, {user}', plain: 'Plain' }
+} as const
+declare const t: Translate<typeof typedMessages>
+
+t('title')
+t('greeting', { name: 'Ann' })
+t('greeting', { name: 1 })
+t('stats', { count: 1, total: 2 })
+t('braces', { name: 'Ann' })
+t('escaped')
+t('common.welcome', { user: 'Ann' })
+t('common.plain')
+// @ts-expect-error vars is missing
+t('greeting')
+// @ts-expect-error a variable is missing
+t('greeting', {})
+// @ts-expect-error a variable is missing
+t('stats', { count: 1 })
+// @ts-expect-error an extra variable
+t('greeting', { name: 'Ann', extra: 1 })
+// @ts-expect-error a misspelled variable
+t('greeting', { nmae: 'Ann' })
+// @ts-expect-error a value that is not a string or a number
+t('greeting', { name: true })
+// @ts-expect-error a value that is undefined
+t('greeting', { name: undefined })
+// @ts-expect-error a message without variables takes no vars
+t('title', {})
+// @ts-expect-error "{{name}}" is no variable
+t('escaped', { name: 'Ann' })
+// @ts-expect-error unknown key
+t('missing')
+
+// A namespace: the keys and their vars are relative to it
+declare const common: Translate<typeof typedMessages, 'common'>
+common('welcome', { user: 'Ann' })
+common('plain')
+// @ts-expect-error vars is missing
+common('welcome')
+// @ts-expect-error a variable of another message
+common('welcome', { name: 'Ann' })
+// @ts-expect-error with a namespace, keys are relative to it
+common('common.welcome', { user: 'Ann' })
+
+// A union of keys takes the vars of all of them
+declare const unionKey: 'greeting' | 'stats'
+t(unionKey, { name: 'Ann', count: 1, total: 2 })
+// @ts-expect-error the vars of one of the keys only
+t(unionKey, { name: 'Ann' })
+declare const titleOrGreeting: 'title' | 'greeting'
+t(titleOrGreeting, { name: 'Ann' })
+// @ts-expect-error vars is needed when one of the keys has variables
+t(titleOrGreeting)
+
+// The vars are checked exactly for an object literal only: a variable of a
+// wider type is taken, as TypeScript does for any object type
+const withExtra = { name: 'Ann', extra: 1 }
+t('greeting', withExtra)
+
+// Messages typed as string take any vars, or none
+const wideMessages: { title: string, greeting: string } = { title: 'Title', greeting: 'Hello, {name}!' }
+declare const wideT: Translate<typeof wideMessages>
+wideT('greeting')
+wideT('greeting', { name: 'Ann' })
+wideT('greeting', { anything: 1 })
+wideT('title', {})
+// @ts-expect-error the values are still strings or numbers
+wideT('greeting', { name: true })
+// @ts-expect-error unknown key
+wideT('missing')
+
+// LocaleMessages: the same keys, with strings as values
+type Ja = typeof typedMessages
+const en: LocaleMessages<Ja> = {
+  title: 'Title in English',
+  greeting: 'Hi, {name}',
+  stats: '{count}/{total}',
+  braces: '{name}',
+  escaped: 'Write',
+  common: { welcome: 'Hi {user}', plain: 'Plain' }
+}
+const publicEn: PublicLocaleMessages<Ja> = en
+// @ts-expect-error a missing key
+const missingKey: LocaleMessages<Ja> = { ...en, common: { welcome: 'Hi' } }
+// @ts-expect-error an extra key, in an object literal
+const extraKey: LocaleMessages<Ja> = { ...en, other: 'Other' }
+// @ts-expect-error a string for a nested object
+const notNested: LocaleMessages<Ja> = { ...en, common: 'Common' }
+// @ts-expect-error a value that is not a string
+const notString: LocaleMessages<Ja> = { ...en, title: 1 }
+export { en, publicEn, missingKey, extraKey, notNested, notString, typedMessages, wideMessages }
+
+// The config check compares the keys of each locale with those of the
+// default locale, for messages imported from files too
+const jaFile = { title: 'タイトル', common: { welcome: 'ようこそ' } } as const
+const enFile = { title: 'Title', common: { welcome: 'Welcome' } }
+const enMissing = { title: 'Title', common: {} }
+const enExtra = { title: 'Title', common: { welcome: 'Welcome', other: 'Other' } }
+const enFlat = { title: 'Title', common: 'Common' }
+const enDeeper = { title: 'Title', common: { welcome: { deep: 'Deep' } } }
+check({ ...config, messages: { ja: jaFile, en: enFile } })
+// @ts-expect-error a locale misses a key
+check({ ...config, messages: { ja: jaFile, en: enMissing } })
+// @ts-expect-error a locale has a key that the default locale does not have
+check({ ...config, messages: { ja: jaFile, en: enExtra } })
+// @ts-expect-error a string where the default locale has a nested object
+check({ ...config, messages: { ja: jaFile, en: enFlat } })
+// @ts-expect-error a nested object where the default locale has a string
+check({ ...config, messages: { ja: jaFile, en: enDeeper } })
+// @ts-expect-error the default locale is the base: it misses a key of the other one
+check({ ...config, defaultLocale: 'en', messages: { ja: jaFile, en: enMissing } })
+// Messages typed with string keys cannot be compared
+const recordEn: Record<string, string> = { title: 'Title' }
+check({ ...config, messages: { ja: jaFile, en: recordEn } })

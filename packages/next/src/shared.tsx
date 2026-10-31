@@ -4,18 +4,18 @@
 import type { ReactNode } from 'react'
 import { I18nProvider as BaseProvider } from '@i18n-tiny/react/internal'
 import type { I18nConfig } from '@i18n-tiny/core'
-import type { NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import type { LocaleMessages, NamespaceKeys, Translate, TranslationKeys } from '@i18n-tiny/core/internal'
 import { alternatePathOf, localizedPathOf, resolveMessage } from '@i18n-tiny/core/internal'
 
 /** A path on the site, such as '/about' */
 export type Path = `/${string}`
 
 /** The config of define() */
-export interface DefineOptions<L extends readonly string[], Msgs> {
+export interface DefineOptions<L extends readonly string[], D extends L[number], Msgs> {
   /** Supported locales. Each one is used as a path segment, such as /en */
   readonly locales: L
   /** The locale of URLs without a locale prefix */
-  readonly defaultLocale: NoInfer<L[number]>
+  readonly defaultLocale: D
   /**
    * Whether URLs of the default locale also carry the locale prefix
    * @default false
@@ -25,8 +25,12 @@ export interface DefineOptions<L extends readonly string[], Msgs> {
   readonly messages: Msgs
 }
 
-/** The type of the messages: those of the first locale */
-export type MessagesOf<L extends readonly string[], Msgs> = Msgs[L[0] & keyof Msgs]
+/**
+ * The type of the messages of the default locale, which give the keys, and
+ * the vars of `as const` messages. The messages of a locale have its keys,
+ * with strings: LocaleMessages<MessagesOf<D, Msgs>>.
+ */
+export type MessagesOf<D extends string, Msgs> = Msgs[D & keyof Msgs]
 
 function unknownLocale (locale: unknown, locales: readonly string[]): Error {
   return new Error(
@@ -43,10 +47,12 @@ function unknownLocale (locale: unknown, locales: readonly string[]): Error {
  */
 export function defineBase<
   const L extends readonly string[],
+  const D extends L[number],
   Msgs extends Record<string, object>
-> (config: DefineOptions<L, Msgs>) {
+> (config: DefineOptions<L, D, Msgs>) {
   type Locale = L[number]
-  type MessageType = MessagesOf<L, Msgs>
+  type MessageType = MessagesOf<D, Msgs>
+  type Messages = LocaleMessages<MessageType>
   type Namespace = NamespaceKeys<MessageType>
 
   const { locales, defaultLocale, prefixDefault = false, messages } = config
@@ -63,9 +69,9 @@ export function defineBase<
   }
 
   // Convert ES module namespace to plain object (required for Client Components)
-  function messagesOf (locale: Locale): MessageType {
+  function messagesOf (locale: Locale): Messages {
     checkLocale(locale)
-    return structuredClone(messages[locale as keyof Msgs]) as MessageType
+    return structuredClone(messages[locale as keyof Msgs]) as Messages
   }
 
   /**
@@ -74,7 +80,7 @@ export function defineBase<
    */
   function Provider ({ locale, messages: msgs, children }: {
     locale: Locale
-    messages: MessageType
+    messages: Messages
     children: ReactNode
   }) {
     checkLocale(locale)
@@ -97,7 +103,7 @@ export function defineBase<
      * Get messages object for server components. A locale that is not one
      * of `locales` throws: narrow a string with isLocale() first.
      */
-    getMessages: async (locale: Locale): Promise<MessageType> => messagesOf(locale),
+    getMessages: async (locale: Locale): Promise<Messages> => messagesOf(locale),
 
     /**
      * Get translation function for server components. A locale that is not
@@ -107,7 +113,7 @@ export function defineBase<
     getTranslations: async <N extends Namespace | undefined = undefined>(
       locale: Locale,
       namespace?: N
-    ): Promise<(key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string> => {
+    ): Promise<Translate<MessageType, N>> => {
       const msgs = messagesOf(locale)
 
       return (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>): string => {

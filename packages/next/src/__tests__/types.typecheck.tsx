@@ -218,3 +218,84 @@ export function useInterfaceTypeChecks () {
   const title: string = clientWithInterface.client.useMessages().common.title
   return title
 }
+
+// Messages with `as const`: the default locale gives the keys and the vars,
+// and the other locales are typed with LocaleMessages
+import type { LocaleMessages } from '../index.react-client'
+import type { LocaleMessages as ServerLocaleMessages } from '../index.react-server'
+import type { LocaleMessages as TypesLocaleMessages } from '../types'
+const jaTyped = {
+  greeting: 'こんにちは、{name}さん',
+  title: 'タイトル',
+  common: { stats: '{count} / {total}' }
+} as const
+const enTyped: LocaleMessages<typeof jaTyped> = {
+  greeting: 'Hello, {name}',
+  title: 'Title',
+  common: { stats: '{count} of {total}' }
+}
+const enServerTyped: ServerLocaleMessages<typeof jaTyped> = enTyped
+const enTypesTyped: TypesLocaleMessages<typeof jaTyped> = enTyped
+void enServerTyped
+void enTypesTyped
+const typedConfig = { locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enTyped, ja: jaTyped } } as const
+
+for (const i18n of [defineClient(typedConfig), defineServer(typedConfig)]) {
+  void (async () => {
+    const t = await i18n.server.getTranslations('en')
+    t('greeting', { name: 'Ann' })
+    t('title')
+    t('common.stats', { count: 1, total: 2 })
+    // @ts-expect-error vars is missing
+    t('greeting')
+    // @ts-expect-error a variable is missing
+    t('common.stats', { count: 1 })
+    // @ts-expect-error an extra variable
+    t('greeting', { name: 'Ann', extra: 1 })
+    // @ts-expect-error a message without variables takes no vars
+    t('title', { name: 'Ann' })
+
+    const common = await i18n.server.getTranslations('en', 'common')
+    common('stats', { count: 1, total: 2 })
+    // @ts-expect-error vars is missing
+    common('stats')
+
+    // The messages of a locale are strings, not the literal types of the default locale
+    const messages = await i18n.server.getMessages('en')
+    const greeting: string = messages.greeting
+    // @ts-expect-error not the literal type of the default locale
+    const literal: 'こんにちは、{name}さん' = messages.greeting
+    // The Provider takes the messages of any locale
+    void <i18n.Provider locale="en" messages={messages}>{null}</i18n.Provider>
+    void <i18n.Provider locale="ja" messages={jaTyped}>{null}</i18n.Provider>
+    return [greeting, literal]
+  })()
+}
+
+export function useClientMessagesTypeChecks () {
+  const i18n = defineClient(typedConfig)
+  const t = i18n.client.useTranslations()
+  t('greeting', { name: 'Ann' })
+  // @ts-expect-error vars is missing
+  t('greeting')
+  const common = i18n.client.useTranslations('common')
+  common('stats', { count: 1, total: 2 })
+  // @ts-expect-error a variable is missing
+  common('stats', { total: 2 })
+  const title: string = i18n.client.useMessages().title
+  return title
+}
+
+// The keys of each locale must be those of the default locale
+const jaPlain = { title: 'タイトル', common: { welcome: 'ようこそ' } }
+const enMissing = { title: 'Title', common: {} }
+const enExtra = { title: 'Title', common: { welcome: 'Welcome' }, extra: 'Extra' }
+defineClient({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: { title: 'Title', common: { welcome: 'Welcome' } }, ja: jaPlain } })
+// @ts-expect-error en misses common.welcome
+defineClient({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enMissing, ja: jaPlain } })
+// @ts-expect-error en misses common.welcome
+defineServer({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enMissing, ja: jaPlain } })
+// @ts-expect-error en has a key that ja does not have
+defineClient({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enExtra, ja: jaPlain } })
+// @ts-expect-error en has a key that ja does not have
+defineServer({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enExtra, ja: jaPlain } })

@@ -100,3 +100,78 @@ export function useInterfaceTypeChecks () {
   const title: string = withInterface.useMessages().common.title
   return title
 }
+
+// Messages with `as const`: the default locale gives the keys and the vars,
+// and the other locales are typed with LocaleMessages
+import type { LocaleMessages } from '../index'
+const jaTyped = {
+  greeting: 'こんにちは、{name}さん',
+  title: 'タイトル',
+  common: { stats: '{count} / {total}' }
+} as const
+const enTyped: LocaleMessages<typeof jaTyped> = {
+  greeting: 'Hello, {name}',
+  title: 'Title',
+  common: { stats: '{count} of {total}' }
+}
+const typed = define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enTyped, ja: jaTyped } })
+
+export function useMessagesTypeChecks () {
+  const t = typed.useTranslations()
+  t('greeting', { name: 'Ann' })
+  t('title')
+  t('common.stats', { count: 1, total: 2 })
+  // @ts-expect-error vars is missing
+  t('greeting')
+  // @ts-expect-error a variable is missing
+  t('common.stats', { count: 1 })
+  // @ts-expect-error an extra variable
+  t('greeting', { name: 'Ann', extra: 1 })
+  // @ts-expect-error a message without variables takes no vars
+  t('title', { name: 'Ann' })
+
+  const common = typed.useTranslations('common')
+  common('stats', { count: 1, total: 2 })
+  // @ts-expect-error vars is missing
+  common('stats')
+
+  // The messages of a locale are strings, not the literal types of the default locale
+  const greeting: string = typed.useMessages().greeting
+  // @ts-expect-error not the literal type of the default locale
+  const literal: 'こんにちは、{name}さん' = typed.useMessages().greeting
+
+  // The Provider takes the messages of any locale
+  void <typed.Provider locale="en" messages={enTyped}>{null}</typed.Provider>
+  void <typed.Provider locale="ja" messages={jaTyped}>{null}</typed.Provider>
+  // @ts-expect-error messages without a key of the default locale
+  void <typed.Provider locale="en" messages={{ greeting: 'Hello', title: 'Title' }}>{null}</typed.Provider>
+  return [greeting, literal]
+}
+
+// The keys of each locale must be those of the default locale
+const jaPlain = { title: 'タイトル', common: { welcome: 'ようこそ' } }
+const enMissing = { title: 'Title', common: {} }
+const enExtra = { title: 'Title', common: { welcome: 'Welcome' }, extra: 'Extra' }
+define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: { title: 'Title', common: { welcome: 'Welcome' } }, ja: jaPlain } })
+// @ts-expect-error en misses common.welcome
+define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enMissing, ja: jaPlain } })
+// @ts-expect-error en has a key that ja does not have
+define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enExtra, ja: jaPlain } })
+
+// The keys come from the default locale, not the first one
+const byDefault = define({ locales: ['en', 'ja'], defaultLocale: 'ja', messages: { en: enTyped, ja: jaTyped } })
+export function useDefaultLocaleKeys () {
+  // @ts-expect-error the vars come from the default locale's message
+  byDefault.useTranslations()('greeting', { other: 'x' })
+}
+
+// A defaultLocale typed as the union of the locales, as in examples/react
+const unionDefault: 'en' | 'ja' = 'en'
+const withUnionDefault = define({ locales: ['en', 'ja'], defaultLocale: unionDefault, messages: { en: enTyped, ja: jaTyped } })
+export function useUnionDefault () {
+  withUnionDefault.useTranslations()('greeting', { name: 'Ann' })
+  // @ts-expect-error unknown key
+  withUnionDefault.useTranslations()('missing')
+}
+// @ts-expect-error the keys of each locale are still compared
+define({ locales: ['en', 'ja'], defaultLocale: unionDefault, messages: { en: enMissing, ja: jaPlain } })

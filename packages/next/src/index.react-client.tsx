@@ -7,11 +7,11 @@ import {
   useLocales as baseUseLocales,
   useDefaultLocale as baseUseDefaultLocale
 } from '@i18n-tiny/react/internal'
-import type { ConfigCheck, NamespaceKeys, TranslationKeys } from '@i18n-tiny/core/internal'
+import type { ConfigCheck, LocaleMessages, NamespaceKeys, Translate, TranslationKeys } from '@i18n-tiny/core/internal'
 import { defineBase } from './shared'
 import type { DefineOptions, MessagesOf } from './shared'
 
-export type { I18nConfig } from '@i18n-tiny/core'
+export type { I18nConfig, LocaleMessages } from '@i18n-tiny/core'
 
 /**
  * Define i18n instance with automatic type inference
@@ -46,24 +46,26 @@ export type { I18nConfig } from '@i18n-tiny/core'
  */
 export function define<
   const L extends readonly string[],
+  const D extends L[number],
   Msgs extends Record<string, object>
 > (
-  config: DefineOptions<L, Msgs> & ConfigCheck<{ locales: L, defaultLocale: L[number], messages: Msgs }>
+  config: DefineOptions<L, D, Msgs> & ConfigCheck<{ locales: L, defaultLocale: D, messages: Msgs }>
 ) {
   type Locale = L[number]
-  // Use the first locale's message type for consistent typing
-  type MessageType = MessagesOf<L, Msgs>
+  // The messages of the default locale give the keys
+  type MessageType = MessagesOf<D, Msgs>
+  type Messages = LocaleMessages<MessageType>
   type Namespace = NamespaceKeys<MessageType>
 
-  const base = defineBase<L, Msgs>(config)
+  const base = defineBase<L, D, Msgs>(config)
 
   // Type-safe wrappers for client hooks with automatic inference
-  function useMessages (): MessageType {
-    return baseUseMessages<MessageType>()
+  function useMessages (): Messages {
+    return baseUseMessages<Messages>()
   }
 
   // With a namespace, keys are relative to it: useTranslations('common') takes 'title' for 'common.title'
-  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): (key: TranslationKeys<MessageType, N>, vars?: Record<string, string | number>) => string {
+  function useTranslations<N extends Namespace | undefined = undefined> (namespace?: N): Translate<MessageType, N> {
     return baseUseTranslations<TranslationKeys<MessageType, N>>(namespace)
   }
 
