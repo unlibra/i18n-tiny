@@ -1,6 +1,6 @@
 {
   "name": "next-i18n-tiny",
-  "version": "2.0.0-beta.1",
+  "version": "2.0.0",
   "type": "module",
   "description": "Alias package for @i18n-tiny/next - Type-safe i18n for Next.js, with a define() under 1.5KB in the browser",
   "keywords": [
@@ -62,7 +62,7 @@
     "node": ">=22.12"
   },
   "dependencies": {
-    "@i18n-tiny/next": "2.0.0-beta.1"
+    "@i18n-tiny/next": "2.0.0"
   },
   "peerDependencies": {
     "next": "^15.0.0 || ^16.0.0",
