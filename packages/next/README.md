@@ -220,6 +220,60 @@ That's it! **Types are automatically inferred** - no manual type annotations nee
 
 Both are fully typed with autocomplete. Use whichever you prefer!
 
+## Messages
+
+### Variables and braces
+
+`{name}` in a message is replaced with the value of `name` in the vars, a string or a number. A name has letters, digits and `_`. To show a brace, write it twice: `{{` shows `{` and `}}` shows `}`.
+
+```typescript
+export default {
+  welcome: 'Welcome, {name}!',         // t('welcome', { name: 'Ann' }) → 'Welcome, Ann!'
+  syntax: 'Write {{name}} in messages' // t('syntax') → 'Write {name} in messages'
+}
+```
+
+`{{name}}` is not a variable, as it is in some other libraries such as i18next: it shows `{name}`. A variable without a value is left as it is, and a missing key returns the key itself, with a warning in development.
+
+### Types of the messages
+
+The keys are typed from the messages of `defaultLocale`, and the messages of every other locale must have the same keys: a missing or extra key is a type error in `define()`, with the reason at the end of the error.
+
+With the messages of the default locale written `as const`, the vars of `t()` are typed from each message. A missing, misspelled or extra variable, and vars left out, are type errors, and a message without variables takes no vars:
+
+```typescript
+// messages/en.ts
+export default {
+  common: { welcome: 'Welcome, {name}!' }
+} as const
+```
+
+```typescript
+const t = await getTranslations(locale)
+t('common.welcome', { name: 'Ann' }) // OK
+t('common.welcome')                  // Type error: vars is missing
+t('common.welcome', { nmae: 'Ann' }) // Type error: name is missing
+```
+
+To get these errors, and autocomplete, in the files of the other locales, type their messages with `LocaleMessages`, the keys of the default locale with strings as values:
+
+```typescript
+// messages/ja.ts
+import type { LocaleMessages } from '@i18n-tiny/next'
+import type en from './en'
+
+const ja: LocaleMessages<typeof en> = {
+  common: { welcome: 'ようこそ、{name}さん！' }
+}
+
+export default ja
+```
+
+- Without `as const`, a message is typed as `string`, and its vars are `Record<string, string | number>`, not checked.
+- For a key typed as a union, such as `t(isNew ? 'welcome' : 'goodbye', vars)`, the vars need the variables of every key.
+- An extra variable is a type error only in an object literal in the call, as TypeScript checks extra properties only there.
+- The variables of the other locales are not compared with those of the default locale: a translation without `{name}` is not an error.
+
 ## API Reference
 
 ### `@i18n-tiny/next`
@@ -243,18 +297,18 @@ Defines an i18n instance with automatic type inference.
 
 ```typescript
 {
-  Provider: React.FC<{ locale: Locale; messages: Messages; children: ReactNode }>
+  Provider: React.FC<{ locale: Locale; messages: LocaleMessages<Messages>; children: ReactNode }>
   locales: readonly Locale[]
   defaultLocale: Locale
   isLocale: (value: unknown) => value is Locale
   localizedPath: (path: string, locale: Locale) => string
   alternatePath: (pathname: string, locale: Locale) => string
   server: {
-    getMessages: (locale: Locale) => Promise<Messages>
+    getMessages: (locale: Locale) => Promise<LocaleMessages<Messages>>
     getTranslations: (locale: Locale, namespace?: Namespace) => Promise<TranslationFunction>
   }
   client: {
-    useMessages: () => Messages
+    useMessages: () => LocaleMessages<Messages>
     useTranslations: (namespace?: Namespace) => TranslationFunction
     useLocale: () => Locale
     useLocales: () => readonly Locale[]
@@ -265,7 +319,9 @@ Defines an i18n instance with automatic type inference.
 
 `Locale` is one of `locales`. The `locale` of `getMessages()`, `getTranslations()` and the `Provider` is a `Locale`: any other value is a type error and throws. To use a `string`, such as a route parameter, narrow it with `isLocale()` first.
 
-`Namespace` is a path to a nested object in your messages, such as `'common'`. With a namespace, the keys of `TranslationFunction` are relative to it and still type-checked: `useTranslations('common')` accepts `'title'` for `common.title`, and `'common.title'` is a type error. Interpolation variables are `Record<string, string | number>` and are not type-checked.
+`Messages` is the type of the messages of `defaultLocale`. The `Provider`, `getMessages()` and `useMessages()` take or return `LocaleMessages<Messages>`, the same keys with strings as values, so that the messages of any locale fit. Keys and variables are typed from `Messages`: see [Messages](#messages).
+
+`Namespace` is a path to a nested object in your messages, such as `'common'`. With a namespace, the keys of `TranslationFunction` are relative to it and still type-checked: `useTranslations('common')` accepts `'title'` for `common.title`, and `'common.title'` is a type error.
 
 The `client` hooks work in Client Components inside the `Provider`. In Server Components they throw.
 

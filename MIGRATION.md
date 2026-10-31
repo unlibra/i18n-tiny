@@ -25,6 +25,8 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | `@i18n-tiny/astro` `I18nConfig` | A config with `messages` | The locale settings, as in the core | [Config types](#config-types) |
 | `getMessages()`, `getTranslations()`, `Provider` | Any `string`, unknown locales fell back to the default locale | One of `locales`, anything else throws | [Locales are typed](#locales-are-typed) |
 | `useLocale()` | `string` | One of `locales` | [Locales are typed](#locales-are-typed) |
+| `{{` and `}}` in messages | Shown as written, and `{{name}}` with vars gave `{` + the value + `}` | Shown as `{` and `}`: `{{name}}` shows `{name}` | [Messages](#messages) |
+| Types of the messages | Keys from the first locale (Next.js, React) or from all locales (Astro), vars not typed | Keys from `defaultLocale`, every locale must have the same keys, vars typed for `as const` messages | [Messages](#messages) |
 | URL functions | `getLocalizedPath()`, `removeLocalePrefix(pathname, locales)`, `hasLocalePrefix()` | `localizedPath()`, `alternatePath()`, `removeLocalePrefix(pathname, config)`, `pathLocale()` | [URL functions](#url-functions) |
 | Path input | A missing `/` was added, a query or hash was kept | Must start with `/`, no `?` or `#` | [URL functions](#url-functions) |
 | Trailing slash | Kept | Removed, except for `/` | [URL functions](#url-functions) |
@@ -158,6 +160,25 @@ const messages = await getMessages(locale)
 ```
 
 `useLocale()` returns one of `locales` instead of `string`, in Next.js and React.
+
+## Messages
+
+### Braces
+
+`{{` and `}}` in a message now show `{` and `}`, with or without vars, so that a message can show a word in braces. In 1.x, `{name}` was always a variable when vars were given:
+
+```typescript
+syntax: 'Write {{name}} in messages' // t('syntax') → 'Write {name} in messages'
+```
+
+A message with `{{` or `}}` for two braces needs four in 2.0. A message written for a library that uses `{{name}}` for a variable, such as i18next, now shows `{name}`: write `{name}` for the variable.
+
+### Types
+
+- The keys are typed from the messages of `defaultLocale`. In 1.x, Next.js and React took the messages of the first locale of `locales`, and Astro those of all locales.
+- The messages of every locale must have the keys of the default locale: a missing or extra key is a type error in `define()`. The check is by type only.
+- With the messages of the default locale written `as const`, the vars of `t()` are typed from each message: a missing, misspelled or extra variable, and vars left out, are type errors, and a message without variables takes no vars. Messages without `as const` take any vars, as in 1.x.
+- `getMessages()`, `useMessages()` and the `messages` of the `Provider` are typed as `LocaleMessages<Messages>`: the keys of the default locale's messages, with strings as values. Each package exports `LocaleMessages`, to type the messages of the other locales: see "Messages" in the README of [Astro](./packages/astro/README.md#messages), [Next.js](./packages/next/README.md#messages) or [React](./packages/react/README.md#messages).
 
 ## URL functions
 
@@ -796,3 +817,4 @@ See [examples/next-ssr](./examples/next-ssr) for the whole app.
 - `detectLocale()`, and the detection of the middleware and the proxy, never pick a language marked with `q=0`, also through another tag (`en-US,en;q=0` does not give `en`). Tags whose `q` is not a number from 0 to 1 are ignored.
 - When detection decides the response, the middleware and the proxy add `Vary: Accept-Language` to it. Next.js replaces it on the pages it renders: see the Next.js README on [language detection and caches](./packages/next/README.md#language-detection-and-caches).
 - A request whose path leads to another host, such as `/en//example.com`, gets no i18n handling in the middleware and the proxy.
+- A missing key no longer throws a `ReferenceError` where `process` is not defined and nothing replaces `process.env.NODE_ENV`, as in some edge runtimes. The warning for a missing key in development is unchanged.

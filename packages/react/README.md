@@ -31,7 +31,8 @@ const enMessages = {
 
 type Messages = typeof enMessages
 
-// satisfies checks that ja has the same keys as en
+// satisfies checks the keys in this file too: define() checks that each
+// locale has the keys of the default locale
 const jaMessages = {
   common: {
     title: 'こんにちは',
@@ -94,6 +95,73 @@ export function Greeting() {
 }
 ```
 
+## Messages
+
+### Variables and braces
+
+`{name}` in a message is replaced with the value of `name` in the vars, a string or a number. A name has letters, digits and `_`. To show a brace, write it twice: `{{` shows `{` and `}}` shows `}`.
+
+```typescript
+export default {
+  welcome: 'Welcome, {name}!',         // t('welcome', { name: 'Ann' }) → 'Welcome, Ann!'
+  syntax: 'Write {{name}} in messages' // t('syntax') → 'Write {name} in messages'
+}
+```
+
+`{{name}}` is not a variable, as it is in some other libraries such as i18next: it shows `{name}`. A variable without a value is left as it is, and a missing key returns the key itself, with a warning in development.
+
+### Types of the messages
+
+Full type inference is automatic:
+
+```typescript
+const t = useTranslations()
+
+// Type error: 'invalid.key' doesn't exist
+t('invalid.key')
+
+// Type error: with a namespace, keys are relative to it
+const tCommon = useTranslations('common')
+tCommon('common.welcome')
+```
+
+The keys are typed from the messages of `defaultLocale`, and the messages of every other locale must have the same keys: a missing or extra key is a type error in `define()`, with the reason at the end of the error.
+
+With the messages of the default locale written `as const`, the vars of `t()` are typed from each message. A missing, misspelled or extra variable, and vars left out, are type errors, and a message without variables takes no vars:
+
+```typescript
+// src/messages/en.ts
+export default {
+  common: { welcome: 'Welcome, {name}!' }
+} as const
+```
+
+```typescript
+const t = useTranslations()
+t('common.welcome', { name: 'Ann' }) // OK
+t('common.welcome')                  // Type error: vars is missing
+t('common.welcome', { nmae: 'Ann' }) // Type error: name is missing
+```
+
+To get these errors, and autocomplete, in the files of the other locales, type their messages with `LocaleMessages`, the keys of the default locale with strings as values:
+
+```typescript
+// src/messages/ja.ts
+import type { LocaleMessages } from '@i18n-tiny/react'
+import type en from './en'
+
+const ja: LocaleMessages<typeof en> = {
+  common: { welcome: 'ようこそ、{name}さん！' }
+}
+
+export default ja
+```
+
+- Without `as const`, a message is typed as `string`, and its vars are `Record<string, string | number>`, not checked.
+- For a key typed as a union, such as `t(isNew ? 'welcome' : 'goodbye', vars)`, the vars need the variables of every key.
+- An extra variable is a type error only in an object literal in the call, as TypeScript checks extra properties only there.
+- The variables of the other locales are not compared with those of the default locale: a translation without `{name}` is not an error.
+
 ## API Reference
 
 ### `define(config)`
@@ -145,7 +213,7 @@ Wraps your app to provide i18n context.
 Props:
 
 - `locale` - Current locale, one of `locales`. Any other value is a type error and throws
-- `messages: Messages` - Message dictionary for current locale. `Messages` is the type of the first locale's messages; the other locales must have the same shape
+- `messages` - Message dictionary for current locale, typed as `LocaleMessages<Messages>`: the keys of the default locale's messages (`Messages`), with strings as values
 - `children: ReactNode` - Child components
 
 ### `isLocale(value)`
@@ -188,23 +256,6 @@ Returns the current locale.
 ```tsx
 const locale = useLocale() // "en" (typed as 'en' | 'ja')
 ```
-
-## TypeScript
-
-Full type inference is automatic:
-
-```typescript
-const t = useTranslations()
-
-// Type error: 'invalid.key' doesn't exist
-t('invalid.key')
-
-// Type error: with a namespace, keys are relative to it
-const tCommon = useTranslations('common')
-tCommon('common.welcome')
-```
-
-Interpolation variables are not type-checked.
 
 ## License
 

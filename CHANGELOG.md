@@ -68,6 +68,17 @@ for how to update from 1.x.
   mode and also with `locale={false}`, and does not prefetch it.
 - With `typedRoutes`, the `href` of the Next.js `Link` is typed as any URL
   instead of one of the generated routes.
+- `{{` and `}}` in a message show `{` and `}`, with or without vars:
+  `{{name}}` shows `{name}` and is not a variable.
+- The keys of the messages are typed from the messages of `defaultLocale`
+  in every package, instead of the first locale (Next.js, React) or all
+  locales (Astro), and the messages of every locale must have the same keys:
+  a missing or extra key is a type error in `define()`.
+- With the messages of the default locale written `as const`, the vars of
+  `t()` are typed from each message: a missing, misspelled or extra
+  variable, and vars left out, are type errors. `getMessages()`,
+  `useMessages()` and the `Provider` use `LocaleMessages<Messages>`, the same
+  keys with strings as values.
 - `DefineConfig` is replaced by `I18nConfig`, the locale settings
   `{ locales, defaultLocale, prefixDefault? }`. The `I18nConfig` of
   `@i18n-tiny/astro` is this type too.
@@ -83,6 +94,8 @@ for how to update from 1.x.
 - The URL functions of `@i18n-tiny/next/router` work in Server Components.
 - The middleware and the proxy add `Vary: Accept-Language` to responses that
   depend on language detection.
+- The `LocaleMessages<T>` type, exported by each package, to type the
+  messages of the other locales from those of the default locale.
 
 ### Removed
 
@@ -108,6 +121,8 @@ for how to update from 1.x.
   that Next.js served from `/en`.
 - The middleware and the proxy no longer route a path that leads to another
   host, such as `/en//example.com`.
+- A missing key threw a `ReferenceError` where `process` is not defined and
+  nothing replaces `process.env.NODE_ENV`.
 
 ## [1.3.0] - 2026-10-23
 

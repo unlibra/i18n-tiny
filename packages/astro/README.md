@@ -143,6 +143,60 @@ The build output has `/` and `/about` in Japanese and `/en` and `/en/about` in E
 
 For server rendering, and for language detection, add the [middleware](#i18n-tinyastromiddleware-ssr-only).
 
+## Messages
+
+### Variables and braces
+
+`{name}` in a message is replaced with the value of `name` in the vars, a string or a number. A name has letters, digits and `_`. To show a brace, write it twice: `{{` shows `{` and `}}` shows `}`.
+
+```typescript
+export default {
+  welcome: 'Welcome, {name}!',         // t('welcome', { name: 'Ann' }) → 'Welcome, Ann!'
+  syntax: 'Write {{name}} in messages' // t('syntax') → 'Write {name} in messages'
+}
+```
+
+`{{name}}` is not a variable, as it is in some other libraries such as i18next: it shows `{name}`. A variable without a value is left as it is, and a missing key returns the key itself, with a warning in development.
+
+### Types of the messages
+
+The keys are typed from the messages of `defaultLocale`, and the messages of every other locale must have the same keys: a missing or extra key is a type error in `define()`, with the reason at the end of the error.
+
+With the messages of the default locale written `as const`, the vars of `t()` are typed from each message. A missing, misspelled or extra variable, and vars left out, are type errors, and a message without variables takes no vars:
+
+```typescript
+// src/messages/ja.ts
+export default {
+  common: { welcome: 'ようこそ、{name}さん！' }
+} as const
+```
+
+```typescript
+const t = i18n.getTranslations(locale)
+t('common.welcome', { name: 'Ann' }) // OK
+t('common.welcome')                  // Type error: vars is missing
+t('common.welcome', { nmae: 'Ann' }) // Type error: name is missing
+```
+
+To get these errors, and autocomplete, in the files of the other locales, type their messages with `LocaleMessages`, the keys of the default locale with strings as values:
+
+```typescript
+// src/messages/en.ts
+import type { LocaleMessages } from '@i18n-tiny/astro'
+import type ja from './ja'
+
+const en: LocaleMessages<typeof ja> = {
+  common: { welcome: 'Welcome, {name}!' }
+}
+
+export default en
+```
+
+- Without `as const`, a message is typed as `string`, and its vars are `Record<string, string | number>`, not checked.
+- For a key typed as a union, such as `t(isNew ? 'welcome' : 'goodbye', vars)`, the vars need the variables of every key.
+- An extra variable is a type error only in an object literal in the call, as TypeScript checks extra properties only there.
+- The variables of the other locales are not compared with those of the default locale: a translation without `{name}` is not an error.
+
 ## API Reference
 
 ### `@i18n-tiny/astro`
@@ -162,9 +216,9 @@ Defines an i18n instance with automatic type inference.
 
 The config is checked when `define()` runs: an empty `locales`, a locale listed twice, a locale that cannot be a path segment (empty, `.`, `..`, or containing `/`, `\`, `?`, `#` or whitespace), a `defaultLocale` that is not one of `locales`, and `messages` with a missing or extra locale throw an error. With `as const` or an inline config, they are type errors too.
 
-Types are taken from `messages`, and `locales` needs no `as const`. The `locale` argument of `getMessages` and `getTranslations` is one of `locales`: any other value, `undefined` included, is a type error and throws. To use a `string` from elsewhere, narrow it with `isLocale()` first.
+Types are taken from the messages of `defaultLocale`, `Messages` below, and `locales` needs no `as const`. The `locale` argument of `getMessages` and `getTranslations` is one of `locales`: any other value, `undefined` included, is a type error and throws. To use a `string` from elsewhere, narrow it with `isLocale()` first.
 
-With a namespace, keys are relative to it: `getTranslations(locale, 'common')` takes `'title'` for `common.title`, and a full path is a type error. The namespace must point to a nested object. Interpolation variables (`vars`) are `Record<string, string | number>` and are not type-checked.
+With a namespace, keys are relative to it: `getTranslations(locale, 'common')` takes `'title'` for `common.title`, and a full path is a type error. The namespace must point to a nested object. Keys and variables (`vars`) are typed from the messages of `defaultLocale`: see [Messages](#messages).
 
 **Returns:**
 
@@ -173,7 +227,7 @@ With a namespace, keys are relative to it: `getTranslations(locale, 'common')` t
   locales: readonly Locale[]
   defaultLocale: Locale
   isLocale: (value: unknown) => value is Locale
-  getMessages: (locale: Locale) => Messages
+  getMessages: (locale: Locale) => LocaleMessages<Messages>
   getTranslations: (locale: Locale, namespace?: string) => TranslationFunction
   getStaticPaths: (options?: { locales?: Locale[] }) => { params: { locale: Locale | undefined }, props: { locale: Locale } }[]
   localizedPath: (path: string, locale: Locale) => string
