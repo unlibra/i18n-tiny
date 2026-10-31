@@ -143,6 +143,7 @@ export function clientTypeChecks () {
 
 // The proxy config is checked as define() checks it
 import { create } from '../proxy'
+import type { ProxyConfig } from '../proxy'
 create({ ...routerConfig })
 create({ ...routerConfig, prefixDefault: true, detectLanguage: false, fallbackLocale: 'ja' })
 // The rewrite mode takes prefixDefault, so that the config of define() can be
@@ -170,6 +171,58 @@ create({ ...routerConfig, routing: 'rewrite', detectLanguage: true, prefixDefaul
 // Without the language detection, prefixDefault may be any boolean
 create({ ...routerConfig, routing: 'rewrite', prefixDefault: someBoolean })
 create({ ...routerConfig, routing: 'rewrite', detectLanguage: someBoolean, prefixDefault: true })
+// The check goes by the type of detectLanguage: a type that includes true may
+// detect, and needs prefixDefault: true. Only false, undefined and leaving it
+// out mean no detection
+const maybeDetect = (Math.random() > 0.5 ? true : undefined) as true | undefined
+// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: maybeDetect })
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: maybeDetect, prefixDefault: true })
+const neverDetect = (Math.random() > 0.5 ? false : undefined) as false | undefined
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: neverDetect })
+create({ ...routerConfig, routing: 'rewrite', detectLanguage: undefined })
+// A wider type with an optional detectLanguage may detect
+interface WideRewriteConfig {
+  readonly locales: readonly ['en', 'ja']
+  readonly defaultLocale: 'en'
+  readonly routing: 'rewrite'
+  readonly detectLanguage?: boolean
+  readonly prefixDefault?: boolean
+}
+const wideRewrite: WideRewriteConfig = { ...routerConfig, routing: 'rewrite' }
+// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+create(wideRewrite)
+create({ ...wideRewrite, prefixDefault: true })
+// A config typed as ProxyConfig keeps only what the type says: in the
+// rewrite mode, detectLanguage and prefixDefault may be anything, so it fails
+// even with prefixDefault: true. Use satisfies ProxyConfig to keep the values
+const annotated: ProxyConfig = { ...routerConfig, routing: 'rewrite', detectLanguage: true }
+// @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+create(annotated)
+const annotatedWithoutDetection: ProxyConfig = { ...routerConfig, routing: 'rewrite' }
+// @ts-expect-error the type ProxyConfig does not say that detectLanguage is left out
+create(annotatedWithoutDetection)
+create({ ...annotated, prefixDefault: true })
+const annotatedStandard: ProxyConfig = { ...routerConfig, detectLanguage: true }
+create(annotatedStandard)
+const satisfying = { ...routerConfig, routing: 'rewrite', detectLanguage: true, prefixDefault: true } as const satisfies ProxyConfig
+create(satisfying)
+// A config that may be either routing may be the rewrite mode with the detection
+function createAny (anyConfig: ProxyConfig): void {
+  // @ts-expect-error a detectLanguage that may be true needs prefixDefault: true
+  create(anyConfig)
+}
+createAny(routerConfig)
+// A routing that may be 'rewrite' is checked as the rewrite mode
+const maybeRewrite = (Math.random() > 0.5 ? 'rewrite' : undefined) as 'rewrite' | undefined
+// @ts-expect-error a routing that may be 'rewrite' with the detection needs prefixDefault: true
+create({ ...routerConfig, routing: maybeRewrite, detectLanguage: true })
+create({ ...routerConfig, routing: maybeRewrite, detectLanguage: true, prefixDefault: true })
+create({ ...routerConfig, routing: maybeRewrite })
+// The type error says what to fix
+const rewriteMessage: Parameters<typeof create<typeof annotated>>[0]['invalid i18n config'] =
+  'the language detection of the rewrite mode needs prefixDefault: true; without it, detectLanguage must be false or left out'
+export { rewriteMessage }
 // @ts-expect-error the error of the config comes first
 create({ locales: ['en', 'ja'], defaultLocale: 'fr', routing: 'rewrite' })
 // @ts-expect-error defaultLocale is not one of locales

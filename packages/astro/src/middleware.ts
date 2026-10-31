@@ -91,18 +91,22 @@ interface RewriteRoutingConfig extends BaseConfig {
  */
 export type MiddlewareConfig = StandardRoutingConfig | RewriteRoutingConfig
 
-// The language detection of the rewrite mode needs prefixDefault: true. A
-// detectLanguage or a prefixDefault typed as boolean may break it, and fails.
-// Without detectLanguage, there is no detection.
-type RewriteCheck<C> = C extends { readonly routing: 'rewrite' }
-  ? C extends { readonly detectLanguage: false }
-    ? unknown
-    : C extends { readonly detectLanguage: boolean }
-      ? C extends { readonly prefixDefault: true }
-        ? unknown
-        : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true' }
-      : unknown
-  : unknown
+// The language detection of the rewrite mode needs prefixDefault: true. The
+// check goes by the types: a routing that may be 'rewrite' with a
+// detectLanguage that may be true needs a prefixDefault that is always true.
+// Only a detectLanguage that is false, undefined or left out does not detect.
+// Each member of a union is checked.
+type PropertyType<C, K extends PropertyKey> = K extends keyof C ? C[K] : undefined
+type DetectingRewriteWithoutPrefix<C> = C extends unknown
+  ? 'rewrite' extends PropertyType<C, 'routing'>
+    ? true extends PropertyType<C, 'detectLanguage'>
+      ? PropertyType<C, 'prefixDefault'> extends true ? never : C
+      : never
+    : never
+  : never
+type RewriteCheck<C> = [DetectingRewriteWithoutPrefix<C>] extends [never]
+  ? unknown
+  : { 'invalid i18n config': 'the language detection of the rewrite mode needs prefixDefault: true; without it, detectLanguage must be false or left out' }
 
 /** The type checks of the middleware config: those of define(), then those of the routing */
 type MiddlewareConfigCheck<C extends MiddlewareConfig> = unknown extends ConfigCheck<C> ? RewriteCheck<C> : ConfigCheck<C>
