@@ -137,15 +137,14 @@ localizedPath('/about', 'fr', config)
 // @ts-expect-error defaultLocale is not one of locales
 removeLocalePrefix('/ja/about', { locales: ['en', 'ja'], defaultLocale: 'fr' })
 
-// Props of the Link component: the define() result, unless locale is false
-const currentLocale: LinkProps = { href: '/about', i18n }
+// Props of the Link component: a locale needs the define() result
+const keepLocale: LinkProps = { href: '/about' }
+const keepLocaleWithI18n: LinkProps = { href: '/about', i18n }
 const withoutLocale: LinkProps = { href: '/about', locale: false }
 const withoutLocaleWithI18n: LinkProps = { href: '/about', locale: false, i18n }
 const forLocale: LinkProps = { href: '/about', locale: 'en', i18n }
 const forPrefixed: LinkProps = { href: '/about', locale: 'en', i18n: prefixed }
-const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current': 'page', i18n }
-// @ts-expect-error a link for the locale of the current page needs i18n
-const keepLocale: LinkProps = { href: '/about' }
+const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current': 'page' }
 // @ts-expect-error a locale needs i18n
 const localeWithoutI18n: LinkProps = { href: '/about', locale: 'en' }
 // @ts-expect-error normalize is gone: use alternatePath() of define() for the current page
@@ -214,7 +213,7 @@ const interfaceTitle: string = withInterface.getMessages('ja').common.title
 
 export {
   interfaceTitle,
-  currentLocale, keepLocale, withoutLocale, withoutLocaleWithI18n, forLocale, forPrefixed, normalized, withAttributes,
+  keepLocale, keepLocaleWithI18n, withoutLocale, withoutLocaleWithI18n, forLocale, forPrefixed, normalized, withAttributes,
   localeWithoutI18n, emptyLocale, localesAsI18n, configAsI18n,
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,
   toolLocale, label, tool, toolUrlLocale, localized, alternate, removed, prefix, sameAsInput, routed,

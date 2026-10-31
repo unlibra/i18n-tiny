@@ -8,9 +8,8 @@
 import type { HTMLAttributes } from 'astro/types'
 import { getLinkHref } from '@i18n-tiny/core/router'
 
-/** What a Link reads from the define() result */
+/** What a Link with `locale` reads from the define() result */
 export interface LinkI18n {
-  readonly defaultLocale: string
   // A method, so that the define() result, whose function takes its own
   // locales only, can be given
   localizedPath (path: string, locale: string): string
@@ -21,23 +20,24 @@ type LinkAttributes = Omit<HTMLAttributes<'a'>, 'href'> & {
   href: string
 }
 
-/** Props of the Link component: `i18n` is required unless `locale` is false */
+/** Props of the Link component: a locale needs `i18n` */
 export type LinkProps = LinkAttributes & (
   | {
-      /** false: the path without a locale */
-      locale: false
-      /** The define() result */
+      /**
+       * - undefined: keep the locale prefix of the current URL (default)
+       * - false: the path without a locale
+       */
+      locale?: false
+      /** The define() result, needed for a locale */
       i18n?: LinkI18n
     }
   | {
       /**
-       * - undefined: the link for the locale of the current page (default)
-       * - a locale such as 'en': the link for that locale
-       * - false: the path without a locale
-       *
-       * The default locale gets no prefix unless prefixDefault is true.
+       * A locale such as 'en': the link for that locale, as localizedPath()
+       * builds it. The default locale gets no prefix unless prefixDefault is
+       * true
        */
-      locale?: string | false
+      locale: string
       /** The define() result, whose config builds the link */
       i18n: LinkI18n
     }
@@ -101,6 +101,8 @@ function isSitePath (href: string): boolean {
 /** What the Link component reads from its props and the current request */
 export interface LinkHrefInput {
   href: string
+  /** The pathname of the current URL, with the base */
+  currentPathname: string
   /** The locale of the current page, from its params or locals */
   currentLocale: string | undefined
   locale?: string | false
@@ -110,31 +112,35 @@ export interface LinkHrefInput {
 }
 
 /**
- * The href of the Link component: builds the path with localizedPath() of
- * the define() result, for `locale`, or without it for the locale of the
- * current page, and adds the base. A page without a locale in its params
- * or locals, such as one of the default locale without a prefix, is of the
- * default locale. `locale={false}` leaves the path without a locale.
+ * The href of the Link component, with the base added:
+ * - without `locale`, the link keeps the pattern of the current URL, as
+ *   getLinkHref() of @i18n-tiny/core/router does: the prefix of the current
+ *   locale only when the current pathname, without the base, has it
+ * - with a locale, localizedPath() of the define() result builds it
+ * - `locale={false}` leaves the path without a locale
+ *
  * Hrefs that are not paths on this site, such as 'https://…' or '#top', are
  * returned unchanged. The query and the hash of href are kept.
  */
 export function linkHref (input: LinkHrefInput): string {
   const { href, currentLocale, locale, i18n, base } = input
-  if (locale !== false && i18n === undefined) {
-    throw new Error(
-      '[i18n] A Link needs the i18n prop, the result of define(): <Link i18n={i18n} ...>. ' +
-      'Only a Link with locale={false} goes without it.'
-    )
+  let result: string
+  if (locale === undefined || locale === false) {
+    result = getLinkHref(href, stripBase(input.currentPathname, base), currentLocale, { locale })
+  } else {
+    if (i18n === undefined) {
+      throw new Error(
+        `[i18n] A Link with locale ${JSON.stringify(locale)} needs the i18n prop, ` +
+        'the result of define(): <Link i18n={i18n} ...>.'
+      )
+    }
+    // Checks href and removes its trailing slashes, as getLinkHref() does
+    const plain = getLinkHref(href, '', undefined, { locale: false })
+    if (!isSitePath(plain)) {
+      return plain
+    }
+    const end = suffixStart(plain)
+    result = i18n.localizedPath(plain.slice(0, end), locale) + plain.slice(end)
   }
-  // Checks href and removes its trailing slashes, as getLinkHref() does
-  const plain = getLinkHref(href, '', undefined, { locale: false })
-  if (!isSitePath(plain)) {
-    return plain
-  }
-  if (locale === false || i18n === undefined) {
-    return addBase(plain, base)
-  }
-  const end = suffixStart(plain)
-  const path = i18n.localizedPath(plain.slice(0, end), locale ?? currentLocale ?? i18n.defaultLocale)
-  return addBase(path + plain.slice(end), base)
+  return isSitePath(result) ? addBase(result, base) : result
 }

@@ -356,7 +356,7 @@ const messages = i18n.getMessages(locale)
 
 Without detection, a URL without a prefix is the default locale, and `prefixDefault` may be `false`.
 
-With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, `<Link href="/" i18n={i18n}>` has the prefix of the current locale, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
+With `detectLanguage: true`, a URL without a prefix is the detected locale, so a link to the default locale needs its prefix too. Put `prefixDefault: true` in the config that `define()` and the middleware share: with detection, the rewrite mode without it is a type error and throws. `<Link href="/" locale="en" i18n={i18n}>` is then `/en`, and `<Link href="/" locale={false}>` is `/`, the detected locale. A URL without a prefix is still served, not redirected.
 
 ```typescript
 // src/i18n.config.ts
@@ -389,7 +389,7 @@ const locale = detectLocale(acceptLanguage, ['en', 'ja'])
 
 #### `Link` Component
 
-A link for the locale of the current page, or for another locale. It takes the `define()` result as `i18n`, and builds the link with its config.
+A link that keeps the locale of the current page, or points to another locale.
 
 ```astro
 ---
@@ -397,8 +397,8 @@ import Link from '@i18n-tiny/astro/router/Link.astro'
 import { i18n } from '../i18n'
 ---
 
-<!-- The locale of the current page: /about on a Japanese page, /en/about on an English one -->
-<Link href="/about" i18n={i18n}>About</Link>
+<!-- Keeps the locale of the current URL: /about on /, /en/about on /en -->
+<Link href="/about">About</Link>
 
 <!-- A link for a locale: /en, and / for the default locale -->
 <Link href="/" locale="en" i18n={i18n}>English</Link>
@@ -411,15 +411,15 @@ import { i18n } from '../i18n'
 | Prop     | Type              | Description                                                                                                   |
 | -------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
 | `href`   | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
-| `locale` | `string \| false` | Without it, the link is for the locale of the current page. A locale builds the link for it, and `false` leaves the path without a locale |
-| `i18n`   | `define()` result | Required unless `locale` is `false`. The link is built with its `localizedPath()`, and so with its `prefixDefault` |
+| `locale` | `string \| false` | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
+| `i18n`   | `define()` result | Required with a locale (other than `false`). The link is built with its `localizedPath()`, and so with its `prefixDefault` |
 
-- The link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true, whatever the current URL is. A locale that is not one of `locales` throws.
-- Without `locale`, the locale of the current page is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. A page without either, such as one of the default locale without a prefix, is of the default locale.
-- Without `i18n`, a `Link` other than `locale={false}` is a type error, and throws.
+- Without `locale`, the link keeps the form of the current URL: it gets the prefix of the current locale only when the current URL has one. The current locale is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. The `Link` of `@i18n-tiny/next` builds this link from the config instead.
+- With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
+- `locale` without `i18n` is a type error, and throws.
 - An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
 - The links have no trailing slash, except for the top page `/`.
-- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link adds it to the result: with the base `/docs`, `<Link href="/about" i18n={i18n}>` on an English page is `/docs/en/about`. Write `href` without the base.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
 
 #### URL functions
 

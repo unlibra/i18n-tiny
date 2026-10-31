@@ -32,7 +32,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | `Link` `locale=""` | The path without a locale | Use `locale={false}` | [Link](#link) |
 | `Link` `locale` for the default locale | Always prefixed (`/en`) | No prefix unless `prefixDefault` (`/`) | [Link](#link) |
 | `Link` relative `href` | `/` was added | Throws | [Link](#link) |
-| Astro `Link` | Worked without `i18n`; without `locale`, copied the pattern of the current URL; `normalize` read `Astro.locals.locales` | Needs the `i18n` prop unless `locale={false}`; without `locale`, the link for the current locale; `normalize` removed | [Astro: Link](#astro-link) |
+| Astro `Link` `locale`, `normalize` | `locale` and `normalize` read `Astro.locals.locales` | `locale` needs the `i18n` prop, `normalize` removed | [Astro: Link](#astro-link) |
 | Astro `Link` with a `base` | Not handled | `href` without the base, the link adds it | [Astro: Link](#astro-link) |
 | Astro static builds | `src/pages/[locale]/`, `@i18n-tiny/astro/integration` | `src/pages/[...locale]/`, `i18n.getStaticPaths()` | [Astro: static builds](#astro-static-builds) |
 | `@i18n-tiny/astro/integration` | Copied the default locale to the root | Removed | [Astro: static builds](#astro-static-builds) |
@@ -355,10 +355,10 @@ If your 1.x site was published with `/ja/...` URLs for the default locale, those
 
 ### Astro: Link
 
-The `Link` takes the `define()` result as the `i18n` prop, unless `locale` is `false`, and builds the link with its config. Without it, the link is a type error and throws.
+A `Link` without `locale` works as in 1.x, without the `i18n` prop: it keeps the form of the current URL.
 
-- **Without `locale`, the link is for the current locale**, built as `localizedPath()` builds it, whatever the current URL is. The current locale is `Astro.params.locale`, or `Astro.locals.locale` in the rewrite mode, and a page without either is of the default locale. In 1.x, the link copied the pattern of the current URL. In the rewrite mode with detection, which now needs `prefixDefault: true`, the links of a page at `/` that was detected as Japanese are `/ja/about` instead of `/about`.
-- **`normalize` is removed.** In 1.x, it read the locales from `Astro.locals.locales`, which the middleware set. For the current page in another locale, pass the path of the page with `locale`, or use `i18n.alternatePath()`.
+- **`locale` (other than `false`) needs the `define()` result as the `i18n` prop.** Without it, the link is a type error and throws. In 1.x, the link read the locales from `Astro.locals.locales`, which the middleware set.
+- **`normalize` is removed.** For the current page in another locale, pass the path of the page with `locale`, or use `i18n.alternatePath()`.
 
 ```astro
 <!-- 1.x: src/pages/[locale]/index.astro (examples/astro) -->
@@ -368,11 +368,6 @@ The `Link` takes the `define()` result as the `i18n` prop, unless `locale` is `f
 <Link href="/" locale="ja" style={buttonStyle(locale === 'ja')}>
   日本語
 </Link>
-```
-
-```astro
-<!-- 2.0: src/components/Nav.astro (examples/astro) -->
-<Link href="/about" i18n={i18n} style="margin-right: 1rem;">{t('about')}</Link>
 ```
 
 ```astro
@@ -395,7 +390,7 @@ The `Link` takes the `define()` result as the `i18n` prop, unless `locale` is `f
 
 `path` is the path of the page without a locale prefix, such as `/about`, which each page passes to `LanguageSwitcher`.
 
-With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link adds it to the result.
+With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link removes the base from the current URL to find the locale, and adds it to the result.
 
 The `Link` currently removes the trailing slash of every link except `/`, also when `astro.config` has `trailingSlash: 'always'`: on such a site, the links point to URLs without the slash, which Astro or your host may redirect or not serve.
 
@@ -531,7 +526,7 @@ declare namespace App {
 }
 ```
 
-The links need the `i18n` prop, except with `locale={false}`, and `locale=""` becomes `locale={false}`:
+The language links need the `i18n` prop, and `locale=""` becomes `locale={false}`:
 
 ```astro
 <!-- 1.x: src/pages/index.astro (examples/astro-ssr) -->
@@ -685,7 +680,7 @@ Besides the [changes to both Link components](#link):
 - **A link to a page of another locale is loaded in full** by the browser, not by the router of Next.js, and is not prefetched. This applies in every routing mode, also to links with `locale={false}`: the locale of the page is read from the path, as the locale of its prefix, or for a path without a prefix, the default locale. With `prefixDefault: true`, a path without a prefix is the detected locale, which only the server knows, so it is loaded in full too. State in Client Components, such as the value of an input, is not kept across such a link. Clicks with a modifier key, `target="_blank"` and `download` are left to the browser.
 - **`typedRoutes`.** With `typedRoutes` on, the `href` of this `Link` is typed as any URL, not as one of the generated routes, since it has no locale prefix. In 1.x, it was checked against the routes.
 
-The Astro `Link` without `locale` is built in the same way: see [Astro: Link](#astro-link).
+The Astro `Link` without `locale` still keeps the form of the current URL: see [Astro: Link](#astro-link).
 
 Language buttons in [examples/next](./examples/next/app/[locale]/client-component.tsx) link to the current page in each locale:
 

@@ -37,10 +37,9 @@ for how to update from 1.x.
 - `Link` (Astro and Next.js): a link for the default locale gets no prefix
   unless `prefixDefault` is true, a relative `href` throws, and
   `locale={false}` replaces `locale=""`.
-- The Astro `Link` needs the `define()` result as the `i18n` prop, except
-  with `locale={false}`. Without `locale`, it builds the link for the locale
-  of the current page from the config, as the Next.js `Link` does, instead of
-  following the current URL. It handles the `base`.
+- The Astro `Link` needs the `define()` result as the `i18n` prop with a
+  `locale`, and handles the `base`. Without `locale`, it keeps the form of
+  the current URL, as in 1.x.
 - Astro static builds put the pages under `src/pages/[...locale]/` and return
   `i18n.getStaticPaths()`: the default locale is built without a prefix.
 - The Astro middleware serves the default locale through

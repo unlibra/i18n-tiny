@@ -29,7 +29,7 @@ const t = i18n.getTranslations(locale, 'lab')
     <h1>{t(tool)}</h1>
     <ul>
       {tools.map((other) => (
-        <li><Link href={`/lab/${other}`} i18n={i18n}>{t(other)}</Link></li>
+        <li><Link href={`/lab/${other}`}>{t(other)}</Link></li>
       ))}
     </ul>
 

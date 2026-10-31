@@ -112,7 +112,7 @@ export function createMiddleware (config: MiddlewareConfig, getBase: () => strin
         return next()
       }
 
-      // The URL before the rewrite
+      // The URL before the rewrite, for the Link component
       locals.originalPathname = context.url.pathname
 
       if (urlLocale !== undefined) {
