@@ -77,20 +77,23 @@ type MessagesError<C> = C extends { readonly messages: infer M }
   : never
 
 // The keys that the messages O of a locale miss or add, compared with the
-// messages B of the default locale, one level at a time
-type ShapeDiff<B, O, P extends string> = string extends keyof O
-  // Messages typed with string keys are left alone
+// messages B of the default locale, one level at a time. Messages typed with
+// string keys, in either locale, are left alone, and so are the items of
+// arrays, which may be tuples in one locale and arrays in the other
+type ShapeDiff<B, O, P extends string> = string extends keyof B | keyof O
   ? never
-  :
-    | `is missing key "${P}${Exclude<keyof B & string, keyof O>}"`
-    | `has key "${P}${Exclude<keyof O & string, keyof B>}" that the default locale does not have`
-    | {
-        [K in keyof B & keyof O & string]: B[K] extends string
-          ? O[K] extends object ? `has an object at key "${P}${K}", where the default locale has a string` : never
-          : B[K] extends object
-            ? O[K] extends string ? `has a string at key "${P}${K}", where the default locale has an object` : ShapeDiff<B[K], O[K], `${P}${K}.`>
-            : never
-      }[keyof B & keyof O & string]
+  : [B, O] extends [readonly unknown[], unknown] | [unknown, readonly unknown[]]
+    ? never
+    :
+      | `is missing key "${P}${Exclude<keyof B & string, keyof O>}"`
+      | `has key "${P}${Exclude<keyof O & string, keyof B>}" that the default locale does not have`
+      | {
+          [K in keyof B & keyof O & string]: B[K] extends string
+            ? O[K] extends object ? `has an object at key "${P}${K}", where the default locale has a string` : never
+            : B[K] extends object
+              ? O[K] extends string ? `has a string at key "${P}${K}", where the default locale has an object` : ShapeDiff<B[K], O[K], `${P}${K}.`>
+              : never
+        }[keyof B & keyof O & string]
 
 // Compared with each default locale, when defaultLocale is typed as a union
 type ShapeErrorOf<L extends string, B, O> = B extends unknown ? `messages of locale "${L}" ${ShapeDiff<B, O, ''>}` : never

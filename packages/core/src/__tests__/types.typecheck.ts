@@ -289,3 +289,20 @@ check({ ...config, defaultLocale: 'en', messages: { ja: jaFile, en: enMissing } 
 // Messages typed with string keys cannot be compared
 const recordEn: Record<string, string> = { title: 'Title' }
 check({ ...config, messages: { ja: jaFile, en: recordEn } })
+// A default locale typed with string keys cannot be compared either
+const recordJa: Record<string, string> = { title: 'タイトル' }
+check({ ...config, messages: { ja: recordJa, en: { title: 'Title' } } })
+check({ ...config, messages: { ja: { nested: recordJa }, en: { nested: { title: 'Title' } } } })
+// Arrays are not compared item by item, whichever locale is written as const
+const jaList = { title: 'タイトル', items: ['一', '二'] } as const
+const enList = { title: 'Title', items: ['One', 'Two'] }
+check({ ...config, messages: { ja: jaList, en: enList } })
+check({ ...config, defaultLocale: 'en', messages: { ja: jaList, en: enList } })
+check({ ...config, messages: { ja: jaList, en: { ...enList, items: ['One'] } } })
+// The keys next to an array are still compared
+// @ts-expect-error a locale misses a key next to an array
+check({ ...config, messages: { ja: jaList, en: { items: ['One', 'Two'] } } })
+// @ts-expect-error a locale has a key next to an array that the default locale does not have
+check({ ...config, messages: { ja: jaList, en: { ...enList, other: 'Other' } } })
+// @ts-expect-error a string where the default locale has an array
+check({ ...config, messages: { ja: jaList, en: { ...enList, items: 'One, Two' } } })
