@@ -1,7 +1,8 @@
 // Type-level checks, run by `pnpm type-check` and never executed.
 // Each @ts-expect-error fails the type check if its line stops being an error.
+import { getLinkHref } from '../internal'
 import type { ConfigCheck, ValidatableConfig } from '../internal'
-import { alternatePath, getLinkHref, localizedPath, pathLocale, removeLocalePrefix } from '../router'
+import { alternatePath, localizedPath, pathLocale, removeLocalePrefix } from '../router'
 import type { I18nConfig } from '../router'
 
 // The parameter type that define(), create() and the URL functions use
@@ -107,7 +108,7 @@ localizedPath('/donate', 'en', narrow)
 // @ts-expect-error unknown locale
 localizedPath('/donate', 'fr', narrow)
 
-// getLinkHref(): the config is required with a locale or normalize
+// getLinkHref() of the internal entry point: the config is required with a locale or normalize
 getLinkHref('/about', '/en/page', 'en', {})
 getLinkHref('/about', '/en/page', 'en', { locale: false })
 getLinkHref('/about', '/en/page', 'en', { locale: 'ja', config })
@@ -141,11 +142,15 @@ getLinkHref('/donate', '/en', 'en', { locale: '', config })
 import { getLocalizedPath } from '../router'
 // @ts-expect-error use pathLocale()
 import { hasLocalePrefix } from '../router'
-// @ts-expect-error use LinkHrefOptions
+// @ts-expect-error use Link, or localizedPath() and alternatePath()
 import type { GetLinkHrefOptions } from '../router'
+// @ts-expect-error getLinkHref() is internal: use Link, or localizedPath() and alternatePath()
+import { getLinkHref as publicGetLinkHref } from '../router'
+// @ts-expect-error the options of getLinkHref() are internal
+import type { LinkHrefOptions } from '../router'
 // @ts-expect-error DefineConfig is replaced by I18nConfig
 import type { DefineConfig } from '../index'
-export type { getLocalizedPath, hasLocalePrefix, GetLinkHrefOptions, DefineConfig }
+export type { getLocalizedPath, hasLocalePrefix, GetLinkHrefOptions, publicGetLinkHref, LinkHrefOptions, DefineConfig }
 
 // Messages
 

@@ -32,8 +32,6 @@ how to update from 1.x. 1.x gets no more releases.
   `removeLocalePrefix(pathname, config)` and `pathLocale(pathname, config)`.
   Paths must start with `/`, must not start with `//` or `/\`, and must have
   no query, hash, tab or line break. The results have no trailing slash.
-- `getLinkHref()` takes `{ locale, normalize, config }` as its required fourth
-  argument.
 - `Link` (Astro and Next.js): a link for the default locale gets no prefix
   unless `prefixDefault` is true, a relative `href` throws, and
   `locale={false}` replaces `locale=""`.
@@ -103,6 +101,8 @@ how to update from 1.x. 1.x gets no more releases.
 
 - `@i18n-tiny/astro/integration` (and `astro-i18n-tiny/integration`).
 - `getLocalizedPath()` and `hasLocalePrefix()`.
+- `getLinkHref()` and `GetLinkHrefOptions` of `@i18n-tiny/core/router`; use
+  `Link`, or `localizedPath()` and `alternatePath()`.
 - `Astro.locals.locales`.
 - `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`, the
   same props of the internal provider (not those of the `Provider` of

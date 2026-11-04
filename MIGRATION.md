@@ -30,7 +30,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | URL functions | `getLocalizedPath()`, `removeLocalePrefix(pathname, locales)`, `hasLocalePrefix()` | `localizedPath()`, `alternatePath()`, `removeLocalePrefix(pathname, config)`, `pathLocale()` | [URL functions](#url-functions) |
 | Path input | A missing `/` was added, a query or hash was kept | Must start with `/`, no `?`, `#`, tab or line break | [URL functions](#url-functions) |
 | Trailing slash | Kept | Removed, except for `/` | [URL functions](#url-functions) |
-| `getLinkHref()` | Fourth argument optional, a string or `{ locale, locales }` | Fourth argument required, `{ locale, normalize, config }` | [getLinkHref()](#getlinkhref) |
+| `getLinkHref()`, `GetLinkHrefOptions` | Exported from `@i18n-tiny/core/router` | Removed: use `Link`, or `localizedPath()` and `alternatePath()` | [getLinkHref()](#getlinkhref) |
 | `Link` `locale=""` | The path without a locale | Use `locale={false}` | [Link](#link) |
 | `Link` `locale` for the default locale | Always prefixed (`/en`) | No prefix unless `prefixDefault` (`/`) | [Link](#link) |
 | `Link` relative `href` | `/` was added | Throws | [Link](#link) |
@@ -208,16 +208,16 @@ In Next.js, the functions of `define()` work in Server and Client Components. Th
 
 ## getLinkHref()
 
-`getLinkHref()` of `@i18n-tiny/core/router` takes an options object as its required fourth argument. A link for a locale and `normalize` need the config.
+`getLinkHref()` and its options type `GetLinkHrefOptions` are removed from `@i18n-tiny/core/router`. Use the `Link` of Astro or Next.js, or build the path with `localizedPath()` and `alternatePath()`:
 
 | 1.x | 2.0 |
 | --- | --- |
-| `getLinkHref(href, pathname, locale)` | `getLinkHref(href, pathname, locale, {})` |
-| `getLinkHref(href, pathname, locale, 'ja')` or `{ locale: 'ja' }` | `getLinkHref(href, pathname, locale, { locale: 'ja', config })` |
-| `getLinkHref(href, pathname, locale, '')`, `{ locale: '' }` or `{ locale: false }` | `getLinkHref(href, pathname, locale, { locale: false })` |
-| `getLinkHref(href, pathname, locale, { locale: 'en', locales })` | `getLinkHref(href, pathname, locale, { locale: 'en', normalize: true, config })` |
+| `getLinkHref(href, pathname, locale)` | `<Link href={href}>` |
+| `getLinkHref(href, pathname, locale, 'ja')` or `{ locale: 'ja' }` | `localizedPath(href, 'ja', config)`, or `<Link href={href} locale="ja">` |
+| `getLinkHref(href, pathname, locale, '')`, `{ locale: '' }` or `{ locale: false }` | `href` as it is, or `<Link href={href} locale={false}>` |
+| `getLinkHref(pathname, pathname, locale, { locale: 'en', locales })` | `alternatePath(pathname, 'en', config)`, or `<Link href={pathname} locale="en" normalize>` |
 
-A link for the default locale gets no prefix unless `prefixDefault` is true. A string as the fourth argument throws.
+As with the `Link`, the default locale gets no prefix unless `prefixDefault` is true, and the functions take a pathname only: add the query and the hash after building the path. In Astro, the `Link` with a locale or `normalize` also needs the `i18n` prop (see [Astro: Link](#astro-link)).
 
 ## Link
 

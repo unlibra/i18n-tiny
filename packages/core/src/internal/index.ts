@@ -8,4 +8,7 @@ export type { NestedKeys, NamespaceKeys, TranslationKeys, LocaleMessages, Transl
 export { localizedPathOf, alternatePathOf, findPrefixLocale } from '../router/paths'
 // Whether browsers may read a path as another host
 export { leadsToAnotherHost } from '../router/paths'
-export { linkHref } from '../router/linkHref'
+// The href of the Link components: getLinkHref() checks the config,
+// linkHref() takes the check to run
+export { getLinkHref, linkHref } from '../router/linkHref'
+export type { LinkHrefOptions } from '../router/linkHref'

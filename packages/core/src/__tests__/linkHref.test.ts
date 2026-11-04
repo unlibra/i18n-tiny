@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { getLinkHref } from '../router'
-import type { I18nConfig, LinkHrefOptions } from '../router'
+import { getLinkHref } from '../internal'
+import type { LinkHrefOptions } from '../internal'
+import type { I18nConfig } from '../router'
 
 const config = { locales: ['ja', 'en'], defaultLocale: 'ja' } as const
 const prefixed = { ...config, prefixDefault: true } as const
