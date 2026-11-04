@@ -53,7 +53,7 @@ jobs:
         run: pnpm check:packages
 
       # Fails when the browser bundle of define() grows past the size the READMEs
-      # give: 1KB for React, 1.5KB for Next.
+      # give: 2KB for React and for Next.
       - name: Check bundle size
         run: pnpm size
 

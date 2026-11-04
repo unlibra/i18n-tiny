@@ -18,7 +18,7 @@ Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tin
 - **Server Components**: Native RSC support.
 - **Minimal SSG**: With the `app/[locale]` root layout, define `generateStaticParams` once there; Next.js applies it to every page below.
 - **Simple API**: Single configuration, minimal boilerplate.
-- **Lightweight**: `define()` is under 1.5KB minified and gzipped in the browser. The `Link` of `@i18n-tiny/next/router` is not counted in this size.
+- **Lightweight**: `define()` is under 2KB minified and gzipped in the browser. The `Link` of `@i18n-tiny/next/router` is not counted in this size.
 - **No global state**: Pure function factory pattern.
 
 ## Installation

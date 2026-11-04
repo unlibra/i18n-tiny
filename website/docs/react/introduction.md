@@ -13,7 +13,7 @@ Updating from 1.x? See the [migration guide](https://github.com/unlibra/i18n-tin
 - **Type-safe**: Full TypeScript support with **automatic type inference** - autocomplete for message keys.
 - **Zero dependencies**: No external i18n libraries needed.
 - **Simple API**: Single configuration with `define()`, returning everything you need (Provider, hooks, constants).
-- **Small**: Under 1KB minified and gzipped in the browser.
+- **Small**: Under 2KB minified and gzipped in the browser.
 - **No global state**: The locale and messages live in React context. Call `define()` once per app.
 
 ## Installation
