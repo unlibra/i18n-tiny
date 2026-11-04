@@ -117,6 +117,36 @@ describe('Edge Cases & Bug Fixes', () => {
       }
     })
 
+    // With normalize, href is the current pathname, such as one that a request
+    // for "//evil.com" gives: it must not become a link to that host
+    it('should throw for an href that starts with "//" with normalize', async () => {
+      const messages = await i18n.server.getMessages('ja')
+      for (const href of ['//evil.com', '//evil.com/about']) {
+        for (const locale of [undefined, false, 'en', 'ja'] as const) {
+          expect(() => render(
+            <i18n.Provider locale="ja" messages={messages}>
+              <Link href={href} locale={locale} normalize>Link</Link>
+            </i18n.Provider>
+          )).toThrow('must not start with "//"')
+          expect(() => render(
+            <i18n.Provider locale="ja" messages={messages}>
+              <Link href={{ pathname: href }} locale={locale} normalize>Link</Link>
+            </i18n.Provider>
+          )).toThrow('must not start with "//"')
+        }
+      }
+    })
+
+    it('should leave an href that starts with "//" as it is without normalize', async () => {
+      const messages = await i18n.server.getMessages('ja')
+      render(
+        <i18n.Provider locale="ja" messages={messages}>
+          <Link href="//cdn.example.com/a" locale="en">CDN</Link>
+        </i18n.Provider>
+      )
+      expect(screen.getByText('CDN').closest('a')).toHaveAttribute('href', '//cdn.example.com/a')
+    })
+
     it('should handle root path correctly when URL has prefix', async () => {
       const { usePathname } = await import('next/navigation')
       vi.mocked(usePathname).mockReturnValue('/ja/home')

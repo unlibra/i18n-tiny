@@ -34,7 +34,9 @@ how to update from 1.x. 1.x gets no more releases.
   no query, hash, tab or line break. The results have no trailing slash.
 - `Link` (Astro and Next.js): a link for the default locale gets no prefix
   unless `prefixDefault` is true, a relative `href` throws, and
-  `locale={false}` replaces `locale=""`.
+  `locale={false}` replaces `locale=""`. With `normalize`, an `href` that
+  starts with `//` throws instead of being left as a link to another host:
+  it is the current pathname, such as the one a request for `//host` gives.
 - The Astro `Link` needs the `define()` result as the `i18n` prop with a
   `locale` or `normalize`, and handles the `base`: with `normalize`, it
   removes the base from `href` too, so `href={Astro.url.pathname}` works.

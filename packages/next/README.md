@@ -554,7 +554,7 @@ const locale = detectLocale(acceptLanguage, ['en', 'ja'])
 
 #### `Link`
 
-Localized Link component, a Client Component. It reads the current locale and the locale settings from the `Provider`, so use it inside the `Provider`. The `href` is a path without a locale prefix and without the `basePath`, and must start with `/`: a relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths on this site, such as `https://…` or `#top`, are left as they are, and the query and the hash of a path are kept.
+Localized Link component, a Client Component. It reads the current locale and the locale settings from the `Provider`, so use it inside the `Provider`. The `href` is a path without a locale prefix and without the `basePath`, and must start with `/`: a relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths on this site, such as `https://…`, `//cdn.example.com/…` or `#top`, are left as they are, and the query and the hash of a path are kept. With `normalize`, an `href` that starts with `//` throws instead: it is the current pathname, which must not lead to another host.
 
 ```typescript
 import { Link } from '@i18n-tiny/next/router'

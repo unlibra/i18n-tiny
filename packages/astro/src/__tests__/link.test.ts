@@ -179,6 +179,13 @@ describe('linkHref', () => {
   })
 
   it('throws with normalize for an href that leads to another host after its base or prefix', () => {
+    // href is the current pathname: a request for "//evil.com" must not give a link to that host
+    for (const locale of ['ja', 'en', undefined, false] as const) {
+      expect(() => linkHref({ href: '//evil.com', locale, normalize: true, i18n, ...page('//evil.com', undefined) })).toThrow('must not start with "//"')
+      expect(() => linkHref({ href: '/docs//evil.com', locale, normalize: true, i18n, ...page('/docs//evil.com', undefined, '/docs') })).toThrow('must not start with "//"')
+    }
+    // Without normalize, "//host" is a link to another host, written as such
+    expect(linkHref({ href: '//cdn.example.com/x', locale: 'en', i18n, ...page('/docs/page', undefined, '/docs') })).toBe('//cdn.example.com/x')
     expect(() => linkHref({ href: '/en//evil.com', locale: 'ja', normalize: true, i18n, ...page('/en/page', 'en') })).toThrow('[i18n]')
     expect(() => linkHref({ href: '/docs/en/\\evil.com', locale: 'ja', normalize: true, i18n, ...page('/docs/en/page', 'en', '/docs') })).toThrow('[i18n]')
     expect(() => linkHref({ href: '/docs/\\evil.com', locale: 'en', normalize: true, i18n, ...page('/docs/page', undefined, '/docs') })).toThrow('[i18n]')

@@ -19,8 +19,30 @@ describe('getLinkHref() with the options of the config', () => {
       ['?page=2']
     ])('leaves %s unchanged', (href) => {
       expect(getLinkHref(href, '/en/page', 'en', {})).toBe(href)
-      expect(getLinkHref(href, '/en/page', 'en', { locale: 'ja', normalize: true, config })).toBe(href)
+      expect(getLinkHref(href, '/en/page', 'en', { locale: 'ja', config })).toBe(href)
       expect(getLinkHref(href, '/en/page', 'en', { locale: false })).toBe(href)
+    })
+
+    it.each([
+      ['https://github.com/x'],
+      ['mailto:hello@example.com'],
+      ['#top'],
+      ['?page=2']
+    ])('leaves %s unchanged with normalize', (href) => {
+      expect(getLinkHref(href, '/en/page', 'en', { locale: 'ja', normalize: true, config })).toBe(href)
+    })
+
+    // With normalize, href is the pathname of the current page, such as one
+    // a request for "//evil.com" gives: it must not become a link to that host
+    it.each([
+      ['//evil.com'],
+      ['//evil.com/about?x=1'],
+      ['//cdn.example.com/a.js']
+    ])('throws for %s with normalize', (href) => {
+      const message = 'must not start with "//" or "/\\"'
+      expect(() => getLinkHref(href, '/en/page', 'en', { locale: 'ja', normalize: true, config })).toThrow(message)
+      expect(() => getLinkHref(href, '/en/page', 'en', { normalize: true, config })).toThrow(message)
+      expect(() => getLinkHref(href, '/en/page', 'en', { locale: false, normalize: true, config })).toThrow(message)
     })
   })
 

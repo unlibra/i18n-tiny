@@ -26,8 +26,9 @@ export type LinkHrefOptions<C extends I18nConfig = I18nConfig> =
 
 // Hrefs that are not paths on this site: absolute URLs (https:, mailto:, ...),
 // protocol-relative URLs, and in-page '#' or '?' links. Only "//" written as
-// such is a link to another host: other paths that browsers may read as
-// another host, such as "/\host" or "/\t/host", throw in assertPathname().
+// such, without normalize, is a link to another host: other paths that
+// browsers may read as another host, such as "/\host" or "/\t/host", throw in
+// assertPathname().
 const NON_PATH_HREF = /^(?:[a-zA-Z][a-zA-Z\d+.-]*:|\/\/|#|\?)/
 
 function hasPrefix (pathname: string, locale: string): boolean {
@@ -48,11 +49,13 @@ export function linkHref (
   if (typeof options !== 'object' || options === null) {
     throw new Error('[i18n] getLinkHref() takes the options object { locale, normalize, config } as its fourth argument.')
   }
-  if (NON_PATH_HREF.test(href)) {
+  const { locale, normalize = false, config } = options
+  // With normalize, href is the pathname of the current page, which is never
+  // meant as a link to another host: "//host" throws in assertPathname()
+  if (NON_PATH_HREF.test(href) && !(normalize && href.startsWith('//'))) {
     return href
   }
 
-  const { locale, normalize = false, config } = options
   if (normalize && config === undefined) {
     throw new Error('[i18n] A link with normalize needs the config option.')
   }
@@ -94,7 +97,9 @@ export function linkHref (
  * @i18n-tiny/next use linkHref(), the same without the check of the config.
  *
  * Hrefs that are not paths on this site, such as 'https://…', 'mailto:…',
- * '//cdn…', '#top' or '?page=2', are returned unchanged. For a path, the query
+ * '//cdn…', '#top' or '?page=2', are returned unchanged. With `normalize`,
+ * an href that starts with "//" throws instead: it is the pathname of the
+ * current page, which must not lead to another host. For a path, the query
  * and the hash are kept as they are and the path is built as follows:
  *
  * - `normalize: true` first removes a locale prefix from the path
@@ -106,8 +111,9 @@ export function linkHref (
  *
  * The path has no trailing slash, except for the top page "/".
  *
- * Throws when the path does not start with "/", starts with "/\" or contains
- * a tab or a line break, when the locale is not one of `locales`, when
+ * Throws when the path does not start with "/", starts with "/\" (or with
+ * `normalize` "//") or contains a tab or a line break, when the locale is not
+ * one of `locales`, when
  * `config` is missing with a locale or `normalize`, or when the config is
  * invalid.
  *

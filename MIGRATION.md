@@ -226,7 +226,7 @@ These changes apply to the `Link` of both Astro and Next.js.
 - `locale=""` is removed. Use `locale={false}` for the path without a locale.
 - A link for the default locale gets no prefix unless `prefixDefault` is true. In 1.x, `<Link href="/" locale="en">` was `/en` even for the default locale `en`; in 2.0 it is `/`.
 - With detection and `prefixDefault: false`, a link to the default locale is detected again: see [Language detection](#language-detection).
-- `href` must start with `/`. A relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged, as in 1.x.
+- `href` must start with `/`. A relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths of the site, such as `https://…`, `//cdn.example.com/…`, `mailto:…` or `#top`, are left unchanged, as in 1.x. With `normalize`, an `href` that starts with `//` throws instead: it is the current pathname, which must not lead to another host.
 - The query and the hash of `href` are kept, and the path has no trailing slash, except for `/`.
 
 ## Language detection
