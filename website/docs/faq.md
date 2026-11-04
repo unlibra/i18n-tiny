@@ -50,7 +50,7 @@ There are no built-in plural rules; messages support placeholders only. To choos
 
 ## How do I detect the visitor's language?
 
-Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering, with `detectLanguage: true`. Detection is off by default. With it, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header. If it is another locale, they redirect to its prefixed URL, such as `/ja/about`. If it is the default locale, they serve it and keep the URL unchanged. With detection, also set `prefixDefault: true` in the config shared with `define()`, so that the links to the default locale have a prefix and are not detected again. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
+Use the i18n-tiny proxy in Next.js, or the middleware in Astro with server-side rendering, with `detectLanguage: true`. Detection is off by default: without it, a URL without a locale prefix is the default locale. With it, for a URL without a locale prefix, they pick the best match from the browser's `Accept-Language` header, or `fallbackLocale` when nothing matches. With detection, also set `prefixDefault: true` in the config shared with `define()`, so that the links to the default locale have a prefix and are not detected again. A URL without a prefix then redirects to the prefixed URL of the detected locale, such as `/ja/about`. In the rewrite mode, detection needs `prefixDefault: true`, and the URL is served in the detected locale without a redirect. See the [Next.js Proxy](./next/api-reference/proxy) and [Astro middleware](./astro/api-reference/middleware) references.
 
 ## Can the default locale have no URL prefix?
 

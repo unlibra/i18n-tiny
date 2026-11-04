@@ -25,7 +25,7 @@ The config is invalid when:
 - `defaultLocale` is not one of `locales`
 - `messages` misses a locale or has one that is not in `locales`
 
-With `as const` or an inline config, these are type errors. At run time, `define()` throws for them on the server, in Server Components and in the proxy. In the browser it does not check the config, which keeps the check out of the client bundle.
+With `as const` or an inline config, these are type errors. At run time, `define()` throws for them in Server Components, and `create()` of the proxy checks its `locales` and `defaultLocale` the same way and throws. In the browser it does not check the config, which keeps the check out of the client bundle.
 
 To use the locale settings where the messages are not loaded too, such as in the proxy, keep them in an object of their own and spread it:
 

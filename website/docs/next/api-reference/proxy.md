@@ -51,7 +51,7 @@ URLs with a locale prefix, such as `/ja/about`, are served as is. The matrix app
 | `true` | `false` | Redirects to `/[defaultLocale]` |
 | `true` | `true` | Detects and redirects to the detected locale |
 
-Without the detection, a URL without a prefix is always the default locale; `fallbackLocale` is used only when the detection finds no match. Languages marked with `q=0` are never picked. A pathname that starts with `//` or `/\`, also after the locale prefix, gets no i18n handling.
+Without the detection, a URL without a prefix is always the default locale; `fallbackLocale` is used only when the detection finds no match. Languages marked with `q=0` are never picked. A pathname that starts with `//` or `/\`, also after the locale prefix, or has a tab or a line break, gets no i18n handling.
 
 **Examples:**
 
@@ -167,7 +167,7 @@ Can be imported directly from `@i18n-tiny/next/proxy`.
 | `supportedLocales` | `readonly string[]` | Required | Array of supported locales |
 
 **Returns:**
-- `string | null`: The matched locale, or `null` if no match is found.
+- `string | null`: one of `supportedLocales`, as written there, or `null` when none matches or the header is empty.
 
 **Example:**
 
@@ -175,5 +175,5 @@ Can be imported directly from `@i18n-tiny/next/proxy`.
 import { detectLocale } from '@i18n-tiny/next/proxy'
 
 const locale = detectLocale(request.headers.get('accept-language'), ['en', 'ja'])
-// Returns: 'en' | 'ja' | null
+// 'en', 'ja' or null, typed as string | null
 ```

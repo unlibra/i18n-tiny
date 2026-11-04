@@ -28,7 +28,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | `{{` and `}}` in messages | Shown as written, and `{{name}}` with vars gave `{` + the value + `}` | Shown as `{` and `}`: `{{name}}` shows `{name}` | [Messages](#messages) |
 | Types of the messages | Keys from the first locale (Next.js, React) or from all locales (Astro), vars not typed | Keys from `defaultLocale`, every locale must have the same keys, vars typed for `as const` messages | [Messages](#messages) |
 | URL functions | `getLocalizedPath()`, `removeLocalePrefix(pathname, locales)`, `hasLocalePrefix()` | `localizedPath()`, `alternatePath()`, `removeLocalePrefix(pathname, config)`, `pathLocale()` | [URL functions](#url-functions) |
-| Path input | A missing `/` was added, a query or hash was kept | Must start with `/`, no `?` or `#` | [URL functions](#url-functions) |
+| Path input | A missing `/` was added, a query or hash was kept | Must start with `/`, no `?`, `#`, tab or line break | [URL functions](#url-functions) |
 | Trailing slash | Kept | Removed, except for `/` | [URL functions](#url-functions) |
 | `getLinkHref()` | Fourth argument optional, a string or `{ locale, locales }` | Fourth argument required, `{ locale, normalize, config }` | [getLinkHref()](#getlinkhref) |
 | `Link` `locale=""` | The path without a locale | Use `locale={false}` | [Link](#link) |
@@ -53,7 +53,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 ## Requirements
 
 - **Node.js 22.12 or later.** Each package has `"engines": { "node": ">=22.12" }`. Astro may need a newer Node.js than this: use the version your Astro version requires.
-- **ES modules only.** The `.cjs` and `.d.cts` files are gone, and `exports` has only the `types` and `default` conditions. On Node.js 22.12 or later, `require()` can still load the packages, since Node.js loads ES modules from `require()`.
+- **ES modules only.** The `.cjs` and `.d.cts` files are gone, and `exports` no longer has the `import` and `require` conditions. The conditions left are `types` and `default`, and `react-server` in the main entry point of `@i18n-tiny/next`, for Server Components. On Node.js 22.12 or later, `require()` can still load the packages, since Node.js loads ES modules from `require()`.
 - **Astro 6 or 7.** Astro 4 and 5 are no longer supported.
 - **TypeScript 5.9 or later** for the types.
 - Next.js 15 or 16 and React 18 or 19, as in 1.x.
@@ -199,7 +199,7 @@ With `config = { locales: ['en', 'ja'], defaultLocale: 'en' }`:
 The rules for paths changed:
 
 - The path must start with `/`. 1.x added a missing `/`; 2.0 throws.
-- The path is a pathname only: a path that contains `?` or `#`, or starts with `//` or `/\`, throws. Add the query and the hash after building the path.
+- The path is a pathname only: a path that contains `?`, `#`, a tab or a line break, or starts with `//` or `/\`, throws. Add the query and the hash after building the path.
 - A locale that is not one of `locales` throws.
 - The results have no trailing slash, except for the top page `/`: `localizedPath('/about/', 'ja', config)` is `'/ja/about'`.
 - `localizedPath()` no longer avoids a double prefix: `localizedPath('/ja/about', 'ja', config)` is `'/ja/ja/about'`. For the current page in another locale, use `alternatePath()`.
@@ -226,7 +226,7 @@ These changes apply to the `Link` of both Astro and Next.js.
 - `locale=""` is removed. Use `locale={false}` for the path without a locale.
 - A link for the default locale gets no prefix unless `prefixDefault` is true. In 1.x, `<Link href="/" locale="en">` was `/en` even for the default locale `en`; in 2.0 it is `/`.
 - With detection and `prefixDefault: false`, a link to the default locale is detected again: see [Language detection](#language-detection).
-- `href` must start with `/`. A relative path such as `about` throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged, as in 1.x.
+- `href` must start with `/`. A relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged, as in 1.x.
 - The query and the hash of `href` are kept, and the path has no trailing slash, except for `/`.
 
 ## Language detection
@@ -467,7 +467,7 @@ Other changes of the middleware:
 
 ### Astro: rewrite mode
 
-With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault` may be `false`. Detection (`detectLanguage: true`, the default of 1.x) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, `create()` throws without it, and a config written inline, with `as const` or with `satisfies` is a type error too. Put `prefixDefault: true` in the shared config.
+With `routing: 'rewrite'`, `detectLanguage` and `prefixDefault` are now accepted, so the middleware takes the same config as `define()`. Without detection, now the default, a URL without a locale prefix is the default locale, and `prefixDefault` may be `false`. Detection (`detectLanguage: true`, the default of 1.x) needs `prefixDefault: true`: a URL without a locale prefix is the detected locale, so a link to the default locale needs the prefix too. Without it, `create()` throws, and a config written inline, with `as const` or with `satisfies` is a type error too. Put `prefixDefault: true` in the shared config.
 
 In the rewrite mode, `prefixDefault` changes the links only: a URL without a locale prefix is still served, not redirected.
 

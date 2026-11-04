@@ -77,7 +77,7 @@ pathLocale('/about', config)             // undefined
 | `pathLocale(pathname, config)` | The locale of the prefix of `pathname`, or `undefined`. Only whole path segments match |
 
 - The results have no trailing slash, except for the top page `/`.
-- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`. Add the query and the hash after building the path.
+- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains a tab, a line break, `?` or `#`. Add the query and the hash after building the path.
 - A locale that is not one of `locales` throws. With `as const`, it is a type error too.
 - `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
 - The config is checked on every call, as `define()` checks it.

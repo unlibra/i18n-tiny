@@ -93,7 +93,7 @@ pathLocale('/english', config)   // undefined: only whole path segments match
 ### Paths in and out
 
 - The results have no trailing slash, except for the top page `/`.
-- The functions take a pathname only. They throw when it does not start with `/`, starts with `//` or `/\` (which browsers read as another host, also once the locale prefix is removed), or contains `?` or `#`. Add the query and the hash after building the path:
+- The functions take a pathname only. They throw when it does not start with `/`, starts with `//` or `/\` (which browsers read as another host, also once the locale prefix is removed), or contains a tab, a line break (which browsers remove, so that `/\t/host` is read as `//host`), `?` or `#`. Add the query and the hash after building the path:
 
   ```typescript
   const { pathname, search, hash } = new URL(location.href)

@@ -30,8 +30,8 @@ how to update from 1.x. 1.x gets no more releases.
   and `@i18n-tiny/next/router` take the config object:
   `localizedPath(path, locale, config)`, `alternatePath(pathname, locale, config)`,
   `removeLocalePrefix(pathname, config)` and `pathLocale(pathname, config)`.
-  Paths must start with `/` and have no query or hash, and the results have
-  no trailing slash.
+  Paths must start with `/`, must not start with `//` or `/\`, and must have
+  no query, hash, tab or line break. The results have no trailing slash.
 - `getLinkHref()` takes `{ locale, normalize, config }` as its required fourth
   argument.
 - `Link` (Astro and Next.js): a link for the default locale gets no prefix

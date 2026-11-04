@@ -432,14 +432,14 @@ Type for the configuration object passed to `create()`.
 
 #### `detectLocale(acceptLanguage, supportedLocales)`
 
-Detects the best matching locale from the Accept-Language header. Languages marked with `q=0` are never returned.
+Detects the best matching locale from the Accept-Language header. Returns one of `supportedLocales`, as written there, or `null` when none matches or the header is empty. Languages marked with `q=0` are never returned.
 
 ```typescript
 import { detectLocale } from '@i18n-tiny/astro/middleware'
 
 const acceptLanguage = request.headers.get('accept-language')
 const locale = detectLocale(acceptLanguage, ['en', 'ja'])
-// Returns: 'en' | 'ja' | null
+// 'en', 'ja' or null, typed as string | null
 ```
 
 ### `@i18n-tiny/astro/router`

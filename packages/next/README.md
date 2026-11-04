@@ -294,7 +294,7 @@ Defines an i18n instance with automatic type inference.
 | `prefixDefault` | `boolean`                  | Whether URLs of the default locale also carry the prefix (default `false`) |
 | `messages`      | `Record<Locale, Messages>` | Messages object keyed by locale                                      |
 
-`locales` and `defaultLocale` are required, and `locales` needs no `as const`. The config is invalid when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors. At run time, `define()` throws for them on the server, in Server Components and in the proxy. In the browser it does not check the config, which keeps the check out of the client bundle.
+`locales` and `defaultLocale` are required, and `locales` needs no `as const`. The config is invalid when `defaultLocale` is not one of `locales`, when `locales` is empty, lists a locale twice or has a locale that is empty, `.`, `..` or contains `/`, `\`, `?`, `#` or whitespace, and when `messages` misses a locale or has one that is not in `locales`. With `as const` or an inline config, these are type errors. At run time, `define()` throws for them in Server Components, and `create()` of the proxy checks its `locales` and `defaultLocale` the same way and throws. In the browser it does not check the config, which keeps the check out of the client bundle.
 
 **Returns:**
 
@@ -468,7 +468,7 @@ Applies to every URL without a locale prefix, such as `/` or `/about` (the path 
 | `true`        | `false`        | Redirects to `/[defaultLocale]`                               |
 | `true`        | `true`         | Detects and redirects to detected locale                      |
 
-Without the detection, a URL without a prefix is always the default locale; `fallbackLocale` is used only when the detection finds no match. A pathname that starts with `//` or `/\`, also after the locale prefix, gets no i18n handling.
+Without the detection, a URL without a prefix is always the default locale; `fallbackLocale` is used only when the detection finds no match. A pathname that starts with `//` or `/\`, also after the locale prefix, or has a tab or a line break, gets no i18n handling.
 
 **Examples:**
 
@@ -540,21 +540,21 @@ Type for the configuration object passed to `create()`.
 
 #### `detectLocale(acceptLanguage, supportedLocales)`
 
-Detects the best matching locale from the Accept-Language header. Languages marked with `q=0` are never returned.
+Detects the best matching locale from the Accept-Language header. Returns one of `supportedLocales`, as written there, or `null` when none matches or the header is empty. Languages marked with `q=0` are never returned.
 
 ```typescript
 import { detectLocale } from '@i18n-tiny/next/proxy'
 
 const acceptLanguage = request.headers.get('accept-language')
 const locale = detectLocale(acceptLanguage, ['en', 'ja'])
-// Returns: 'en' | 'ja' | null
+// 'en', 'ja' or null, typed as string | null
 ```
 
 ### `@i18n-tiny/next/router`
 
 #### `Link`
 
-Localized Link component, a Client Component. It reads the current locale and the locale settings from the `Provider`, so use it inside the `Provider`. The `href` is a path without a locale prefix and without the `basePath`, and must start with `/`: a relative path such as `about` throws. Hrefs that are not paths on this site, such as `https://…` or `#top`, are left as they are, and the query and the hash of a path are kept.
+Localized Link component, a Client Component. It reads the current locale and the locale settings from the `Provider`, so use it inside the `Provider`. The `href` is a path without a locale prefix and without the `basePath`, and must start with `/`: a relative path such as `about` throws, and so does a path that, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths on this site, such as `https://…` or `#top`, are left as they are, and the query and the hash of a path are kept.
 
 ```typescript
 import { Link } from '@i18n-tiny/next/router'
@@ -597,7 +597,7 @@ pathLocale('/about', config)                // undefined
 ```
 
 - The results have no trailing slash, except for the top page `/`, and no `basePath`.
-- They take a pathname only: a path that does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`, throws, as does a locale that is not one of `locales`. Add the query and the hash after building the path.
+- They take a pathname only: a path that does not start with `/`, starts with `//` or `/\`, or contains a tab, a line break, `?` or `#`, throws, as does a locale that is not one of `locales`. Add the query and the hash after building the path.
 - `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
 
 ## Advanced Usage

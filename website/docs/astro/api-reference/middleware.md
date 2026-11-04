@@ -145,10 +145,10 @@ Can be imported directly from `@i18n-tiny/astro/middleware`.
 | `supportedLocales` | `readonly string[]` | Required | Array of supported locales |
 
 **Returns:**
-- `string | null`: The matched locale, or `null` if no match is found.
+- `string | null`: one of `supportedLocales`, as written there, or `null` when none matches or the header is empty.
 
 ```typescript
 import { detectLocale } from '@i18n-tiny/astro/middleware'
 
-detectLocale(request.headers.get('accept-language'), ['en', 'ja']) // 'en' | 'ja' | null
+detectLocale(request.headers.get('accept-language'), ['en', 'ja']) // 'en', 'ja' or null
 ```

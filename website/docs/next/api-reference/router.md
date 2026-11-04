@@ -39,7 +39,7 @@ import { Link } from '@i18n-tiny/next/router'
 
 - Without `locale`, the link is for the current locale, as `localizedPath()` builds it: with `defaultLocale: 'en'`, `href="/about"` is `/about` on an English page and `/ja/about` on a Japanese page, whatever the current URL is.
 - With `locale`, the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
-- An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths on this site, such as `https://…` or `#top`, are left as they are, and the query and the hash of a path are kept.
+- An `href` that does not start with `/`, such as `about`, throws, and so does an `href` whose path, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths on this site, such as `https://…` or `#top`, are left as they are, and the query and the hash of a path are kept.
 - A link to a page of another locale is loaded in full by the browser, not by the router of Next.js, and is not prefetched. The locale of the page is read from the path, also with `locale={false}`: the locale of its prefix, or for a path without a prefix, the default locale. With `prefixDefault`, a path without a prefix is the detected locale, which only the server knows, and is loaded in full too. Clicks with a modifier key, `target="_blank"` and `download` are left to the browser.
 - With `typedRoutes`, the `href` of this `Link` is typed as any URL, not as one of the generated routes, since it has no locale prefix.
 
@@ -62,7 +62,7 @@ pathLocale('/about', config)                // undefined
 ```
 
 - The results have no trailing slash, except for the top page `/`, and no `basePath`.
-- They take a pathname only: a path that does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`, throws, as does a locale that is not one of `locales`. Add the query and the hash after building the path.
+- They take a pathname only: a path that does not start with `/`, starts with `//` or `/\`, or contains a tab, a line break, `?` or `#`, throws, as does a locale that is not one of `locales`. Add the query and the hash after building the path.
 - `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
 
 A sitemap needs absolute URLs: build them from the site, the `basePath` and the path.
