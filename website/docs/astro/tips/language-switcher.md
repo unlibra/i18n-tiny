@@ -1,10 +1,10 @@
 ---
-description: "Switch languages in Astro without sending users back to the home page, and add hreflang alternate links, with the i18n-tiny Link component and alternatePath()."
+description: "Switch languages in Astro without sending users back to the home page with the normalize prop of the i18n-tiny Link component, and add hreflang alternate links with alternatePath()."
 ---
 
 # Astro Language Switcher That Keeps the Page
 
-A language switcher links to the current page in each locale. Pass the path of the page, without a locale prefix, to the `Link` component with each locale.
+A language switcher links to the current page in each locale. Pass the current URL to the `Link` component with each locale and the `normalize` prop.
 
 ## Implementation Example
 
@@ -14,40 +14,25 @@ A language switcher links to the current page in each locale. Pass the path of t
 import Link from '@i18n-tiny/astro/router/Link.astro'
 import { i18n } from '../i18n'
 
-interface Props {
-  path: string // such as '/about'
-}
-
 const names = { ja: '日本語', en: 'English' }
 ---
 
 <nav>
   {i18n.locales.map((locale) => (
-    <Link href={Astro.props.path} locale={locale} i18n={i18n}>
+    <Link href={Astro.url.pathname} locale={locale} normalize i18n={i18n}>
       {names[locale]}
     </Link>
   ))}
 </nav>
 ```
 
-Each page passes its path: `<LanguageSwitcher path="/about" />`. On `/en/about`, the links are `/about` for Japanese, the default locale, and `/en/about` for English. With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the `Link` adds it.
+## How It Works
+
+1.  On `/en/about`, `Astro.url.pathname` is `/en/about`.
+2.  `normalize` removes the [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), if any, and the locale prefix `/en`: `/about`.
+3.  The link is built for each locale: `/about` for Japanese, the default locale, and `/en/about` for English. With a `base`, the `Link` adds it.
 
 For a page in some locales only, map over its locales instead of `i18n.locales`.
-
-## From the Current URL
-
-To build the links from the current URL instead, pass `i18n.alternatePath(Astro.url.pathname, locale)` to a `Link` with `locale={false}`, or to a plain `<a>`:
-
-```astro
-{i18n.locales.map((locale) => (
-  <Link href={i18n.alternatePath(Astro.url.pathname, locale)} locale={false}>
-    {names[locale]}
-  </Link>
-))}
-```
-
-- Do not leave out `locale={false}`. A `Link` without `locale` adds the prefix of the current page to its `href`, so on `/en/about` the link to Japanese would be `/en/about` again.
-- `Astro.url.pathname` includes the `base`: with a `base`, pass the path of the page, as in the first example.
 
 ## With Language Detection
 

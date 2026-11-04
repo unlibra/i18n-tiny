@@ -461,22 +461,26 @@ import { i18n } from '../i18n'
 <Link href="/" locale="en" i18n={i18n}>English</Link>
 <Link href="/" locale="ja" i18n={i18n}>日本語</Link>
 
+<!-- The current page in another locale -->
+<Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
+
 <!-- The path without a locale -->
 <Link href="/" locale={false}>Top</Link>
 ```
 
-| Prop     | Type              | Description                                                                                                   |
-| -------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
-| `href`   | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
-| `locale` | `string \| false` | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
-| `i18n`   | `define()` result | Required with a locale (other than `false`). The link is built with its `localizedPath()`, and so with its `prefixDefault` |
+| Prop        | Type              | Description                                                                                                   |
+| ----------- | ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `href`      | `string`          | The path of the page, starting with `/`, without the base and without a locale prefix                         |
+| `locale`    | `string \| false` | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
+| `normalize` | `boolean`         | Removes the base and a locale prefix from `href` first, for `href={Astro.url.pathname}`                       |
+| `i18n`      | `define()` result | Required with a locale (other than `false`) and `normalize`. The link is built with its `localizedPath()`, and so with its `prefixDefault` |
 
 - Without `locale`, the link keeps the form of the current URL: it gets the prefix of the current locale only when the current URL has one. The current locale is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. The `Link` of `@i18n-tiny/next` builds this link from the config instead.
 - With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
-- `locale` without `i18n` is a type error, and throws.
-- An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
+- `locale` or `normalize` without `i18n` is a type error, and throws.
+- An `href` that does not start with `/`, such as `about`, throws, and so does an `href` whose path, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths of the site, such as `https://…`, `//cdn.example.com/…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
 - The links have no trailing slash, except for the top page `/`.
-- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base. With `normalize`, the base is also removed from `href`, so `href={Astro.url.pathname}` works.
 
 #### URL functions
 
@@ -497,7 +501,7 @@ pathLocale('/about', config)             // undefined
 ```
 
 - The results have no trailing slash, except for the top page `/`.
-- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains `?` or `#`. Add the query and the hash after building the path.
+- They take a pathname only, and throw when it does not start with `/`, starts with `//` or `/\`, or contains a tab, a line break, `?` or `#`. Add the query and the hash after building the path.
 - A locale that is not one of `locales` throws. With `as const`, it is a type error too.
 - `localizedPath()` takes the path without a locale prefix, and adds one even when the path already has it. Use `alternatePath()` for the current page.
 
@@ -540,7 +544,7 @@ const { locale, tool } = Astro.props
 
 ### Language Switcher
 
-The current page in each locale. The page passes its path, without a locale prefix:
+The current page in each locale:
 
 ```astro
 ---
@@ -548,25 +552,19 @@ The current page in each locale. The page passes its path, without a locale pref
 import Link from '@i18n-tiny/astro/router/Link.astro'
 import { i18n } from '../i18n'
 
-interface Props {
-  path: string // such as '/about'
-}
-
 const names = { ja: '日本語', en: 'English' }
 ---
 
 <nav>
   {i18n.locales.map((locale) => (
-    <Link href={Astro.props.path} locale={locale} i18n={i18n}>
+    <Link href={Astro.url.pathname} locale={locale} normalize i18n={i18n}>
       {names[locale]}
     </Link>
   ))}
 </nav>
 ```
 
-For a page in some locales only, map over its locales instead of `i18n.locales`.
-
-To build the links from the current URL instead, pass `i18n.alternatePath(Astro.url.pathname, locale)` to a `Link` with `locale={false}`, or to a plain `<a>`. A `Link` without `locale` adds the prefix of the current page to its `href`, so on `/en/about` the link to Japanese would be `/en/about` again. `Astro.url.pathname` includes the [`base`](https://docs.astro.build/en/reference/configuration-reference/#base): with a `base`, pass the path of the page, as above.
+`normalize` removes the base and the locale prefix of the current URL before the link for each locale is built: on `/en/about`, the links are `/about` and `/en/about`. For a page in some locales only, map over its locales instead of `i18n.locales`.
 
 If you turn on detection in the [middleware](#i18n-tinyastromiddleware-ssr-only) with `detectLanguage: true`, also put `prefixDefault: true` in the [config shared with `define()`](#i18nconfig-type). With `prefixDefault: false`, a browser that prefers another locale than the default one cannot reach the pages of the default locale: the link to the default locale has no prefix, and the middleware detects its language again, so a browser that prefers English follows the Japanese link to `/about` and is redirected back to `/en/about`. With `prefixDefault: true`, the URLs of the default locale have the prefix too (`/ja/about`), and are not detected.
 

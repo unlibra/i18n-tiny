@@ -138,7 +138,7 @@ localizedPath('/about', 'fr', config)
 // @ts-expect-error defaultLocale is not one of locales
 removeLocalePrefix('/ja/about', { locales: ['en', 'ja'], defaultLocale: 'fr' })
 
-// Props of the Link component: a locale needs the define() result
+// Props of the Link component: a locale and normalize need the define() result
 const keepLocale: LinkProps = { href: '/about' }
 const keepLocaleWithI18n: LinkProps = { href: '/about', i18n }
 const withoutLocale: LinkProps = { href: '/about', locale: false }
@@ -148,8 +148,13 @@ const forPrefixed: LinkProps = { href: '/about', locale: 'en', i18n: prefixed }
 const withAttributes: LinkProps = { href: '/about', class: 'nav', 'aria-current': 'page' }
 // @ts-expect-error a locale needs i18n
 const localeWithoutI18n: LinkProps = { href: '/about', locale: 'en' }
-// @ts-expect-error normalize is gone: use alternatePath() of define() for the current page
 const normalized: LinkProps = { href: '/en/about', locale: 'ja', normalize: true, i18n }
+const normalizedKeepLocale: LinkProps = { href: '/en/about', normalize: true, i18n }
+const normalizedWithoutLocale: LinkProps = { href: '/en/about', locale: false, normalize: true, i18n: prefixed }
+// @ts-expect-error normalize needs i18n
+const normalizeWithoutI18n: LinkProps = { href: '/about', normalize: true }
+// @ts-expect-error normalize needs i18n, also with locale false
+const normalizeFalseWithoutI18n: LinkProps = { href: '/about', locale: false, normalize: true }
 // @ts-expect-error locale="" without i18n, the 1.x way to leave the path without a locale: use locale={false}.
 // With i18n, locale="" passes the type check and throws as an unknown locale.
 const emptyLocale: LinkProps = { href: '/about', locale: '' }
@@ -249,7 +254,8 @@ const interfaceTitle: string = withInterface.getMessages('ja').common.title
 
 export {
   interfaceTitle,
-  keepLocale, keepLocaleWithI18n, withoutLocale, withoutLocaleWithI18n, forLocale, forPrefixed, normalized, withAttributes,
+  keepLocale, keepLocaleWithI18n, withoutLocale, withoutLocaleWithI18n, forLocale, forPrefixed, normalized,
+  normalizedKeepLocale, normalizedWithoutLocale, normalizeWithoutI18n, normalizeFalseWithoutI18n, withAttributes,
   localeWithoutI18n, emptyLocale, localesAsI18n, configAsI18n,
   title, locales, defaultLocale, prefixDefault, pageLocale, pageLocales, urlLocale, urlLocaleAlways, notWide,
   toolLocale, label, tool, toolUrlLocale, localized, alternate, removed, prefix, sameAsInput, routed,

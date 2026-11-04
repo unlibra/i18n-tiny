@@ -81,6 +81,36 @@ describe('linkHref', () => {
     expect(linkHref({ href: '/about/', locale: false, i18n: prefixed, ...page('/en/page', 'en') })).toBe('/about')
   })
 
+  it('builds the current page in another locale with normalize', () => {
+    expect(linkHref({ href: '/en/about', locale: 'ja', normalize: true, i18n, ...page('/en/about', 'en') })).toBe('/about')
+    expect(linkHref({ href: '/about', locale: 'en', normalize: true, i18n, ...page('/about', undefined) })).toBe('/en/about')
+    expect(linkHref({ href: '/about/', locale: 'en', normalize: true, i18n, ...page('/about/', undefined) })).toBe('/en/about')
+    expect(linkHref({ href: '/en', locale: 'ja', normalize: true, i18n, ...page('/en', 'en') })).toBe('/')
+    expect(linkHref({ href: '/en/about', locale: 'ja', normalize: true, i18n: prefixed, ...page('/en/about', 'en') })).toBe('/ja/about')
+    expect(linkHref({ href: '/ja/about', locale: 'en', normalize: true, i18n: prefixed, ...page('/ja/about', 'ja') })).toBe('/en/about')
+  })
+
+  it('removes a locale prefix from href with normalize, without locale or with locale false', () => {
+    // Without locale, the link keeps the pattern of the current URL
+    expect(linkHref({ href: '/en/about', normalize: true, i18n, ...page('/en/about', 'en') })).toBe('/en/about')
+    expect(linkHref({ href: '/en/about', normalize: true, i18n, ...page('/page', undefined) })).toBe('/about')
+    expect(linkHref({ href: '/en/about', locale: false, normalize: true, i18n, ...page('/en/about', 'en') })).toBe('/about')
+  })
+
+  it('keeps the query and the hash with normalize', () => {
+    expect(linkHref({ href: '/en/about?x=1#top', locale: 'ja', normalize: true, i18n, ...page('/en/about', 'en') })).toBe('/about?x=1#top')
+    expect(linkHref({ href: '/docs/en/about?x=1', locale: 'ja', normalize: true, i18n, ...page('/docs/en/about', 'en', '/docs') })).toBe('/docs/about?x=1')
+  })
+
+  it('removes the base from href too with normalize', () => {
+    const base = '/docs'
+    expect(linkHref({ href: '/docs/en/about', locale: 'ja', normalize: true, i18n, ...page('/docs/en/about', 'en', base) })).toBe('/docs/about')
+    expect(linkHref({ href: '/docs/about', locale: 'en', normalize: true, i18n, ...page('/docs/about', undefined, base) })).toBe('/docs/en/about')
+    expect(linkHref({ href: '/docs', locale: 'en', normalize: true, i18n, ...page('/docs', undefined, base) })).toBe('/docs/en')
+    expect(linkHref({ href: '/docs/en', locale: 'ja', normalize: true, i18n, ...page('/docs/en', 'en', '/docs/') })).toBe('/docs')
+    expect(linkHref({ href: '/docs/en/about', locale: false, normalize: true, i18n, ...page('/docs/en/about', 'en', base) })).toBe('/docs/about')
+  })
+
   it('keeps the query and the hash, and removes trailing slashes', () => {
     expect(linkHref({ href: '/about/?x=1#top', ...page('/en/page', 'en') })).toBe('/en/about?x=1#top')
     expect(linkHref({ href: '/about/?x=1#top', locale: 'en', i18n, ...page('/page', undefined) })).toBe('/en/about?x=1#top')
@@ -107,9 +137,13 @@ describe('linkHref', () => {
     }
   })
 
-  it('throws without i18n for a locale', () => {
+  it('throws without i18n for a locale and normalize', () => {
     expect(() => linkHref({ href: '/about', locale: 'en', ...page('/page', undefined) }))
       .toThrow('[i18n] A Link with locale "en" needs the i18n prop, the result of define(): <Link i18n={i18n} ...>.')
+    expect(() => linkHref({ href: '/about', normalize: true, ...page('/page', undefined) }))
+      .toThrow('[i18n] A Link with normalize needs the i18n prop, the result of define(): <Link i18n={i18n} ...>.')
+    expect(() => linkHref({ href: '/about', locale: false, normalize: true, ...page('/page', undefined) }))
+      .toThrow('[i18n] A Link with normalize needs the i18n prop')
   })
 
   it('throws for an unknown or empty locale', () => {
@@ -139,8 +173,16 @@ describe('linkHref', () => {
         expect(() => linkHref({ href, locale: false, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
         expect(() => linkHref({ href, locale: 'ja', i18n, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
         expect(() => linkHref({ href, locale: 'en', i18n: prefixed, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
+        expect(() => linkHref({ href, locale: 'en', normalize: true, i18n, ...page('/page', undefined, base) })).toThrow('contain a tab or a line break')
       }
     }
+  })
+
+  it('throws with normalize for an href that leads to another host after its base or prefix', () => {
+    expect(() => linkHref({ href: '/en//evil.com', locale: 'ja', normalize: true, i18n, ...page('/en/page', 'en') })).toThrow('[i18n]')
+    expect(() => linkHref({ href: '/docs/en/\\evil.com', locale: 'ja', normalize: true, i18n, ...page('/docs/en/page', 'en', '/docs') })).toThrow('[i18n]')
+    expect(() => linkHref({ href: '/docs/\\evil.com', locale: 'en', normalize: true, i18n, ...page('/docs/page', undefined, '/docs') })).toThrow('[i18n]')
+    expect(() => linkHref({ href: '/docs/\t/evil.com', locale: 'en', normalize: true, i18n, ...page('/docs/page', undefined, '/docs') })).toThrow('contain a tab or a line break')
   })
 
   it('throws for a relative href', () => {
@@ -184,16 +226,23 @@ describe('Link component', () => {
     expect(href(await render({ href: '/about' }, '/page', { locals: { locale: 'en', originalPathname: '/page' } }))).toBe('/about')
   })
 
+  it('renders the current page in another locale with normalize', async () => {
+    expect(href(await render({ href: '/en/about', locale: 'ja', normalize: true, i18n }, '/en/about', { params: { locale: 'en' } }))).toBe('/about')
+    expect(href(await render({ href: '/about', locale: 'en', normalize: true, i18n }, '/about'))).toBe('/en/about')
+  })
+
   it('passes the other attributes and the slot to the a element', async () => {
     const html = await render({ href: '/about', locale: 'en', i18n, class: 'nav', 'aria-current': 'page' }, '/page')
     expect(html).toContain('class="nav"')
     expect(html).toContain('aria-current="page"')
     expect(html).toContain('>Text')
     expect(html).not.toContain('i18n')
+    expect(await render({ href: '/en/about', locale: 'ja', normalize: true, i18n }, '/en/about')).not.toContain('normalize')
   })
 
   it('throws without i18n for a locale', async () => {
     await expect(render({ href: '/about', locale: 'en' }, '/page')).rejects.toThrow('[i18n] A Link with locale "en" needs the i18n prop')
+    await expect(render({ href: '/about', normalize: true }, '/page')).rejects.toThrow('[i18n] A Link with normalize needs the i18n prop')
     expect(href(await render({ href: '/about', locale: false }, '/en/page', { params: { locale: 'en' } }))).toBe('/about')
   })
 })

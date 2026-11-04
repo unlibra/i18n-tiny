@@ -16,7 +16,8 @@ A link that keeps the locale of the current page, or points to another locale.
 | --- | --- | :---: | --- |
 | `href` | `string` | Required | The path of the page, starting with `/`, without the base and without a locale prefix |
 | `locale` | `string` \| `false` | | Without it, the link keeps the locale of the current URL. A locale builds the link for it, and `false` leaves the path without a locale |
-| `i18n` | `define()` result | With a locale | Required with a locale (other than `false`). The link is built with its `localizedPath()`, and so with its `prefixDefault` |
+| `normalize` | `boolean` | | Removes the base and a locale prefix from `href` first, for `href={Astro.url.pathname}`. Default `false` |
+| `i18n` | `define()` result | With a locale or `normalize` | Required with a locale (other than `false`) and `normalize`. The link is built with its `localizedPath()`, and so with its `prefixDefault` |
 | Others | `HTMLAttributes<'a'>` | | Attributes of the `<a>` element, such as `hreflang` or `class` |
 
 **Example:**
@@ -34,16 +35,19 @@ import { i18n } from '../i18n'
 <Link href="/" locale="en" i18n={i18n}>English</Link>
 <Link href="/" locale="ja" i18n={i18n}>日本語</Link>
 
+<!-- The current page in another locale -->
+<Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
+
 <!-- The path without a locale -->
 <Link href="/" locale={false}>Top</Link>
 ```
 
 - Without `locale`, the link keeps the form of the current URL: it gets the prefix of the current locale only when the current URL has one. The current locale is `Astro.params.locale`, or in the rewrite mode `Astro.locals.locale`. The `Link` of `@i18n-tiny/next` builds this link from the config instead.
 - With `locale`, the link is built as `localizedPath()` builds it: the default locale gets no prefix unless `prefixDefault` is true. A locale that is not one of `locales` throws.
-- `locale` without `i18n` is a type error, and throws.
-- An `href` that does not start with `/`, such as `about`, throws. Hrefs that are not paths of the site, such as `https://…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
+- `locale` or `normalize` without `i18n` is a type error, and throws.
+- An `href` that does not start with `/`, such as `about`, throws, and so does an `href` whose path, before `?` and `#`, starts with `/\` or has a tab or a line break, which browsers may read as another host. Hrefs that are not paths of the site, such as `https://…`, `//cdn.example.com/…`, `mailto:…` or `#top`, are left unchanged. A query and a hash in `href` are kept.
 - The links have no trailing slash, except for the top page `/`.
-- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base.
+- With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), the link removes it from the current URL to find the locale, and adds it to the result: with the base `/docs`, `<Link href="/about">` on `/docs/en` is `/docs/en/about`. Write `href` without the base. With `normalize`, the base is also removed from `href`, so `href={Astro.url.pathname}` works.
 
 For links to the current page in each locale, see the [language switcher](../tips/language-switcher).
 

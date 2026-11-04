@@ -34,7 +34,7 @@ The alias packages `next-i18n-tiny`, `astro-i18n-tiny` and `react-i18n-tiny` hav
 | `Link` `locale=""` | The path without a locale | Use `locale={false}` | [Link](#link) |
 | `Link` `locale` for the default locale | Always prefixed (`/en`) | No prefix unless `prefixDefault` (`/`) | [Link](#link) |
 | `Link` relative `href` | `/` was added | Throws | [Link](#link) |
-| Astro `Link` `locale`, `normalize` | `locale` and `normalize` read `Astro.locals.locales` | `locale` needs the `i18n` prop, `normalize` removed | [Astro: Link](#astro-link) |
+| Astro `Link` `locale`, `normalize` | Read `Astro.locals.locales` | Need the `i18n` prop | [Astro: Link](#astro-link) |
 | Astro `Link` with a `base` | Not handled | `href` without the base, the link adds it | [Astro: Link](#astro-link) |
 | Astro static builds | `src/pages/[locale]/`, `@i18n-tiny/astro/integration` | `src/pages/[...locale]/`, `i18n.getStaticPaths()` | [Astro: static builds](#astro-static-builds) |
 | `@i18n-tiny/astro/integration` | Copied the default locale to the root | Removed | [Astro: static builds](#astro-static-builds) |
@@ -378,8 +378,15 @@ If your 1.x site was published with `/ja/...` URLs for the default locale, those
 
 A `Link` without `locale` works as in 1.x, without the `i18n` prop: it keeps the form of the current URL.
 
-- **`locale` (other than `false`) needs the `define()` result as the `i18n` prop.** Without it, the link is a type error and throws. In 1.x, the link read the locales from `Astro.locals.locales`, which the middleware set.
-- **`normalize` is removed.** For the current page in another locale, pass the path of the page with `locale`, or use `i18n.alternatePath()`.
+`locale` (other than `false`) and `normalize` need the `define()` result as the `i18n` prop. Without it, they are a type error and throw. In 1.x, the link read the locales from `Astro.locals.locales`, which the middleware set, and `normalize` did nothing without the middleware.
+
+```astro
+<!-- 1.x -->
+<Link href={Astro.url.pathname} locale="en" normalize>English</Link>
+
+<!-- 2.0 -->
+<Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
+```
 
 ```astro
 <!-- 1.x: src/pages/[locale]/index.astro (examples/astro) -->
@@ -397,8 +404,9 @@ A `Link` without `locale` works as in 1.x, without the `i18n` prop: it keeps the
 <div>
   {i18n.locales.map((linkLocale) => (
     <Link
-      href={path}
+      href={Astro.url.pathname}
       locale={linkLocale}
+      normalize
       i18n={i18n}
       hreflang={linkLocale}
       style={buttonStyle(linkLocale === locale)}
@@ -409,23 +417,7 @@ A `Link` without `locale` works as in 1.x, without the `i18n` prop: it keeps the
 </div>
 ```
 
-`path` is the path of the page without a locale prefix, such as `/about`, which each page passes to `LanguageSwitcher`.
-
-To keep building the links from the current URL, as with `normalize`, pass the result of `i18n.alternatePath()` to a `Link` with `locale={false}`, or to a plain `<a>`:
-
-```astro
-<!-- 1.x -->
-<Link href={Astro.url.pathname} locale="en" normalize>English</Link>
-
-<!-- 2.0 -->
-<Link href={i18n.alternatePath(Astro.url.pathname, 'en')} locale={false}>English</Link>
-```
-
-- Do not pass it to a `Link` without `locale`: such a link adds the prefix of the current page, so on `/ja/about` the link to English would be `/ja/about`.
-- `Astro.url.pathname` includes the `base`. With a `base`, pass the path of the page without the base, as in the example above, and not `Astro.url.pathname`.
-- In the rewrite mode, the current URL is `Astro.locals.originalPathname`.
-
-With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link removes the base from the current URL to find the locale, and adds it to the result.
+With a [`base`](https://docs.astro.build/en/reference/configuration-reference/#base), write `href` without the base: the link removes the base from the current URL to find the locale, and adds it to the result. With `normalize`, the base is also removed from `href`, so `href={Astro.url.pathname}` works.
 
 The `Link` currently removes the trailing slash of every link except `/`, also when `astro.config` has `trailingSlash: 'always'`: on such a site, the links point to URLs without the slash, which Astro or your host may redirect or not serve.
 

@@ -38,8 +38,9 @@ how to update from 1.x. 1.x gets no more releases.
   unless `prefixDefault` is true, a relative `href` throws, and
   `locale={false}` replaces `locale=""`.
 - The Astro `Link` needs the `define()` result as the `i18n` prop with a
-  `locale`, and handles the `base`. Without `locale`, it keeps the form of
-  the current URL, as in 1.x.
+  `locale` or `normalize`, and handles the `base`: with `normalize`, it
+  removes the base from `href` too, so `href={Astro.url.pathname}` works.
+  Without `locale`, it keeps the form of the current URL, as in 1.x.
 - Astro static builds put the pages under `src/pages/[...locale]/` and return
   `i18n.getStaticPaths()`: the default locale is built without a prefix.
 - The Astro middleware serves the default locale through
@@ -103,10 +104,6 @@ how to update from 1.x. 1.x gets no more releases.
 - `@i18n-tiny/astro/integration` (and `astro-i18n-tiny/integration`).
 - `getLocalizedPath()` and `hasLocalePrefix()`.
 - `Astro.locals.locales`.
-- The `normalize` prop of the Astro `Link`; use the path of the page with
-  `locale`, or pass `i18n.alternatePath()` to a `Link` with `locale={false}`
-  or to a plain `<a>`. A `Link` without `locale` adds the prefix of the
-  current page to it, and `Astro.url.pathname` includes the `base`.
 - `I18nProviderProps` of `@i18n-tiny/react/internal`; use `ProviderProps`, the
   same props of the internal provider (not those of the `Provider` of
   `define()`).

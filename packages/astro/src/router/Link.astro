@@ -4,10 +4,11 @@
  *
  * Without `locale`, the link keeps the locale of the current URL: it gets
  * the prefix of the current locale only when the current URL has one. A
- * `locale` such as 'en' needs the define() result as the `i18n` prop, whose
- * config builds the link as localizedPath() does. The base of the site is
- * removed from the current URL and added to the link, so href is a path
- * without the base.
+ * `locale` such as 'en' and `normalize` need the define() result as the
+ * `i18n` prop, whose config builds the link as localizedPath() does. The
+ * base of the site is removed from the current URL and added to the link,
+ * so href is a path without the base. With `normalize`, the base and a
+ * locale prefix are removed from href first, for href={Astro.url.pathname}.
  *
  * @example
  * ```astro
@@ -20,6 +21,9 @@
  * // A link for a locale: the default locale gets no prefix
  * <Link href="/" locale="en" i18n={i18n}>English</Link>
  *
+ * // The current page in another locale
+ * <Link href={Astro.url.pathname} locale="en" normalize i18n={i18n}>English</Link>
+ *
  * // The path without a locale
  * <Link href="/" locale={false}>Top</Link>
  * ```
@@ -29,7 +33,7 @@ import { linkHref } from '@i18n-tiny/astro/internal'
 
 type Props = LinkProps
 
-const { href, locale, i18n, ...attrs } = Astro.props
+const { href, locale, normalize, i18n, ...attrs } = Astro.props
 
 const locals = Astro.locals as Record<string, unknown>
 
@@ -46,6 +50,7 @@ const localizedHref = linkHref({
   currentPathname,
   currentLocale,
   locale,
+  normalize,
   i18n,
   base: import.meta.env.BASE_URL
 })

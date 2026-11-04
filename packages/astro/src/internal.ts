@@ -6,11 +6,12 @@
  */
 
 import type { HTMLAttributes } from 'astro/types'
-import { getLinkHref } from '@i18n-tiny/core/router'
-import { leadsToAnotherHost } from '@i18n-tiny/core/internal'
+import { leadsToAnotherHost, linkHref as coreLinkHref } from '@i18n-tiny/core/internal'
 
-/** What a Link with `locale` reads from the define() result */
+/** What a Link with `locale` or `normalize` reads from the define() result */
 export interface LinkI18n {
+  readonly locales: readonly string[]
+  readonly defaultLocale: string
   // A method, so that the define() result, whose function takes its own
   // locales only, can be given
   localizedPath (path: string, locale: string): string
@@ -21,7 +22,7 @@ type LinkAttributes = Omit<HTMLAttributes<'a'>, 'href'> & {
   href: string
 }
 
-/** Props of the Link component: a locale needs `i18n` */
+/** Props of the Link component: a locale and `normalize` need `i18n` */
 export type LinkProps = LinkAttributes & (
   | {
       /**
@@ -29,16 +30,24 @@ export type LinkProps = LinkAttributes & (
        * - false: the path without a locale
        */
       locale?: false
-      /** The define() result, needed for a locale */
+      normalize?: false
+      /** The define() result, needed for a locale and `normalize` */
       i18n?: LinkI18n
     }
   | {
       /**
-       * A locale such as 'en': the link for that locale, as localizedPath()
-       * builds it. The default locale gets no prefix unless prefixDefault is
-       * true
+       * - undefined: keep the locale prefix of the current URL (default)
+       * - a locale such as 'en': the link for that locale, as localizedPath()
+       *   builds it. The default locale gets no prefix unless prefixDefault
+       *   is true
+       * - false: the path without a locale
        */
-      locale: string
+      locale?: string | false
+      /**
+       * Remove the base and a locale prefix from href first, such as when
+       * href is Astro.url.pathname
+       */
+      normalize?: boolean
       /** The define() result, whose config builds the link */
       i18n: LinkI18n
     }
@@ -100,6 +109,10 @@ function isSitePath (href: string): boolean {
   return href.startsWith('/') && !leadsToAnotherHost(href.slice(0, suffixStart(href)))
 }
 
+function missingI18n (prop: string): Error {
+  return new Error(`[i18n] A Link with ${prop} needs the i18n prop, the result of define(): <Link i18n={i18n} ...>.`)
+}
+
 /** What the Link component reads from its props and the current request */
 export interface LinkHrefInput {
   href: string
@@ -108,6 +121,7 @@ export interface LinkHrefInput {
   /** The locale of the current page, from its params or locals */
   currentLocale: string | undefined
   locale?: string | false
+  normalize?: boolean
   i18n?: LinkI18n
   /** import.meta.env.BASE_URL */
   base: string
@@ -116,28 +130,38 @@ export interface LinkHrefInput {
 /**
  * The href of the Link component, with the base added:
  * - without `locale`, the link keeps the pattern of the current URL, as
- *   getLinkHref() of @i18n-tiny/core/router does: the prefix of the current
- *   locale only when the current pathname, without the base, has it
+ *   getLinkHref() of @i18n-tiny/core does: the prefix of the current locale
+ *   only when the current pathname, without the base, has it
  * - with a locale, localizedPath() of the define() result builds it
  * - `locale={false}` leaves the path without a locale
+ * - `normalize` first removes the base and a locale prefix from href, such
+ *   as when href is Astro.url.pathname
  *
  * Hrefs that are not paths on this site, such as 'https://…' or '#top', are
  * returned unchanged. The query and the hash of href are kept.
  */
 export function linkHref (input: LinkHrefInput): string {
-  const { href, currentLocale, locale, i18n, base } = input
+  const { href, currentLocale, locale, normalize = false, i18n, base } = input
+  if (normalize && i18n === undefined) {
+    throw missingI18n('normalize')
+  }
+  // The locales of define(), for removing a locale prefix from href. The
+  // config of define() is checked once there, and not again here.
+  const config = normalize && i18n !== undefined
+    ? { locales: i18n.locales, defaultLocale: i18n.defaultLocale }
+    : undefined
+  const target = normalize ? stripBase(href, base) : href
+
   let result: string
   if (locale === undefined || locale === false) {
-    result = getLinkHref(href, stripBase(input.currentPathname, base), currentLocale, { locale })
+    result = coreLinkHref(target, stripBase(input.currentPathname, base), currentLocale, { locale, normalize, config })
   } else {
     if (i18n === undefined) {
-      throw new Error(
-        `[i18n] A Link with locale ${JSON.stringify(locale)} needs the i18n prop, ` +
-        'the result of define(): <Link i18n={i18n} ...>.'
-      )
+      throw missingI18n(`locale ${JSON.stringify(locale)}`)
     }
-    // Checks href and removes its trailing slashes, as getLinkHref() does
-    const plain = getLinkHref(href, '', undefined, { locale: false })
+    // Checks href and removes its trailing slashes, and with normalize its
+    // locale prefix, as getLinkHref() does
+    const plain = coreLinkHref(target, '', undefined, { locale: false, normalize, config })
     if (!isSitePath(plain)) {
       return plain
     }
