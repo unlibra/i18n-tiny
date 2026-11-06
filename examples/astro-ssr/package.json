@@ -14,7 +14,7 @@
     "@astrojs/node": "^11.1.9",
     "@i18n-tiny/astro": "workspace:*",
     "@i18n-tiny/core": "workspace:*",
-    "astro": "^7.4.2"
+    "astro": "^7.4.4"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
