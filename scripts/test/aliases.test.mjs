@@ -216,6 +216,15 @@ test('writing an alias removes stale generated files and keeps the README', () =
   assert.equal(readFileSync(join(dir, 'README.md'), 'utf-8'), 'readme')
 })
 
+test('generated files in a subdirectory match the plan on every platform', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'alias-test-'))
+  const { files } = plan({ exports: { './router/*': './src/router/*' } }, { dirs: { 'src/router': ['Link.astro'] } })
+  writeAlias(dir, files)
+
+  assert.deepEqual(diffAlias(dir, files), [])
+  assert.equal(readFileSync(join(dir, 'router/Link.astro'), 'utf-8'), files.get('router/Link.astro'))
+})
+
 test('conditions keep the order the package gives them', () => {
   const { pkg } = plan({
     exports: {

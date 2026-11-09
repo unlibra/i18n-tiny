@@ -7,7 +7,7 @@
 // fields (name, description, keywords...) are written by hand.
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative } from 'node:path'
+import { dirname, join } from 'node:path'
 import ts from 'typescript'
 
 // Each alias and the package it stands for.
@@ -255,10 +255,13 @@ export function planAliases (root) {
   return plans
 }
 
-function listFiles (dir, base = dir) {
+// Lists the files under dir as paths joined with "/", the separator the plan
+// uses, whatever the platform separator is.
+function listFiles (dir, prefix = '') {
   return readdirSync(dir).flatMap((name) => {
     const full = join(dir, name)
-    return statSync(full).isDirectory() ? listFiles(full, base) : [relative(base, full)]
+    const file = prefix ? `${prefix}/${name}` : name
+    return statSync(full).isDirectory() ? listFiles(full, file) : [file]
   })
 }
 
