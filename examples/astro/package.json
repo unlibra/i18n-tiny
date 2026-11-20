@@ -13,7 +13,7 @@
   "dependencies": {
     "@i18n-tiny/astro": "workspace:*",
     "@i18n-tiny/core": "workspace:*",
-    "astro": "^7.4.7"
+    "astro": "^7.4.11"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
